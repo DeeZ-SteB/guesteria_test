@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CalendarX, SearchX, SlidersHorizontal } from "lucide-react";
 import type { HotelSummary } from "@/lib/hotels/types";
@@ -10,13 +10,10 @@ import { nightsBetween, todayInKyiv } from "@/lib/booking/stay";
 import { hotelHref, parseView, searchHref, SORTS, type SearchQuery, type Sort, type ViewState } from "@/lib/search/params";
 import { activeFilterCount, applyView, clampPrice, countMatching, priceBounds } from "@/lib/search/filter";
 import { saveRecent } from "@/lib/search/recent";
-import { storePending, takePending } from "@/lib/favorites/pending";
-import { createRequestTracker } from "@/lib/favorites/tracker";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/feedback";
 import { Sheet } from "@/components/ui/sheet";
-import { useAuthModal } from "@/features/auth/auth-modal";
-import { setFavorite } from "@/features/favorites/actions";
+import { useFavoriteToggle } from "@/features/favorites/use-favorite-toggle";
 import { FiltersFields } from "./filters";
 import { HotelCard } from "./hotel-card";
 
@@ -50,7 +47,7 @@ export function ResultsView({ hotels, favoriteIds, query, signedIn }: ResultsVie
 
   useEffect(() => saveRecent(query, todayInKyiv()), [query]);
 
-  const favorites = useFavorites({ favoriteIds, signedIn, hotels, cityId: query.cityId });
+  const favorites = useFavoriteToggle({ favoriteIds, signedIn, hotels, cityId: query.cityId });
 
   // ---- mobile filters sheet with a draft ----
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -174,83 +171,4 @@ export function ResultsView({ hotels, favoriteIds, query, signedIn }: ResultsVie
       </Sheet>
     </div>
   );
-}
-
-/**
- * Hearts: optimistic local state, rolled back if the save fails. Signed-out taps remember
- * the hotel and open the auth modal; after login the page re-renders and the intent is replayed once.
- */
-function useFavorites({
-  favoriteIds,
-  signedIn,
-  hotels,
-  cityId,
-}: {
-  favoriteIds: string[];
-  signedIn: boolean;
-  hotels: HotelSummary[];
-  cityId: string;
-}) {
-  const [ids, setIds] = useState(() => new Set(favoriteIds));
-  const [message, setMessage] = useState<string | null>(null);
-  const { open } = useAuthModal();
-  const replayed = useRef(false);
-  const tracker = useRef(createRequestTracker());
-
-  const setOne = (hotelId: string, value: boolean) =>
-    setIds((prev) => {
-      const next = new Set(prev);
-      if (value) next.add(hotelId);
-      else next.delete(hotelId);
-      return next;
-    });
-
-  const save = useCallback(
-    async (hotel: HotelSummary, favorite: boolean, previous: boolean) => {
-      const token = tracker.current.begin(hotel.id, previous);
-      setOne(hotel.id, favorite);
-      setMessage(null);
-      const result = await setFavorite({ hotelId: hotel.id, hotelName: hotel.name, hotelImage: hotel.photo, cityId, favorite });
-      if (result.ok) {
-        tracker.current.done(token);
-        return;
-      }
-      // Only the latest click for this hotel rolls back, to the value before that click.
-      const restore = tracker.current.rollbackValue(hotel.id, token);
-      if (restore !== undefined) {
-        setOne(hotel.id, restore);
-        setMessage(result.reason === "unauthenticated" ? "Увійдіть, щоб зберігати готелі" : "Не вдалося зберегти. Спробуйте ще раз.");
-      }
-    },
-    [cityId],
-  );
-
-  useEffect(() => {
-    if (!signedIn) {
-      replayed.current = false; // signed out in place: a later sign-in may replay again
-      return;
-    }
-    if (replayed.current) return;
-    replayed.current = true;
-    const pending = takePending();
-    const hotel = pending && hotels.find((h) => h.id === pending.hotelId);
-    // Syncing from sessionStorage (an external system) once after login; defer the state update
-    // out of the effect body so it does not cascade into this render.
-    if (hotel && !favoriteIds.includes(hotel.id)) queueMicrotask(() => void save(hotel, true, false));
-  }, [signedIn, hotels, favoriteIds, save]);
-
-  const toggle = useCallback(
-    (hotel: HotelSummary) => {
-      if (!signedIn) {
-        storePending(hotel.id);
-        open({ title: "Увійдіть, щоб зберегти готель" });
-        return;
-      }
-      const current = ids.has(hotel.id);
-      void save(hotel, !current, current);
-    },
-    [signedIn, ids, open, save],
-  );
-
-  return { ids, toggle, message };
 }

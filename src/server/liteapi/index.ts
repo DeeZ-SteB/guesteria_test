@@ -6,7 +6,7 @@ import { isPastCheckIn, isTooFarAhead, staySchema, type Stay } from "@/lib/booki
 import { findCity } from "@/lib/cities";
 import { liteApiKey } from "@/server/env";
 import { createLiteApiClient } from "./client";
-import { LiteApiError } from "./errors";
+import { LiteApiError, reviveLiteApiError } from "./errors";
 import { toHotelDetails, toReviews } from "./mappers";
 import * as service from "./service";
 
@@ -63,21 +63,32 @@ async function cachedReviews(id: string): Promise<Review[]> {
   return toReviews(await client().getReviews(id, 20));
 }
 
+/** Calls a cached function and restores the LiteApiError class lost at the cache boundary. */
+async function fromCache<T>(load: () => Promise<T>): Promise<T> {
+  try {
+    return await load();
+  } catch (error) {
+    throw reviveLiteApiError(error);
+  }
+}
+
 // ---------- public API ----------
 
 export async function getHotel(hotelId: string): Promise<HotelDetails> {
-  return cachedHotel(parseHotelId(hotelId, "getHotel"));
+  const id = parseHotelId(hotelId, "getHotel");
+  return fromCache(() => cachedHotel(id));
 }
 
 export async function getReviews(hotelId: string): Promise<Review[]> {
-  return cachedReviews(parseHotelId(hotelId, "getReviews"));
+  const id = parseHotelId(hotelId, "getReviews");
+  return fromCache(() => cachedReviews(id));
 }
 
 /** Hotels with live prices for a stay. Prices are never cached. */
 export async function searchHotels(input: { cityId: string } & Stay): Promise<HotelSummary[]> {
   const city = findCity(input.cityId) ?? invalid("searchHotels");
   const stay = parseStay(input, "searchHotels");
-  const hotels = await cachedCityHotels(city.countryCode, city.cityName);
+  const hotels = await fromCache(() => cachedCityHotels(city.countryCode, city.cityName));
   return service.searchHotels(client(), { hotels, stay });
 }
 
@@ -85,6 +96,6 @@ export async function searchHotels(input: { cityId: string } & Stay): Promise<Ho
 export async function getRoomRates(hotelId: string, stayInput: Stay): Promise<RoomOffer[]> {
   const id = parseHotelId(hotelId, "getRoomRates");
   const stay = parseStay(stayInput, "getRoomRates");
-  const details = await cachedHotel(id);
+  const details = await fromCache(() => cachedHotel(id));
   return service.getRoomRates(client(), { hotelId: id, stay, rooms: details.rooms });
 }

@@ -113,6 +113,7 @@ export const reviewsSchema = z.object({
           name: z.string().catch("Гість"),
           date: nullableString,
           headline: nullableString,
+          language: nullableString,
           pros: nullableString,
           cons: nullableString,
         })

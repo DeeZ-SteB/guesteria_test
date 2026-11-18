@@ -146,3 +146,32 @@ describe("LiteAPI client: more error branches", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 });
+
+describe("unknown hotel (probed live: HTTP 400 / 4002)", () => {
+  it("maps to invalid_request so the page can show 404", async () => {
+    const { default: notFound } = await import("./__fixtures__/error-hotel-not-found.json");
+    const fetch = fakeFetch({ status: notFound.httpStatus, body: notFound.body });
+    expect((await caught(createLiteApiClient({ apiKey: "k", fetch }).getHotel("lpzzzzzz"))).kind).toBe("invalid_request");
+  });
+});
+
+// Found by me in the browser (stage 4): errors thrown inside "use cache" come back as plain
+// Error objects (name + message survive, class and fields don't), so `instanceof` failed and an
+// unknown hotel showed a generic error instead of 404.
+describe("reviveLiteApiError", () => {
+  it("restores kind and code from an error that crossed the cache boundary", async () => {
+    const { reviveLiteApiError, LiteApiError } = await import("./errors");
+    const crossed = Object.assign(new Error("LiteAPI GET /data/hotel: invalid_request (4002)"), { name: "LiteApiError" });
+    const revived = reviveLiteApiError(crossed);
+    expect(revived).toBeInstanceOf(LiteApiError);
+    expect(revived).toMatchObject({ kind: "invalid_request", code: 4002, endpoint: "GET /data/hotel" });
+  });
+
+  it("keeps real LiteApiErrors and maps anything else to unknown", async () => {
+    const { reviveLiteApiError, LiteApiError } = await import("./errors");
+    const real = new LiteApiError("timeout", "x");
+    expect(reviveLiteApiError(real)).toBe(real);
+    expect(reviveLiteApiError(new Error("boom")).kind).toBe("unknown");
+    expect(reviveLiteApiError(Object.assign(new Error("LiteAPI x: hacked"), { name: "LiteApiError" })).kind).toBe("unknown");
+  });
+});

@@ -32,8 +32,10 @@ describe("safeReturnTo", () => {
     expect(safeReturnTo(value)).toBe("/");
   });
 
-  it("rejects overlong values", () => {
-    expect(safeReturnTo(`/${"a".repeat(600)}`)).toBe("/");
+  it("keeps checkout links with a long offer token and rejects anything over 2048 chars", () => {
+    const checkout = `/checkout?offerId=${"A".repeat(1236)}&hotel=lpbbb0c&checkin=2026-12-09&checkout=2026-12-12&adults=2`;
+    expect(safeReturnTo(checkout)).toBe(checkout);
+    expect(safeReturnTo(`/${"a".repeat(2048)}`)).toBe("/");
   });
 
   it("returns the given fallback for missing or non-string input", () => {

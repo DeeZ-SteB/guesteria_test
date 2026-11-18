@@ -69,6 +69,13 @@ export function findCityByName(text: string): City | undefined {
   return CITIES.find((city) => normalise(city.nameUk) === q || normalise(city.cityName) === q);
 }
 
+/** City from LiteAPI's own `city` field (e.g. "Ternopilʼ") → our entry, if we list it. */
+export function findCityByLiteApiName(name: string | null | undefined): City | undefined {
+  if (!name) return undefined;
+  const q = normalise(name);
+  return CITIES.find((city) => normalise(city.cityName) === q);
+}
+
 /** Autocomplete: Ukrainian or English name, prefix matches first. */
 export function searchCities(query: string, limit = 8): City[] {
   const q = normalise(query);

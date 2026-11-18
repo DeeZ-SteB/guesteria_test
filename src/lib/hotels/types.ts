@@ -82,6 +82,8 @@ export type Review = {
   type: string | null;
   date: string | null;
   headline: string | null;
+  /** BCP-47-ish code from the supplier, e.g. "pl", "en-gb". */
+  language: string | null;
   pros: string | null;
   cons: string | null;
 };

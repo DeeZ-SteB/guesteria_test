@@ -104,6 +104,7 @@ export function toReviews({ data }: ReviewsResponse): Review[] {
             type: r.type ?? null,
             date: r.date ?? null,
             headline: r.headline || null,
+            language: r.language || null,
             pros: r.pros || null,
             cons: r.cons || null,
           },

@@ -1,4 +1,5 @@
-const MAX_LENGTH = 512;
+// Checkout links carry a ~1.2k-char offer token; the structural checks below are what keep this safe.
+const MAX_LENGTH = 2048;
 const INTERNAL_PARAMS = ["auth", "next"];
 const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
 

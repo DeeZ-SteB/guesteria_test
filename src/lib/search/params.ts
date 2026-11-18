@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { offerIdSchema } from "@/lib/booking/offer";
 import { findCity } from "@/lib/cities";
 import { isPastCheckIn, isTooFarAhead, MAX_DAYS_AHEAD, MAX_GUESTS, staySchema, type Stay } from "@/lib/booking/stay";
 
@@ -30,19 +31,18 @@ function first(raw: RawParams, key: string): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-/** Shared by the client form (before submit) and the server page (after navigation). */
-export function validateSearch(values: FormValues, today: string): {
-  query?: SearchQuery;
-  errors: Partial<Record<SearchField, string>>;
-} {
-  const errors: Partial<Record<SearchField, string>> = {};
-  const city = findCity(values.city.trim());
-  if (!city) errors.city = "Оберіть місто зі списку";
+export type StayValues = Omit<FormValues, "city">;
 
+/** Dates + guests only (hotel page). Same Ukrainian messages as the search form. */
+export function validateStay(values: StayValues, today: string): {
+  stay?: Stay;
+  errors: Partial<Record<Exclude<SearchField, "city">, string>>;
+} {
+  const errors: Partial<Record<Exclude<SearchField, "city">, string>> = {};
   const stay = staySchema.safeParse({ checkIn: values.checkIn, checkOut: values.checkOut, adults: values.adults });
   if (!stay.success) {
     for (const issue of stay.error.issues) {
-      const key = issue.path[0] as SearchField;
+      const key = issue.path[0] as Exclude<SearchField, "city">;
       errors[key] ??=
         key === "checkIn" || key === "checkOut"
           ? issue.code === "custom"
@@ -50,14 +50,25 @@ export function validateSearch(values: FormValues, today: string): {
             : "Оберіть дату"
           : `Від 1 до ${MAX_GUESTS} гостей`;
     }
-  } else if (isPastCheckIn(stay.data.checkIn, new Date(`${today}T12:00:00Z`))) {
-    errors.checkIn = "Дата заїзду не може бути в минулому";
-  } else if (isTooFarAhead(stay.data.checkIn, new Date(`${today}T12:00:00Z`))) {
-    errors.checkIn = `Бронювання доступне на ${MAX_DAYS_AHEAD} днів уперед`;
+    return { errors };
   }
+  const noon = new Date(`${today}T12:00:00Z`);
+  if (isPastCheckIn(stay.data.checkIn, noon)) errors.checkIn = "Дата заїзду не може бути в минулому";
+  else if (isTooFarAhead(stay.data.checkIn, noon)) errors.checkIn = `Бронювання доступне на ${MAX_DAYS_AHEAD} днів уперед`;
+  return Object.keys(errors).length ? { errors } : { errors, stay: stay.data };
+}
 
-  if (Object.keys(errors).length > 0 || !city || !stay.success) return { errors };
-  return { errors, query: { cityId: city.id, ...stay.data } };
+/** Shared by the client form (before submit) and the server page (after navigation). */
+export function validateSearch(values: FormValues, today: string): {
+  query?: SearchQuery;
+  errors: Partial<Record<SearchField, string>>;
+} {
+  const city = findCity(values.city.trim());
+  const { stay, errors } = validateStay(values, today);
+  const all: Partial<Record<SearchField, string>> = { ...errors };
+  if (!city) all.city = "Оберіть місто зі списку";
+  if (!city || !stay) return { errors: all };
+  return { errors: all, query: { cityId: city.id, ...stay } };
 }
 
 /** View params are optional: anything invalid is ignored rather than shown as an error. */
@@ -115,9 +126,27 @@ export function searchHref(query: SearchQuery, view: ViewState = DEFAULT_VIEW): 
   return `/?${params}`;
 }
 
-export function hotelHref(hotelId: string, query: Stay): string {
+/** `/hotels/id?checkin&checkout&adults[&city]` — `city` is optional so older links keep working. */
+export function hotelHref(hotelId: string, query: Stay & { cityId?: string | null }): string {
   const params = new URLSearchParams({ checkin: query.checkIn, checkout: query.checkOut, adults: String(query.adults) });
+  if (query.cityId) params.set("city", query.cityId);
   return `/hotels/${encodeURIComponent(hotelId)}?${params}`;
+}
+
+/** Hand-off to checkout (stage 5). Throws on a malformed offer token rather than building a bad link. */
+export function checkoutHref({ offerId, hotelId, stay }: { offerId: string; hotelId: string; stay: Stay }): string {
+  const params = new URLSearchParams({
+    offerId: offerIdSchema.parse(offerId),
+    hotel: hotelId,
+    checkin: stay.checkIn,
+    checkout: stay.checkOut,
+    adults: String(stay.adults),
+  });
+  return `/checkout?${params}`;
+}
+
+export function stayKey(stay: Stay): string {
+  return `${stay.checkIn}|${stay.checkOut}|${stay.adults}`;
 }
 
 /** Stable identity of a search (excludes sort/filters) — used as a Suspense key. */

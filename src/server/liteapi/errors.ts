@@ -64,3 +64,23 @@ export function fromThrown(error: unknown, endpoint: string): LiteApiError {
   if (error instanceof TypeError) return new LiteApiError("network", endpoint, { cause: error });
   return new LiteApiError("unknown", endpoint, { cause: error });
 }
+
+const KINDS = new Set<LiteApiErrorKind>(["no_availability", "unauthorized", "invalid_request", "timeout", "network", "upstream", "unknown"]);
+const MESSAGE = /^LiteAPI (.+): ([a-z_]+)(?: \((\d+)\))?$/;
+
+/**
+ * Errors thrown inside a "use cache" function reach the caller as plain `Error`s: name and
+ * message survive, the class and its fields don't. Rebuild a LiteApiError from the message
+ * (which we format ourselves) so callers can rely on `kind`.
+ */
+export function reviveLiteApiError(error: unknown): LiteApiError {
+  if (error instanceof LiteApiError) return error;
+  if (error instanceof Error && error.name === "LiteApiError") {
+    const match = MESSAGE.exec(error.message);
+    const kind = match?.[2] as LiteApiErrorKind | undefined;
+    if (match && kind && KINDS.has(kind)) {
+      return new LiteApiError(kind, match[1], { code: match[3] ? Number(match[3]) : undefined, cause: error });
+    }
+  }
+  return new LiteApiError("unknown", "unknown", { cause: error });
+}

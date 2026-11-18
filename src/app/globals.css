@@ -90,3 +90,18 @@ html:has(dialog[open]) {
 dialog::backdrop {
   background: var(--gs-overlay);
 }
+
+/* A page with a sticky booking bar on phones lifts the AI button and the page padding above it. */
+@media (max-width: 1023px) {
+  :root:has([data-sticky-cta]) {
+    --gs-cta-height: 72px;
+  }
+}
+
+/* Desktop pages with their own inline "Ask AI" card (hotel page) don't need the floating button,
+   which would otherwise cover the sticky booking card. */
+@media (min-width: 1024px) {
+  :root:has([data-ai-inline]) [data-ai-fab] {
+    display: none;
+  }
+}

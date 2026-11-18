@@ -16,7 +16,8 @@ export const favoriteInputSchema = z.object({
     .max(500)
     .nullable()
     .transform((url) => (isAllowedImageUrl(url) ? url : null)),
-  cityId: z.string().refine((id) => !!findCity(id)),
+  // Null for hotels outside our city list (e.g. opened from a shared link).
+  cityId: z.string().refine((id) => !!findCity(id)).nullable(),
   favorite: z.boolean(),
 });
 
