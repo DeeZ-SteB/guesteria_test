@@ -1,0 +1,42 @@
+name: AI review
+
+# Independent AI review on every PR. Runs in a clean context that only sees the repo and the diff,
+# separate from the local agents that wrote the code.
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - name: Skip when the API key is not configured
+        if: env.ANTHROPIC_API_KEY == ''
+        run: echo "::notice::ANTHROPIC_API_KEY is not set, skipping AI review."
+      - uses: actions/checkout@v4
+        if: env.ANTHROPIC_API_KEY != ''
+        with:
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@v1
+        if: env.ANTHROPIC_API_KEY != ''
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review PR #${{ github.event.pull_request.number }} in ${{ github.repository }}.
+            Read CLAUDE.md first; its rules are the review standard.
+            Focus on: correctness bugs, failure paths of external API calls,
+            secrets reachable from client code, missing auth/ownership checks,
+            tables without RLS, unvalidated input, and missing tests for logic that can break.
+            Skip style and formatting.
+            Post findings as inline comments with severity (HIGH/MEDIUM/LOW) and a concrete fix,
+            then one summary comment with a verdict.
+          claude_args: --max-turns 15

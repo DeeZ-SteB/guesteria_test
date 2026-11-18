@@ -1,0 +1,60 @@
+# App containers. Supabase runs separately via the Supabase CLI (`npm run db:start`),
+# which manages its own Docker containers on ports 8720-8729.
+# Start Supabase first: the app containers join its network (supabase_network_guesteria)
+# instead of creating a new one.
+#
+# Ports (87xx block, chosen to avoid the other local projects):
+#   8700  Next.js dev on the host (npm run dev)          - recommended for daily work
+#   8701  Next.js dev in Docker (npm run docker:dev)
+#   8780  Production image (npm run docker:up)
+name: guesteria
+
+x-supabase-from-host: &supabase-from-host
+  # Inside a container `localhost` is the container itself.
+  SUPABASE_INTERNAL_URL: http://host.docker.internal:8721
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+    image: guesteria-web:local
+    container_name: guesteria_web
+    env_file: .env
+    environment:
+      <<: *supabase-from-host
+    ports:
+      - "8780:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  web-dev:
+    profiles: ["dev"]
+    image: node:22-alpine
+    container_name: guesteria_web_dev
+    working_dir: /app
+    command: sh -c "npm ci --ignore-scripts && npx next dev -H 0.0.0.0 -p 3000"
+    env_file: .env
+    environment:
+      <<: *supabase-from-host
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/app
+      - web_dev_node_modules:/app/node_modules
+      - web_dev_next:/app/.next
+    ports:
+      - "8701:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  default:
+    name: supabase_network_guesteria
+    external: true
+
+volumes:
+  web_dev_node_modules:
+  web_dev_next:

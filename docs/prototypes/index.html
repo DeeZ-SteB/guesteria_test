@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guesteria Stay — прототипи</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: {
+    primary: { DEFAULT: '#0F766E', soft: '#CCFBF1', dark: '#115E59' },
+    accent: '#F59E0B', success: '#15803D', danger: '#B91C1C',
+    ink: '#0F172A', muted: '#64748B', line: '#E2E8F0', bg: '#F8FAFC'
+  },
+  fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+} } }
+</script>
+<style>
+  body { background: #E2E8F0; }
+  .phone { width: 375px; height: 780px; border-radius: 40px; border: 10px solid #0F172A; background: #F8FAFC; position: relative; overflow: hidden; box-shadow: 0 20px 50px rgba(15,23,42,.25); flex: none; }
+  .screen { height: 100%; overflow-y: auto; scrollbar-width: none; }
+  .screen::-webkit-scrollbar { display: none; }
+  .desk-wrap { overflow: hidden; }
+  .desk { width: 1200px; height: 760px; border-radius: 14px; border: 8px solid #0F172A; background: #F8FAFC; position: relative; overflow: hidden; box-shadow: 0 20px 50px rgba(15,23,42,.25); }
+  .desk .screen { height: 100%; }
+  .img-a { background: linear-gradient(135deg,#0F766E,#5EEAD4); }
+  .img-b { background: linear-gradient(135deg,#B45309,#FCD34D); }
+  .img-c { background: linear-gradient(135deg,#1E3A8A,#93C5FD); }
+  .img-d { background: linear-gradient(135deg,#7C2D12,#FDBA74); }
+  .img-e { background: linear-gradient(135deg,#334155,#CBD5E1); }
+  .img-f { background: linear-gradient(135deg,#6D28D9,#C4B5FD); }
+  .icon { width: 18px; height: 18px; stroke-width: 2; }
+  .icon-sm { width: 14px; height: 14px; stroke-width: 2; }
+  .clamp3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .label { font-size: 11px; color: #64748B; }
+  .badge { display:inline-block; background:#0F766E; color:#fff; font-weight:700; border-radius:8px 8px 8px 0; padding:2px 7px; font-size:13px; }
+  h2.sec { scroll-margin-top: 80px; }
+</style>
+</head>
+<body class="font-sans text-ink antialiased">
+
+<header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-line">
+  <div class="max-w-[1600px] mx-auto px-6 py-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+    <span class="font-bold">Guesteria<span class="text-primary">Stay</span> · прототипи</span>
+    <a href="#p1" class="text-muted hover:text-primary">1 Пошук</a>
+    <a href="#p2" class="text-muted hover:text-primary">2 Готель</a>
+    <a href="#p3" class="text-muted hover:text-primary">3 Оформлення</a>
+    <a href="#p4" class="text-muted hover:text-primary">4 Кабінет</a>
+    <a href="#p5" class="text-muted hover:text-primary">5 Поїздка</a>
+    <a href="#ai" class="text-primary font-semibold">✦ AI-асистент</a>
+    <a href="#auth" class="text-muted hover:text-primary">Вхід</a>
+  </div>
+</header>
+
+<div class="max-w-[1600px] mx-auto px-6 pt-8 pb-4">
+  <h1 class="text-3xl font-bold">Екрани: мобільна (375 px) і десктоп (1200 px)</h1>
+  <p class="text-muted mt-2 max-w-3xl">5 сторінок + AI-асистент Guesteria + вхід. Кожен екран гортається всередині рамки. Специфікація — <code class="bg-white px-1.5 py-0.5 rounded">docs/SPEC.md</code>. Дані умовні, зображення — плейсхолдери.</p>
+</div>
+
+<main class="max-w-[1600px] mx-auto px-6 pb-20 space-y-16">
+
+<!-- =====================================================================
+     1. ПОШУК І РЕЗУЛЬТАТИ
+====================================================================== -->
+<section>
+  <h2 id="p1" class="sec text-2xl font-bold">1 · Пошук і результати <span class="text-base font-normal text-muted">/</span></h2>
+  <div class="flex flex-wrap gap-10 mt-5">
+
+    <div><p class="font-semibold mb-2">1a · Мобільна: старт</p>
+    <div class="phone"><div class="screen pb-28">
+      <div class="bg-primary text-white px-4 pt-12 pb-20">
+        <div class="flex items-center justify-between"><span class="font-bold text-lg">Guesteria<span class="text-primary-soft">Stay</span></span><i data-lucide="bell" class="icon"></i></div>
+        <h3 class="text-2xl font-bold mt-6">Куди їдемо?</h3>
+        <p class="text-primary-soft text-sm mt-1">Готелі з AI-консьєржем для вашої поїздки</p>
+      </div>
+      <div class="mx-4 -mt-14 bg-white rounded-2xl shadow-lg p-3 space-y-2">
+        <div class="flex items-center gap-3 border border-line rounded-xl px-3 py-3"><i data-lucide="map-pin" class="icon text-primary"></i><div><p class="label">Місто</p><p class="font-medium">Львів, Україна</p></div></div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="flex items-center gap-3 border border-line rounded-xl px-3 py-3"><i data-lucide="calendar" class="icon text-primary"></i><div><p class="label">Заїзд</p><p class="font-medium">12 гру, пт</p></div></div>
+          <div class="flex items-center gap-3 border border-line rounded-xl px-3 py-3"><i data-lucide="calendar-check" class="icon text-primary"></i><div><p class="label">Виїзд</p><p class="font-medium">15 гру, пн</p></div></div>
+        </div>
+        <div class="flex items-center justify-between border border-line rounded-xl px-3 py-2">
+          <div class="flex items-center gap-3"><i data-lucide="users" class="icon text-primary"></i><div><p class="label">Гості</p><p class="font-medium">2 дорослих</p></div></div>
+          <div class="flex items-center gap-2"><button class="w-9 h-9 rounded-full border border-line grid place-items-center"><i data-lucide="minus" class="icon-sm"></i></button><b class="w-4 text-center">2</b><button class="w-9 h-9 rounded-full border border-primary text-primary grid place-items-center"><i data-lucide="plus" class="icon-sm"></i></button></div>
+        </div>
+        <button class="w-full bg-primary text-white font-semibold rounded-xl py-3.5 flex items-center justify-center gap-2"><i data-lucide="search" class="icon"></i>Знайти</button>
+      </div>
+      <div class="mx-4 mt-4 bg-primary-soft rounded-2xl p-3 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-primary text-white grid place-items-center shrink-0"><i data-lucide="sparkles" class="icon"></i></div>
+        <div class="text-sm flex-1"><p class="font-semibold text-primary-dark">Не знаєте, що обрати?</p><p class="text-primary-dark/80 text-xs">Опишіть ідеальний готель — Guesteria AI підбере</p></div>
+        <i data-lucide="chevron-right" class="icon text-primary"></i>
+      </div>
+      <div class="px-4 mt-6">
+        <h4 class="font-semibold mb-2">Останні пошуки</h4>
+        <div class="flex gap-2 overflow-x-auto">
+          <div class="shrink-0 bg-white border border-line rounded-xl px-3 py-2 text-sm"><p class="font-medium">Київ</p><p class="text-muted text-xs">20–22 січ · 1 дорослий</p></div>
+          <div class="shrink-0 bg-white border border-line rounded-xl px-3 py-2 text-sm"><p class="font-medium">Одеса</p><p class="text-muted text-xs">3–7 лип · 2 дорослих</p></div>
+        </div>
+        <h4 class="font-semibold mt-6 mb-2">Популярні напрямки</h4>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="h-24 rounded-2xl img-a p-3 flex items-end text-white font-semibold">Львів</div>
+          <div class="h-24 rounded-2xl img-c p-3 flex items-end text-white font-semibold">Київ</div>
+          <div class="h-24 rounded-2xl img-b p-3 flex items-end text-white font-semibold">Барселона</div>
+          <div class="h-24 rounded-2xl img-d p-3 flex items-end text-white font-semibold">Рим</div>
+        </div>
+      </div>
+    </div><div data-fab></div><div data-tabbar="search"></div></div></div>
+
+    <div><p class="font-semibold mb-2">1b · Мобільна: результати</p>
+    <div class="phone"><div class="screen pb-28">
+      <div class="sticky top-0 z-10 bg-white border-b border-line px-4 pt-11 pb-3">
+        <button class="w-full flex items-center gap-3 border-2 border-accent rounded-xl px-3 py-2.5 text-left"><i data-lucide="chevron-left" class="icon"></i><div class="flex-1"><p class="font-semibold leading-tight">Львів</p><p class="text-xs text-muted">12–15 гру · 3 ночі · 2 дорослих</p></div><i data-lucide="pencil" class="icon-sm text-muted"></i></button>
+        <div class="flex gap-2 mt-3">
+          <button class="flex-1 flex items-center justify-center gap-1.5 border border-line rounded-lg py-2 text-sm font-medium"><i data-lucide="arrow-up-down" class="icon-sm"></i>Спершу дешевші</button>
+          <button class="flex-1 flex items-center justify-center gap-1.5 border border-primary text-primary rounded-lg py-2 text-sm font-medium"><i data-lucide="sliders-horizontal" class="icon-sm"></i>Фільтри · 2</button>
+        </div>
+      </div>
+      <p class="px-4 pt-3 text-sm text-muted">Знайдено 47 готелів</p>
+      <div class="px-4 pt-2 space-y-3" data-cards-v="3"></div>
+    </div><div data-fab></div><div data-tabbar="search"></div></div></div>
+
+    <div><p class="font-semibold mb-2">1c · Мобільна: фільтри</p>
+    <div class="phone"><div class="screen">
+      <div class="absolute inset-0 bg-ink/50"></div>
+      <div class="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl p-4 pb-8">
+        <div class="w-10 h-1 bg-line rounded-full mx-auto mb-4"></div>
+        <div class="flex items-center justify-between mb-4"><h3 class="text-lg font-bold">Фільтри</h3><button class="text-primary text-sm font-medium">Скинути</button></div>
+        <p class="font-semibold text-sm mb-2">Ціна за весь період</p>
+        <div class="relative h-1.5 bg-line rounded-full my-4"><div class="absolute left-[10%] right-[35%] h-full bg-primary rounded-full"></div><span class="absolute left-[10%] -top-2 w-5 h-5 -ml-2.5 bg-white border-2 border-primary rounded-full"></span><span class="absolute right-[35%] -top-2 w-5 h-5 -mr-2.5 bg-white border-2 border-primary rounded-full"></span></div>
+        <div class="flex justify-between text-sm text-muted"><span>2 000 ₴</span><span>12 000 ₴</span></div>
+        <p class="font-semibold text-sm mt-5 mb-2">Зірки</p>
+        <div class="flex gap-2"><button class="flex-1 border border-line rounded-lg py-2 text-sm">3★</button><button class="flex-1 border-2 border-primary bg-primary-soft text-primary rounded-lg py-2 text-sm font-semibold">4★</button><button class="flex-1 border-2 border-primary bg-primary-soft text-primary rounded-lg py-2 text-sm font-semibold">5★</button></div>
+        <p class="font-semibold text-sm mt-5 mb-2">Оцінка гостей</p>
+        <div class="flex gap-2"><button class="flex-1 border border-line rounded-lg py-2 text-sm">Будь-яка</button><button class="flex-1 border-2 border-primary bg-primary-soft text-primary rounded-lg py-2 text-sm font-semibold">8+</button><button class="flex-1 border border-line rounded-lg py-2 text-sm">9+</button></div>
+        <label class="flex items-center justify-between mt-5 text-sm"><span>Безкоштовне скасування</span><span class="w-11 h-6 bg-primary rounded-full relative"><span class="absolute right-0.5 top-0.5 w-5 h-5 bg-white rounded-full"></span></span></label>
+        <label class="flex items-center justify-between mt-3 text-sm"><span>Сніданок включено</span><span class="w-11 h-6 bg-line rounded-full relative"><span class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full"></span></span></label>
+        <button class="w-full bg-primary text-white font-semibold rounded-xl py-3.5 mt-6">Показати 18 готелів</button>
+      </div>
+    </div></div></div>
+  </div>
+
+  <p class="font-semibold mt-10 mb-2">1d · Десктоп: результати (фільтри ліворуч, картки горизонтальні)</p>
+  <div class="desk-wrap"><div class="desk"><div class="screen">
+    <div data-header="search"></div>
+    <div class="bg-primary px-8 py-5">
+      <div class="max-w-[1100px] mx-auto bg-white rounded-xl p-1.5 flex gap-1.5 border-2 border-accent">
+        <div class="flex-[1.4] flex items-center gap-2 px-3 py-2"><i data-lucide="map-pin" class="icon text-primary"></i><div><p class="label">Місто</p><p class="font-medium text-sm">Львів, Україна</p></div></div>
+        <div class="flex-1 flex items-center gap-2 px-3 py-2 border-l border-line"><i data-lucide="calendar" class="icon text-primary"></i><div><p class="label">Дати</p><p class="font-medium text-sm">12 гру — 15 гру</p></div></div>
+        <div class="flex-1 flex items-center gap-2 px-3 py-2 border-l border-line"><i data-lucide="users" class="icon text-primary"></i><div><p class="label">Гості</p><p class="font-medium text-sm">2 дорослих</p></div></div>
+        <button class="bg-primary text-white font-semibold rounded-lg px-8">Знайти</button>
+      </div>
+    </div>
+    <div class="max-w-[1100px] mx-auto grid grid-cols-[250px_1fr] gap-6 py-6">
+      <aside class="space-y-4">
+        <div class="bg-primary-soft rounded-xl p-3 text-sm"><p class="font-semibold text-primary-dark flex items-center gap-1.5"><i data-lucide="sparkles" class="icon-sm"></i>Guesteria AI</p><p class="text-primary-dark/80 text-xs mt-1">«Тихий готель біля центру зі сніданком до 2500 ₴ за ніч»</p><button class="mt-2 text-primary font-semibold text-xs">Запитати AI →</button></div>
+        <div class="bg-white border border-line rounded-xl p-4 text-sm space-y-4">
+          <p class="font-bold">Фільтри</p>
+          <div><p class="font-semibold mb-2">Ціна за період</p><div class="relative h-1.5 bg-line rounded-full my-3"><div class="absolute left-[10%] right-[35%] h-full bg-primary rounded-full"></div></div><div class="flex justify-between text-xs text-muted"><span>2 000 ₴</span><span>12 000 ₴</span></div></div>
+          <div><p class="font-semibold mb-2">Зірки</p><label class="flex gap-2 items-center"><input type="checkbox" checked class="accent-primary">5 зірок</label><label class="flex gap-2 items-center mt-1"><input type="checkbox" checked class="accent-primary">4 зірки</label><label class="flex gap-2 items-center mt-1"><input type="checkbox" class="accent-primary">3 зірки</label></div>
+          <div><p class="font-semibold mb-2">Оцінка гостей</p><label class="flex gap-2 items-center"><input type="radio" name="r" class="accent-primary">9+ Чудово</label><label class="flex gap-2 items-center mt-1"><input type="radio" name="r" checked class="accent-primary">8+ Дуже добре</label></div>
+          <div><p class="font-semibold mb-2">Інше</p><label class="flex gap-2 items-center"><input type="checkbox" checked class="accent-primary">Безкоштовне скасування</label><label class="flex gap-2 items-center mt-1"><input type="checkbox" class="accent-primary">Сніданок включено</label></div>
+        </div>
+      </aside>
+      <div>
+        <div class="flex items-center justify-between mb-3"><p class="font-bold text-xl">Львів: знайдено 47 готелів</p><button class="flex items-center gap-1.5 border border-line bg-white rounded-lg px-3 py-2 text-sm"><i data-lucide="arrow-up-down" class="icon-sm"></i>Спершу дешевші<i data-lucide="chevron-down" class="icon-sm"></i></button></div>
+        <div class="space-y-3" data-cards-h="3"></div>
+      </div>
+    </div>
+  </div></div></div>
+</section>
+
+<!-- =====================================================================
+     2. ГОТЕЛЬ
+====================================================================== -->
+<section>
+  <h2 id="p2" class="sec text-2xl font-bold">2 · Готель <span class="text-base font-normal text-muted">/hotels/[id]</span></h2>
+  <div class="flex flex-wrap gap-10 mt-5">
+    <div><p class="font-semibold mb-2">2a · Мобільна</p>
+    <div class="phone"><div class="screen pb-28">
+      <div class="h-64 img-a relative">
+        <button class="absolute top-11 left-4 w-9 h-9 bg-white rounded-full grid place-items-center"><i data-lucide="chevron-left" class="icon"></i></button>
+        <div class="absolute top-11 right-4 flex gap-2"><button class="w-9 h-9 bg-white rounded-full grid place-items-center"><i data-lucide="share-2" class="icon"></i></button><button class="w-9 h-9 bg-white rounded-full grid place-items-center"><i data-lucide="heart" class="icon text-danger fill-danger"></i></button></div>
+        <span class="absolute bottom-3 right-3 bg-ink/70 text-white text-xs rounded-full px-2 py-1">1 / 24</span>
+      </div>
+      <div class="p-4 bg-white">
+        <p class="text-accent text-sm">★★★★</p><h3 class="text-xl font-bold">Оселя на Ринку</h3>
+        <p class="text-sm text-muted flex items-center gap-1 mt-1"><i data-lucide="map-pin" class="icon-sm"></i>пл. Ринок, 14, Львів</p>
+        <div class="flex items-center gap-3 mt-3"><span class="badge">8,9</span><div><p class="font-semibold text-sm">Чудово</p><p class="text-xs text-muted">1 240 відгуків</p></div></div>
+        <button class="mt-3 w-full border border-primary text-primary rounded-xl py-2.5 text-sm font-semibold flex items-center justify-center gap-2"><i data-lucide="sparkles" class="icon-sm"></i>Запитати AI про цей готель</button>
+      </div>
+      <div class="p-4 bg-white mt-2"><h4 class="font-semibold mb-3">Зручності</h4>
+        <div class="grid grid-cols-2 gap-y-2.5 text-sm">
+          <span class="flex items-center gap-2"><i data-lucide="wifi" class="icon text-primary"></i>Безкоштовний Wi-Fi</span><span class="flex items-center gap-2"><i data-lucide="coffee" class="icon text-primary"></i>Сніданок</span>
+          <span class="flex items-center gap-2"><i data-lucide="snowflake" class="icon text-primary"></i>Кондиціонер</span><span class="flex items-center gap-2"><i data-lucide="car" class="icon text-primary"></i>Парковка</span>
+        </div><button class="text-primary text-sm font-medium mt-3">Усі 32 зручності</button></div>
+      <div class="p-4 bg-white mt-2"><h4 class="font-semibold mb-2">Про готель</h4>
+        <p class="text-sm text-muted clamp3">Бутик-готель у будинку XVIII століття на площі Ринок. Номери з видом на Ратушу, ресторан галицької кухні, кав'ярня на першому поверсі. До Оперного театру 10 хвилин пішки.</p>
+        <button class="text-primary text-sm font-medium mt-1">Читати далі</button>
+        <div class="flex gap-3 mt-3 text-sm"><span class="flex-1 bg-bg rounded-xl p-3"><span class="label block">Заїзд</span>з 14:00</span><span class="flex-1 bg-bg rounded-xl p-3"><span class="label block">Виїзд</span>до 12:00</span></div></div>
+      <div class="p-4 bg-white mt-2">
+        <div class="flex justify-between items-start"><div><h4 class="font-semibold">Номери</h4><p class="text-xs text-muted">12–15 гру · 3 ночі · 2 дорослих</p></div><button class="text-primary text-sm font-medium">Змінити дати</button></div>
+        <div class="border border-line rounded-2xl overflow-hidden mt-3">
+          <div class="h-24 img-e"></div>
+          <div class="p-3"><p class="font-semibold">Стандарт з двоспальним ліжком</p><p class="text-xs text-muted">22 м² · 1 двоспальне ліжко</p></div>
+          <div class="border-t border-line p-3 flex items-end justify-between gap-2"><div class="text-xs space-y-1"><p class="flex items-center gap-1"><i data-lucide="bed" class="icon-sm"></i>Лише номер</p><p class="text-danger">Без повернення коштів</p></div><div class="text-right"><p class="font-bold">5 760 ₴</p><button class="mt-1 bg-primary text-white text-sm font-semibold rounded-lg px-4 py-2">Обрати</button></div></div>
+          <div class="border-t border-line p-3 flex items-end justify-between gap-2 bg-primary-soft/40"><div class="text-xs space-y-1"><p class="flex items-center gap-1"><i data-lucide="coffee" class="icon-sm"></i>Сніданок включено</p><p class="text-success font-medium">✓ Безкоштовне скасування до 10 гру</p></div><div class="text-right"><p class="font-bold">6 840 ₴</p><button class="mt-1 bg-primary text-white text-sm font-semibold rounded-lg px-4 py-2">Обрати</button></div></div>
+        </div>
+      </div>
+      <div class="p-4 bg-white mt-2"><div class="flex items-center justify-between mb-3"><h4 class="font-semibold">Відгуки</h4><button class="text-primary text-sm font-medium">Усі 1 240</button></div>
+        <div class="bg-bg rounded-xl p-3 text-sm"><div class="flex justify-between"><span class="font-medium">Олена · Україна</span><b class="text-primary">10</b></div><p class="text-muted mt-1">Неймовірний вид на Ратушу, привітний персонал і смачні сніданки.</p></div></div>
+    </div>
+    <div class="absolute bottom-0 inset-x-0 bg-white border-t border-line px-4 pt-3 pb-6 flex items-center justify-between"><div><p class="text-xs text-muted">від</p><p class="font-bold text-lg leading-tight">5 760 ₴ <span class="text-xs font-normal text-muted">за 3 ночі</span></p></div><button class="bg-primary text-white font-semibold rounded-xl px-5 py-3">Обрати номер</button></div>
+    </div></div>
+  </div>
+
+  <p class="font-semibold mt-10 mb-2">2b · Десктоп: галерея 1 + 4, контент + липка картка бронювання, номери таблицею</p>
+  <div class="desk-wrap"><div class="desk"><div class="screen">
+    <div data-header="search"></div>
+    <div class="max-w-[1100px] mx-auto py-6">
+      <p class="text-xs text-muted">Пошук › Львів › Оселя на Ринку</p>
+      <div class="flex items-end justify-between mt-2">
+        <div><p class="text-accent text-sm">★★★★</p><h3 class="text-3xl font-bold">Оселя на Ринку</h3><p class="text-muted text-sm mt-1 flex items-center gap-1"><i data-lucide="map-pin" class="icon-sm"></i>пл. Ринок, 14, Львів · <a class="text-primary">Маршрут</a></p></div>
+        <div class="flex gap-2"><button class="border border-line bg-white rounded-lg px-3 py-2 text-sm flex items-center gap-1.5"><i data-lucide="share-2" class="icon-sm"></i>Поділитися</button><button class="border border-line bg-white rounded-lg px-3 py-2 text-sm flex items-center gap-1.5"><i data-lucide="heart" class="icon-sm text-danger fill-danger"></i>В обраному</button></div>
+      </div>
+      <div class="grid grid-cols-4 grid-rows-2 gap-2 h-80 rounded-2xl overflow-hidden mt-4"><div class="col-span-2 row-span-2 img-a"></div><div class="img-e"></div><div class="img-b"></div><div class="img-c"></div><div class="img-d relative"><span class="absolute inset-0 bg-ink/40 grid place-items-center text-white font-semibold">+19 фото</span></div></div>
+      <div class="grid grid-cols-[1fr_330px] gap-8 mt-6">
+        <div class="space-y-6">
+          <div class="grid grid-cols-4 gap-2 text-sm"><span class="bg-white border border-line rounded-lg p-2.5 flex items-center gap-2"><i data-lucide="wifi" class="icon text-primary"></i>Wi-Fi</span><span class="bg-white border border-line rounded-lg p-2.5 flex items-center gap-2"><i data-lucide="coffee" class="icon text-primary"></i>Сніданок</span><span class="bg-white border border-line rounded-lg p-2.5 flex items-center gap-2"><i data-lucide="car" class="icon text-primary"></i>Парковка</span><span class="bg-white border border-line rounded-lg p-2.5 flex items-center gap-2"><i data-lucide="snowflake" class="icon text-primary"></i>Кондиціонер</span></div>
+          <p class="text-sm text-muted">Бутик-готель у будинку XVIII століття на площі Ринок. Номери з видом на Ратушу, ресторан галицької кухні, кав'ярня на першому поверсі. До Оперного театру 10 хвилин пішки, до вокзалу 15 хвилин на таксі. <a class="text-primary">Читати далі</a></p>
+          <div>
+            <h4 class="font-bold text-lg mb-3">Номери на 12–15 гру</h4>
+            <table class="w-full text-sm bg-white border border-line rounded-xl overflow-hidden">
+              <thead class="bg-primary text-white text-left"><tr><th class="p-3 font-semibold">Тип номера</th><th class="p-3 font-semibold">Умови</th><th class="p-3 font-semibold text-right">Ціна за 3 ночі</th><th class="p-3"></th></tr></thead>
+              <tbody class="divide-y divide-line">
+                <tr><td class="p-3 align-top" rowspan="2"><p class="font-semibold text-primary">Стандарт з двоспальним ліжком</p><p class="text-xs text-muted">22 м² · 1 двоспальне ліжко</p></td><td class="p-3"><p>Лише номер</p><p class="text-danger text-xs">Без повернення коштів</p></td><td class="p-3 text-right font-bold">5 760 ₴</td><td class="p-3 text-right"><button class="bg-primary text-white font-semibold rounded-lg px-4 py-2">Обрати</button></td></tr>
+                <tr><td class="p-3"><p>Сніданок включено</p><p class="text-success text-xs">✓ Безкоштовне скасування до 10 гру</p></td><td class="p-3 text-right font-bold">6 840 ₴</td><td class="p-3 text-right"><button class="bg-primary text-white font-semibold rounded-lg px-4 py-2">Обрати</button></td></tr>
+                <tr><td class="p-3"><p class="font-semibold text-primary">Делюкс з видом на Ратушу</p><p class="text-xs text-muted">30 м² · балкон</p></td><td class="p-3"><p>Сніданок включено</p><p class="text-success text-xs">✓ Безкоштовне скасування до 10 гру</p></td><td class="p-3 text-right font-bold">9 300 ₴</td><td class="p-3 text-right"><button class="bg-primary text-white font-semibold rounded-lg px-4 py-2">Обрати</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <aside class="space-y-3">
+          <div class="bg-white rounded-2xl border border-line p-5">
+            <div class="flex items-center gap-3"><span class="badge">8,9</span><div><p class="font-semibold text-sm">Чудово</p><p class="text-xs text-muted">1 240 відгуків</p></div></div>
+            <div class="grid grid-cols-2 gap-2 mt-4 text-sm"><div class="border border-line rounded-xl p-2.5"><p class="label">Заїзд</p>пт, 12 гру</div><div class="border border-line rounded-xl p-2.5"><p class="label">Виїзд</p>пн, 15 гру</div></div>
+            <div class="border border-line rounded-xl p-2.5 mt-2 text-sm"><p class="label">Гості</p>2 дорослих</div>
+            <p class="text-sm text-muted mt-4">від</p><p class="text-2xl font-bold">5 760 ₴ <span class="text-sm font-normal text-muted">за 3 ночі</span></p>
+            <button class="w-full bg-primary text-white font-semibold rounded-xl py-3 mt-3">Обрати номер</button>
+          </div>
+          <div class="bg-primary-soft rounded-2xl p-4 text-sm"><p class="font-semibold text-primary-dark flex items-center gap-1.5"><i data-lucide="sparkles" class="icon-sm"></i>Питання про готель?</p><p class="text-primary-dark/80 text-xs mt-1">Guesteria AI знає все про цей готель і відгуки гостей</p><button class="mt-2 bg-white text-primary font-semibold rounded-lg px-3 py-1.5 text-xs">Запитати AI</button></div>
+        </aside>
+      </div>
+    </div>
+  </div><div data-fab-desk></div></div></div>
+</section>
+
+<!-- =====================================================================
+     3. ОФОРМЛЕННЯ
+====================================================================== -->
+<section>
+  <h2 id="p3" class="sec text-2xl font-bold">3 · Оформлення <span class="text-base font-normal text-muted">/checkout</span></h2>
+  <div class="flex flex-wrap gap-10 mt-5">
+    <div><p class="font-semibold mb-2">3a · Мобільна: оформлення</p>
+    <div class="phone"><div class="screen pb-28">
+      <div class="sticky top-0 z-10 bg-white border-b border-line px-4 pt-11 pb-3 flex items-center gap-3"><i data-lucide="chevron-left" class="icon"></i><h3 class="font-semibold">Оформлення</h3></div>
+      <div class="p-4 space-y-3">
+        <div class="bg-amber-50 border border-accent/40 text-sm rounded-xl p-3 flex gap-2"><i data-lucide="info" class="icon text-accent shrink-0"></i><span>Ціна змінилася: було <s>6 840 ₴</s>, стало <b>6 910 ₴</b>.</span></div>
+        <div class="bg-white rounded-2xl border border-line p-3 flex gap-3"><div class="w-20 h-20 rounded-xl img-a shrink-0"></div><div class="text-sm"><p class="font-semibold">Оселя на Ринку</p><p class="text-muted text-xs">Стандарт з двоспальним ліжком</p><p class="text-xs mt-1">12–15 гру · 3 ночі · 2 дорослих</p><p class="text-xs">Сніданок включено</p></div></div>
+        <div class="bg-white rounded-2xl border border-line p-3 text-sm"><p class="text-success font-medium flex items-center gap-1"><i data-lucide="shield-check" class="icon-sm"></i>Безкоштовне скасування до 10 гру, 14:00</p><p class="text-xs text-muted mt-1">Після цієї дати — 100% вартості.</p></div>
+        <div class="bg-white rounded-2xl border border-line p-3 text-sm space-y-1.5"><div class="flex justify-between"><span class="text-muted">3 ночі × 2 303 ₴</span><span>6 910 ₴</span></div><div class="flex justify-between"><span class="text-muted">Податки і збори</span><span>включено</span></div><div class="flex justify-between font-bold text-base pt-1.5 border-t border-line"><span>Разом</span><span>6 910 ₴</span></div></div>
+        <div class="bg-white rounded-2xl border border-line p-3 space-y-3"><p class="font-semibold">Дані гостя</p>
+          <div><label class="label">Ім'я</label><div class="border border-line rounded-xl px-3 py-2.5 mt-1 text-sm">Костянтин</div></div>
+          <div><label class="label">Прізвище</label><div class="border border-line rounded-xl px-3 py-2.5 mt-1 text-sm">Стеблюк</div></div>
+          <div><label class="label">Email</label><div class="border-2 border-danger rounded-xl px-3 py-2.5 mt-1 text-sm">kostya@</div><p class="text-xs text-danger mt-1">Вкажіть коректний email</p></div>
+        </div>
+        <p class="text-xs text-muted flex gap-1.5"><i data-lucide="flask-conical" class="icon-sm shrink-0"></i>Тестове бронювання в sandbox — кошти не списуються.</p>
+      </div>
+    </div>
+    <div class="absolute bottom-0 inset-x-0 bg-white border-t border-line px-4 pt-3 pb-6"><button class="w-full bg-primary text-white font-semibold rounded-xl py-3.5">Підтвердити · 6 910 ₴</button></div>
+    </div></div>
+
+    <div><p class="font-semibold mb-2">3b · Мобільна: перевірка тарифу</p>
+    <div class="phone"><div class="screen px-6 pt-40 text-center">
+      <div class="w-14 h-14 rounded-full border-4 border-primary-soft border-t-primary animate-spin mx-auto"></div>
+      <h3 class="text-lg font-bold mt-6">Перевіряємо наявність і ціну…</h3>
+      <p class="text-sm text-muted mt-2">Це може зайняти до хвилини. Не закривайте сторінку.</p>
+      <div class="mt-16 bg-white border border-line rounded-2xl p-4 text-left">
+        <p class="font-semibold text-danger flex items-center gap-2"><i data-lucide="alert-circle" class="icon"></i>Тариф уже недоступний</p>
+        <p class="text-sm text-muted mt-1">Хтось щойно забронював цей номер. Оберіть інший тариф.</p>
+        <button class="mt-3 w-full border border-primary text-primary font-semibold rounded-xl py-2.5 text-sm">Повернутися до готелю</button>
+        <p class="label mt-2 text-center">↑ стан помилки 2001</p>
+      </div>
+    </div></div></div>
+
+    <div><p class="font-semibold mb-2">3c · Мобільна: підтверджено</p>
+    <div class="phone"><div class="screen px-6 pt-20 text-center">
+      <div class="w-20 h-20 rounded-full bg-success/10 grid place-items-center mx-auto"><i data-lucide="check" class="text-success" style="width:40px;height:40px;stroke-width:3"></i></div>
+      <h3 class="text-2xl font-bold mt-5">Бронювання підтверджено</h3>
+      <p class="text-muted mt-2">Номер бронювання <b class="text-ink">LT-8F3K2Q</b></p>
+      <div class="bg-white rounded-2xl border border-line p-3 flex gap-3 text-left mt-6"><div class="w-16 h-16 rounded-xl img-a shrink-0"></div><div class="text-sm"><p class="font-semibold">Оселя на Ринку</p><p class="text-xs text-muted">12–15 гру · 3 ночі</p><p class="text-xs font-semibold mt-1">6 910 ₴</p></div></div>
+      <div class="bg-primary-soft rounded-2xl p-4 text-left mt-4 text-sm"><p class="font-semibold text-primary-dark flex items-center gap-1.5"><i data-lucide="sparkles" class="icon-sm"></i>Guesteria AI уже знає про поїздку</p><p class="text-primary-dark/80 mt-1">Пройдіть онлайн-чекін, замовте ранній заїзд чи трансфер — просто напишіть.</p></div>
+      <button class="w-full bg-primary text-white font-semibold rounded-xl py-3.5 mt-6">Відкрити поїздку</button>
+      <button class="w-full text-primary font-semibold rounded-xl py-3 mt-2">На головну</button>
+    </div></div></div>
+  </div>
+
+  <p class="font-semibold mt-10 mb-2">3d · Десктоп: форма ліворуч, липка картка бронювання праворуч</p>
+  <div class="desk-wrap"><div class="desk"><div class="screen">
+    <div data-header="search"></div>
+    <div class="max-w-[1000px] mx-auto py-6">
+      <div class="flex items-center gap-3 text-sm"><span class="flex items-center gap-2 text-success font-medium"><span class="w-6 h-6 rounded-full bg-success text-white grid place-items-center text-xs">✓</span>Вибір номера</span><span class="flex-1 h-px bg-line"></span><span class="flex items-center gap-2 font-semibold"><span class="w-6 h-6 rounded-full bg-primary text-white grid place-items-center text-xs">2</span>Ваші дані</span><span class="flex-1 h-px bg-line"></span><span class="flex items-center gap-2 text-muted"><span class="w-6 h-6 rounded-full border border-line grid place-items-center text-xs">3</span>Підтвердження</span></div>
+      <div class="grid grid-cols-[1fr_360px] gap-8 mt-6">
+        <div class="space-y-4">
+          <div class="bg-amber-50 border border-accent/40 text-sm rounded-xl p-3 flex gap-2"><i data-lucide="info" class="icon text-accent shrink-0"></i>Ціна змінилася з моменту пошуку: було <s>6 840 ₴</s>, стало <b>6 910 ₴</b>.</div>
+          <div class="bg-white border border-line rounded-2xl p-5">
+            <p class="font-bold text-lg">Дані гостя</p>
+            <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
+              <div><label class="label">Ім'я *</label><div class="border border-line rounded-xl px-3 py-2.5 mt-1">Костянтин</div></div>
+              <div><label class="label">Прізвище *</label><div class="border border-line rounded-xl px-3 py-2.5 mt-1">Стеблюк</div></div>
+              <div class="col-span-2"><label class="label">Email *</label><div class="border border-line rounded-xl px-3 py-2.5 mt-1">demo@guesteria.stay</div><p class="label mt-1">Сюди надійде підтвердження</p></div>
+            </div>
+          </div>
+          <div class="bg-white border border-line rounded-2xl p-5 text-sm">
+            <p class="font-bold text-lg">Умови</p>
+            <p class="text-success font-medium flex items-center gap-1.5 mt-3"><i data-lucide="shield-check" class="icon-sm"></i>Безкоштовне скасування до 10 гру, 14:00</p>
+            <p class="text-muted mt-1">Після цієї дати утримується 100% вартості. Заїзд з 14:00, виїзд до 12:00.</p>
+          </div>
+          <p class="text-xs text-muted flex gap-1.5"><i data-lucide="flask-conical" class="icon-sm"></i>Тестове бронювання в sandbox LiteAPI — кошти не списуються.</p>
+        </div>
+        <aside class="bg-white border border-line rounded-2xl overflow-hidden h-fit">
+          <div class="h-32 img-a"></div>
+          <div class="p-5 text-sm">
+            <p class="text-accent text-xs">★★★★</p><p class="font-bold text-base">Оселя на Ринку</p><p class="text-muted">Стандарт · Сніданок включено</p>
+            <div class="grid grid-cols-2 gap-2 mt-3"><div class="bg-bg rounded-lg p-2"><p class="label">Заїзд</p>пт, 12 гру</div><div class="bg-bg rounded-lg p-2"><p class="label">Виїзд</p>пн, 15 гру</div></div>
+            <div class="space-y-1.5 mt-4"><div class="flex justify-between"><span class="text-muted">3 ночі × 2 303 ₴</span><span>6 910 ₴</span></div><div class="flex justify-between"><span class="text-muted">Податки</span><span>включено</span></div><div class="flex justify-between font-bold text-lg pt-2 border-t border-line"><span>Разом</span><span>6 910 ₴</span></div></div>
+            <button class="w-full bg-primary text-white font-semibold rounded-xl py-3 mt-4">Підтвердити бронювання</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div></div></div>
+</section>
+
+<!-- =====================================================================
+     4. КАБІНЕТ
+====================================================================== -->
+<section>
+  <h2 id="p4" class="sec text-2xl font-bold">4 · Особистий кабінет <span class="text-base font-normal text-muted">/account</span></h2>
+  <div class="flex flex-wrap gap-10 mt-5">
+    <div><p class="font-semibold mb-2">4a · Мобільна: поїздки</p>
+    <div class="phone"><div class="screen pb-28">
+      <div class="bg-white px-4 pt-12 border-b border-line">
+        <h3 class="text-2xl font-bold">Кабінет</h3>
+        <div class="flex gap-5 mt-4 text-sm font-medium"><span class="pb-3 border-b-2 border-primary text-primary">Поїздки</span><span class="pb-3 text-muted">Обране</span><span class="pb-3 text-muted">Профіль</span></div>
+      </div>
+      <div class="flex gap-2 px-4 pt-3 text-xs font-medium"><span class="bg-ink text-white rounded-full px-3 py-1.5">Майбутні · 2</span><span class="bg-white border border-line rounded-full px-3 py-1.5">Минулі · 4</span><span class="bg-white border border-line rounded-full px-3 py-1.5">Скасовані · 1</span></div>
+      <div class="p-4 space-y-3">
+        <article class="bg-white rounded-2xl border border-line overflow-hidden">
+          <div class="h-28 img-a relative"><span class="absolute top-3 left-3 bg-white text-primary text-xs font-semibold rounded-full px-2.5 py-1">Через 5 днів</span><span class="absolute top-3 right-3 bg-accent text-white text-xs font-semibold rounded-full px-2.5 py-1">Чекін не пройдено</span></div>
+          <div class="p-3">
+            <div class="flex justify-between items-start"><div><p class="font-semibold">Оселя на Ринку</p><p class="text-xs text-muted">Львів · 12–15 гру · LT-8F3K2Q</p></div><span class="text-xs bg-success/10 text-success font-medium rounded-full px-2 py-0.5">Підтверджено</span></div>
+            <div class="flex gap-2 mt-3"><button class="flex-1 bg-primary text-white text-sm font-semibold rounded-lg py-2.5">Відкрити поїздку</button><button class="border border-line text-sm font-medium rounded-lg px-4 py-2.5">Скасувати</button></div>
+          </div>
+        </article>
+        <article class="bg-white rounded-2xl border border-line p-3 flex gap-3"><div class="w-20 h-20 rounded-xl img-c shrink-0"></div><div class="flex-1"><div class="flex justify-between"><p class="font-semibold text-sm">Kyiv Riverside</p><span class="text-[11px] bg-success/10 text-success font-medium rounded-full px-2 py-0.5 h-fit">Підтверджено</span></div><p class="text-xs text-muted">Київ · 20–22 січ</p><p class="text-xs mt-2">LT-2A9DX1 · 3 120 ₴</p></div></article>
+      </div>
+    </div><div data-fab></div><div data-tabbar="trips"></div></div></div>
+
+    <div><p class="font-semibold mb-2">4b · Мобільна: обране</p>
+    <div class="phone"><div class="screen pb-28">
+      <div class="bg-white px-4 pt-12 border-b border-line">
+        <h3 class="text-2xl font-bold">Кабінет</h3>
+        <div class="flex gap-5 mt-4 text-sm font-medium"><span class="pb-3 text-muted">Поїздки</span><span class="pb-3 border-b-2 border-primary text-primary">Обране · 5</span><span class="pb-3 text-muted">Профіль</span></div>
+      </div>
+      <div class="p-4 grid grid-cols-2 gap-3">
+        <div class="bg-white rounded-2xl border border-line overflow-hidden"><div class="h-24 img-a relative"><i data-lucide="heart" class="icon absolute top-2 right-2 text-danger fill-danger"></i></div><div class="p-2.5"><p class="font-semibold text-sm leading-tight">Оселя на Ринку</p><p class="text-xs text-muted">Львів</p><span class="badge mt-1.5 !text-xs">8,9</span></div></div>
+        <div class="bg-white rounded-2xl border border-line overflow-hidden"><div class="h-24 img-b relative"><i data-lucide="heart" class="icon absolute top-2 right-2 text-danger fill-danger"></i></div><div class="p-2.5"><p class="font-semibold text-sm leading-tight">Ратуша Лофт</p><p class="text-xs text-muted">Львів</p><span class="badge mt-1.5 !text-xs">8,4</span></div></div>
+        <div class="bg-white rounded-2xl border border-line overflow-hidden"><div class="h-24 img-c relative"><i data-lucide="heart" class="icon absolute top-2 right-2 text-danger fill-danger"></i></div><div class="p-2.5"><p class="font-semibold text-sm leading-tight">Kyiv Riverside</p><p class="text-xs text-muted">Київ</p><span class="badge mt-1.5 !text-xs">9,1</span></div></div>
+        <div class="bg-white rounded-2xl border border-line overflow-hidden"><div class="h-24 img-d relative"><i data-lucide="heart" class="icon absolute top-2 right-2 text-danger fill-danger"></i></div><div class="p-2.5"><p class="font-semibold text-sm leading-tight">Hotel Roma Centro</p><p class="text-xs text-muted">Рим</p><span class="badge mt-1.5 !text-xs">8,7</span></div></div>
+      </div>
+    </div><div data-fab></div><div data-tabbar="fav"></div></div></div>
+
+    <div><p class="font-semibold mb-2">4c · Мобільна: профіль</p>
+    <div class="phone"><div class="screen pb-28">
+      <div class="bg-white px-4 pt-12 border-b border-line">
+        <h3 class="text-2xl font-bold">Кабінет</h3>
+        <div class="flex gap-5 mt-4 text-sm font-medium"><span class="pb-3 text-muted">Поїздки</span><span class="pb-3 text-muted">Обране</span><span class="pb-3 border-b-2 border-primary text-primary">Профіль</span></div>
+      </div>
+      <div class="p-4 space-y-3 text-sm">
+        <div class="bg-white rounded-2xl border border-line p-4 flex items-center gap-3"><div class="w-12 h-12 rounded-full bg-primary-soft text-primary font-bold grid place-items-center">КС</div><div><p class="font-semibold">Костянтин Стеблюк</p><p class="text-xs text-muted">demo@guesteria.stay</p></div></div>
+        <div class="bg-white rounded-2xl border border-line p-4 space-y-3">
+          <p class="font-semibold">Особисті дані</p>
+          <div><label class="label">Ім'я</label><div class="border border-line rounded-xl px-3 py-2.5 mt-1">Костянтин</div></div>
+          <div><label class="label">Прізвище</label><div class="border border-line rounded-xl px-3 py-2.5 mt-1">Стеблюк</div></div>
+          <div><label class="label">Телефон</label><div class="border border-line rounded-xl px-3 py-2.5 mt-1">+380 67 000 00 00</div></div>
+          <button class="w-full bg-primary text-white font-semibold rounded-xl py-2.5">Зберегти</button>
+        </div>
+        <div class="bg-white rounded-2xl border border-line divide-y divide-line">
+          <div class="p-4 flex justify-between items-center"><span class="flex items-center gap-2"><i data-lucide="sparkles" class="icon text-primary"></i>Мова відповідей AI</span><span class="text-muted">Авто ›</span></div>
+          <div class="p-4 flex justify-between items-center"><span class="flex items-center gap-2"><i data-lucide="lock" class="icon text-primary"></i>Змінити пароль</span><span class="text-muted">›</span></div>
+          <div class="p-4 flex justify-between items-center"><span class="flex items-center gap-2"><i data-lucide="log-out" class="icon text-primary"></i>Вийти</span><span class="text-muted">›</span></div>
+        </div>
+        <button class="w-full border border-danger/40 text-danger font-medium rounded-xl py-3 flex items-center justify-center gap-2"><i data-lucide="trash-2" class="icon-sm"></i>Видалити акаунт і всі дані</button>
+      </div>
+    </div><div data-tabbar="profile"></div></div></div>
+  </div>
+
+  <p class="font-semibold mt-10 mb-2">4d · Десктоп: ліве меню + поїздки у 2 колонки</p>
+  <div class="desk-wrap"><div class="desk"><div class="screen">
+    <div data-header="trips"></div>
+    <div class="max-w-[1100px] mx-auto grid grid-cols-[240px_1fr] gap-8 py-8">
+      <aside class="bg-white border border-line rounded-2xl p-4 h-fit text-sm">
+        <div class="flex items-center gap-3 pb-4 border-b border-line"><div class="w-11 h-11 rounded-full bg-primary-soft text-primary font-bold grid place-items-center">КС</div><div><p class="font-semibold">Костянтин</p><p class="text-xs text-muted">demo@guesteria.stay</p></div></div>
+        <nav class="mt-3 space-y-1">
+          <a class="flex items-center gap-2 bg-primary-soft text-primary-dark font-semibold rounded-lg px-3 py-2"><i data-lucide="luggage" class="icon"></i>Поїздки</a>
+          <a class="flex items-center gap-2 text-muted rounded-lg px-3 py-2"><i data-lucide="heart" class="icon"></i>Обране <span class="ml-auto text-xs">5</span></a>
+          <a class="flex items-center gap-2 text-muted rounded-lg px-3 py-2"><i data-lucide="user" class="icon"></i>Профіль</a>
+          <a class="flex items-center gap-2 text-muted rounded-lg px-3 py-2"><i data-lucide="log-out" class="icon"></i>Вийти</a>
+        </nav>
+      </aside>
+      <div>
+        <div class="flex items-center justify-between"><h3 class="text-2xl font-bold">Мої поїздки</h3>
+          <div class="flex gap-2 text-sm font-medium"><span class="bg-ink text-white rounded-full px-3 py-1.5">Майбутні · 2</span><span class="bg-white border border-line rounded-full px-3 py-1.5">Минулі · 4</span><span class="bg-white border border-line rounded-full px-3 py-1.5">Скасовані · 1</span></div></div>
+        <div class="grid grid-cols-2 gap-4 mt-5">
+          <article class="bg-white rounded-2xl border border-line overflow-hidden">
+            <div class="h-36 img-a relative"><span class="absolute top-3 left-3 bg-white text-primary text-xs font-semibold rounded-full px-2.5 py-1">Через 5 днів</span><span class="absolute top-3 right-3 bg-accent text-white text-xs font-semibold rounded-full px-2.5 py-1">Чекін не пройдено</span></div>
+            <div class="p-4"><div class="flex justify-between"><div><p class="font-semibold">Оселя на Ринку</p><p class="text-sm text-muted">Львів · 12–15 гру · LT-8F3K2Q</p></div><span class="text-xs bg-success/10 text-success font-medium rounded-full px-2 py-0.5 h-fit">Підтверджено</span></div>
+            <div class="flex gap-2 mt-4"><button class="flex-1 bg-primary text-white text-sm font-semibold rounded-lg py-2.5">Відкрити поїздку</button><button class="border border-line text-sm font-medium rounded-lg px-4">Скасувати</button></div></div>
+          </article>
+          <article class="bg-white rounded-2xl border border-line overflow-hidden">
+            <div class="h-36 img-c relative"><span class="absolute top-3 left-3 bg-white text-primary text-xs font-semibold rounded-full px-2.5 py-1">Через 2 місяці</span></div>
+            <div class="p-4"><div class="flex justify-between"><div><p class="font-semibold">Kyiv Riverside</p><p class="text-sm text-muted">Київ · 20–22 січ · LT-2A9DX1</p></div><span class="text-xs bg-success/10 text-success font-medium rounded-full px-2 py-0.5 h-fit">Підтверджено</span></div>
+            <div class="flex gap-2 mt-4"><button class="flex-1 bg-primary text-white text-sm font-semibold rounded-lg py-2.5">Відкрити поїздку</button><button class="border border-line text-sm font-medium rounded-lg px-4">Скасувати</button></div></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </div><div data-fab-desk></div></div></div>
+</section>
+
+<!-- =====================================================================
+     5. МОЯ ПОЇЗДКА
+====================================================================== -->
+<section>
+  <h2 id="p5" class="sec text-2xl font-bold">5 · Моя поїздка <span class="text-base font-normal text-muted">/account/trips/[id]</span> <span class="text-base text-primary">нова функція</span></h2>
+  <div class="flex flex-wrap gap-10 mt-5">
+    <div><p class="font-semibold mb-2">5a · Мобільна</p>
+    <div class="phone"><div class="screen pb-28">
+      <div class="h-44 img-a relative text-white">
+        <div class="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent"></div>
+        <button class="absolute top-11 left-4 w-9 h-9 bg-white text-ink rounded-full grid place-items-center"><i data-lucide="chevron-left" class="icon"></i></button>
+        <div class="absolute bottom-3 left-4 right-4"><span class="bg-white text-primary text-xs font-semibold rounded-full px-2.5 py-1">Через 5 днів</span><h3 class="text-xl font-bold mt-2">Оселя на Ринку</h3><p class="text-sm opacity-90">12–15 гру · LT-8F3K2Q</p></div>
+      </div>
+      <div class="p-4 space-y-3 text-sm">
+        <div class="bg-white rounded-2xl border border-line p-3 grid grid-cols-3 gap-2 text-center"><div><p class="label">Номер</p><p class="font-medium">Стандарт</p></div><div><p class="label">Харчування</p><p class="font-medium">Сніданок</p></div><div><p class="label">Сума</p><p class="font-medium">6 910 ₴</p></div></div>
+        <div class="bg-white rounded-2xl border border-line p-3 flex items-center gap-3"><i data-lucide="map-pin" class="icon text-primary"></i><span class="flex-1">пл. Ринок, 14, Львів</span><button class="text-primary font-medium flex items-center gap-1">Маршрут<i data-lucide="external-link" class="icon-sm"></i></button></div>
+        <div class="bg-white rounded-2xl border-2 border-accent p-3">
+          <p class="font-semibold flex items-center gap-2"><i data-lucide="clipboard-check" class="icon text-primary"></i>Онлайн-чекін</p>
+          <p class="text-xs text-muted mt-1">Повідомте готелю час прибуття — номер підготують заздалегідь.</p>
+          <div class="grid grid-cols-2 gap-2 mt-3"><div><label class="label">Час прибуття</label><div class="border border-line rounded-xl px-3 py-2 mt-1 flex justify-between">10:30<i data-lucide="chevron-down" class="icon-sm text-muted"></i></div></div><div><label class="label">Гостей</label><div class="border border-line rounded-xl px-3 py-2 mt-1">2</div></div></div>
+          <div class="mt-2"><label class="label">Побажання</label><div class="border border-line rounded-xl px-3 py-2 mt-1 text-muted">Тихий номер, високий поверх</div></div>
+          <button class="w-full bg-primary text-white font-semibold rounded-xl py-2.5 mt-3">Пройти чекін</button>
+        </div>
+        <div class="bg-white rounded-2xl border border-line p-3">
+          <p class="font-semibold flex items-center gap-2"><i data-lucide="bell-ring" class="icon text-primary"></i>Запити до готелю</p>
+          <div class="flex gap-2 overflow-x-auto mt-3 text-xs font-medium"><button class="shrink-0 border border-line rounded-full px-3 py-1.5">Ранній заїзд</button><button class="shrink-0 border border-line rounded-full px-3 py-1.5">Пізній виїзд</button><button class="shrink-0 border border-line rounded-full px-3 py-1.5">Трансфер</button><button class="shrink-0 border border-line rounded-full px-3 py-1.5">Сніданок у номер</button></div>
+          <ul class="mt-3 divide-y divide-line">
+            <li class="py-2.5 flex items-center justify-between"><div><p class="font-medium">Ранній заїзд з 11:00</p><p class="text-xs text-muted flex items-center gap-1"><i data-lucide="sparkles" class="icon-sm text-primary"></i>Створено AI · сьогодні</p></div><span class="text-xs bg-success/10 text-success font-medium rounded-full px-2 py-0.5">Підтверджено</span></li>
+            <li class="py-2.5 flex items-center justify-between"><div><p class="font-medium">Трансфер з вокзалу</p><p class="text-xs text-muted">12 гру, 10:00</p></div><span class="text-xs bg-line text-muted font-medium rounded-full px-2 py-0.5">Надіслано</span></li>
+          </ul>
+        </div>
+        <div class="bg-white rounded-2xl border border-line p-3"><p class="font-semibold mb-2">Про готель</p><div class="grid grid-cols-2 gap-y-2 text-xs"><span>🕑 Заїзд з 14:00</span><span>🕛 Виїзд до 12:00</span><span>📶 Wi-Fi: Osela_Guest</span><span>☕ Сніданок 7:30–10:30</span></div></div>
+        <button class="w-full text-danger text-sm font-medium py-2">Скасувати бронювання</button>
+      </div>
+    </div>
+    <div class="absolute bottom-0 inset-x-0 bg-white border-t border-line px-4 pt-3 pb-6"><button class="w-full bg-primary text-white font-semibold rounded-xl py-3.5 flex items-center justify-center gap-2"><i data-lucide="sparkles" class="icon"></i>Запитати Guesteria AI</button></div>
+    </div></div>
+  </div>
+
+  <p class="font-semibold mt-10 mb-2">5b · Десктоп: деталі поїздки ліворуч, AI-асистент постійно відкритий праворуч</p>
+  <div class="desk-wrap"><div class="desk"><div class="screen">
+    <div data-header="trips"></div>
+    <div class="grid grid-cols-[1fr_420px] h-[calc(100%-61px)]">
+      <div class="overflow-y-auto px-8 py-6 space-y-4 text-sm">
+        <p class="text-xs text-muted">Кабінет › Поїздки › Оселя на Ринку</p>
+        <div class="rounded-2xl overflow-hidden img-a h-44 relative text-white"><div class="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent"></div><div class="absolute bottom-4 left-5"><span class="bg-white text-primary text-xs font-semibold rounded-full px-2.5 py-1">Через 5 днів</span><h3 class="text-2xl font-bold mt-2">Оселя на Ринку</h3><p class="opacity-90">пт, 12 гру — пн, 15 гру · LT-8F3K2Q</p></div></div>
+        <div class="grid grid-cols-4 gap-3"><div class="bg-white border border-line rounded-xl p-3"><p class="label">Номер</p><p class="font-medium">Стандарт</p></div><div class="bg-white border border-line rounded-xl p-3"><p class="label">Харчування</p><p class="font-medium">Сніданок</p></div><div class="bg-white border border-line rounded-xl p-3"><p class="label">Гості</p><p class="font-medium">2 дорослих</p></div><div class="bg-white border border-line rounded-xl p-3"><p class="label">Сума</p><p class="font-medium">6 910 ₴</p></div></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-white rounded-2xl border border-line p-4"><div class="flex justify-between"><p class="font-semibold flex items-center gap-2"><i data-lucide="clipboard-check" class="icon text-primary"></i>Онлайн-чекін</p><span class="text-xs text-success font-medium">Пройдено ✓</span></div><div class="grid grid-cols-2 gap-2 mt-3"><div class="bg-bg rounded-lg p-2"><p class="label">Прибуття</p>10:30</div><div class="bg-bg rounded-lg p-2"><p class="label">Побажання</p>Тихий номер</div></div><button class="text-primary text-xs font-medium mt-2">Змінити</button></div>
+          <div class="bg-white rounded-2xl border border-line p-4"><p class="font-semibold flex items-center gap-2"><i data-lucide="map-pin" class="icon text-primary"></i>Як дістатися</p><p class="mt-2">пл. Ринок, 14, Львів</p><p class="text-xs text-muted">Вокзал — 3 км · Аеропорт — 8 км</p><button class="text-primary text-xs font-medium mt-2">Відкрити маршрут ↗</button></div>
+        </div>
+        <div class="bg-white rounded-2xl border border-line p-4">
+          <div class="flex justify-between items-center"><p class="font-semibold flex items-center gap-2"><i data-lucide="bell-ring" class="icon text-primary"></i>Запити до готелю</p><div class="flex gap-2 text-xs font-medium"><button class="border border-line rounded-full px-3 py-1.5">+ Ранній заїзд</button><button class="border border-line rounded-full px-3 py-1.5">+ Пізній виїзд</button><button class="border border-line rounded-full px-3 py-1.5">+ Трансфер</button><button class="border border-line rounded-full px-3 py-1.5">+ Інше</button></div></div>
+          <table class="w-full mt-3"><tbody class="divide-y divide-line">
+            <tr><td class="py-2.5 font-medium">Ранній заїзд з 11:00</td><td class="text-xs text-muted"><span class="inline-flex items-center gap-1"><i data-lucide="sparkles" class="icon-sm text-primary"></i>Створено AI</span></td><td class="text-right"><span class="text-xs bg-success/10 text-success font-medium rounded-full px-2 py-0.5">Підтверджено</span></td></tr>
+            <tr><td class="py-2.5 font-medium">Трансфер з вокзалу, 12 гру 10:00</td><td class="text-xs text-muted">Вручну</td><td class="text-right"><span class="text-xs bg-line text-muted font-medium rounded-full px-2 py-0.5">Надіслано</span></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="border-l border-line bg-white flex flex-col" data-chat-trip></div>
+    </div>
+  </div></div></div>
+</section>
+
+<!-- =====================================================================
+     AI-АСИСТЕНТ
+====================================================================== -->
+<section>
+  <h2 id="ai" class="sec text-2xl font-bold">✦ AI-асистент Guesteria <span class="text-base font-normal text-muted">віджет на всіх сторінках</span></h2>
+  <p class="text-muted mt-1 max-w-3xl">Один агент, який розуміє контекст сторінки. Дії, що змінюють дані, — лише після кнопки «Підтвердити». Бронювати й платити не вміє: відкриває оформлення.</p>
+  <div class="flex flex-wrap gap-10 mt-5">
+    <div><p class="font-semibold mb-2">AI-a · Мобільна: підбір готелів</p>
+    <div class="phone"><div class="screen pb-36 bg-bg">
+      <div class="sticky top-0 z-10 bg-white border-b border-line px-4 pt-11 pb-3 flex items-center gap-3">
+        <i data-lucide="x" class="icon"></i><div class="w-9 h-9 rounded-full bg-primary grid place-items-center text-white"><i data-lucide="sparkles" class="icon-sm"></i></div>
+        <div><p class="font-semibold text-sm leading-tight">Guesteria AI</p><p class="text-[11px] text-muted">Пошук готелів</p></div>
+      </div>
+      <div class="p-4 space-y-3 text-sm">
+        <div class="max-w-[85%] ml-auto bg-primary text-white rounded-2xl rounded-tr-sm p-3">Тихий готель у Львові біля центру, зі сніданком, до 2500 ₴ за ніч, 12–15 грудня, нас двоє</div>
+        <div class="max-w-[92%] bg-white border border-line rounded-2xl rounded-tl-sm p-3 space-y-2">
+          <p>Знайшов 3 варіанти на 12–15 гру. Усі в пішій доступності від Ринку, зі сніданком і безкоштовним скасуванням:</p>
+          <div class="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+            <div class="shrink-0 w-44 border border-line rounded-xl overflow-hidden"><div class="h-20 img-a"></div><div class="p-2"><p class="font-semibold text-xs">Оселя на Ринку</p><p class="text-[11px] text-muted">8,9 · «тихо, вікна у двір»</p><p class="font-bold text-sm mt-1">6 840 ₴</p><button class="w-full mt-1.5 bg-primary text-white text-xs font-semibold rounded-lg py-1.5">Відкрити</button></div></div>
+            <div class="shrink-0 w-44 border border-line rounded-xl overflow-hidden"><div class="h-20 img-b"></div><div class="p-2"><p class="font-semibold text-xs">Ратуша Лофт</p><p class="text-[11px] text-muted">8,4 · 650 м від центру</p><p class="font-bold text-sm mt-1">5 120 ₴</p><button class="w-full mt-1.5 bg-primary text-white text-xs font-semibold rounded-lg py-1.5">Відкрити</button></div></div>
+          </div>
+          <p class="text-xs text-muted">Найтихіший за відгуками — «Оселя на Ринку». Показати тарифи?</p>
+        </div>
+      </div>
+    </div>
+    <div class="absolute bottom-0 inset-x-0 bg-white border-t border-line px-3 pt-2 pb-6">
+      <div class="flex gap-2 overflow-x-auto pb-2 text-xs"><button class="shrink-0 bg-primary-soft text-primary-dark rounded-full px-3 py-1.5">Покажи тарифи</button><button class="shrink-0 bg-primary-soft text-primary-dark rounded-full px-3 py-1.5">Дешевше</button><button class="shrink-0 bg-primary-soft text-primary-dark rounded-full px-3 py-1.5">З парковкою</button></div>
+      <div class="flex items-center gap-2"><div class="flex-1 border border-line rounded-full px-4 py-2.5 text-sm text-muted">Напишіть будь-якою мовою…</div><button class="w-11 h-11 rounded-full bg-primary text-white grid place-items-center"><i data-lucide="send" class="icon"></i></button></div>
+    </div>
+    </div></div>
+
+    <div><p class="font-semibold mb-2">AI-b · Мобільна: чекін і запит у поїздці</p>
+    <div class="phone"><div class="screen pb-36 bg-bg">
+      <div class="sticky top-0 z-10 bg-white border-b border-line px-4 pt-11 pb-3 flex items-center gap-3">
+        <i data-lucide="x" class="icon"></i><div class="w-9 h-9 rounded-full bg-primary grid place-items-center text-white"><i data-lucide="sparkles" class="icon-sm"></i></div>
+        <div><p class="font-semibold text-sm leading-tight">Guesteria AI</p><p class="text-[11px] text-muted">Оселя на Ринку · 12–15 гру</p></div>
+      </div>
+      <div class="p-4 space-y-3 text-sm">
+        <div class="max-w-[85%] bg-white border border-line rounded-2xl rounded-tl-sm p-3">Вітаю, Костянтине! До поїздки 5 днів, а онлайн-чекін ще не пройдено. Коли плануєте прибути?</div>
+        <div class="max-w-[85%] ml-auto bg-primary text-white rounded-2xl rounded-tr-sm p-3">О 10:30 поїздом. Хочу тихий номер</div>
+        <div class="max-w-[92%] bg-white border border-line rounded-2xl rounded-tl-sm p-3 space-y-2">
+          <p>Заїзд у готелі з 14:00, тож одразу пропоную і ранній заїзд. Перевірте:</p>
+          <div class="border border-primary/30 bg-primary-soft/50 rounded-xl p-2.5"><p class="label">Онлайн-чекін</p><p class="font-medium">Прибуття 10:30 · «Тихий номер»</p></div>
+          <div class="border border-primary/30 bg-primary-soft/50 rounded-xl p-2.5"><p class="label">Запит до готелю</p><p class="font-medium">Ранній заїзд з 11:00 · 12 гру</p></div>
+          <div class="flex gap-2"><button class="flex-1 bg-primary text-white text-xs font-semibold rounded-lg py-2">Підтвердити обидва</button><button class="flex-1 border border-line bg-white text-xs font-medium rounded-lg py-2">Змінити</button></div>
+        </div>
+        <div class="max-w-[85%] bg-success/10 text-success border border-success/20 rounded-2xl p-3 text-xs flex gap-2"><i data-lucide="check-circle" class="icon-sm shrink-0"></i>Чекін пройдено, запит надіслано готелю. Повідомлю, щойно готель відповість.</div>
+        <div class="max-w-[85%] ml-auto bg-primary text-white rounded-2xl rounded-tr-sm p-3">Як дістатися з вокзалу?</div>
+        <div class="max-w-[85%] bg-white border border-line rounded-2xl rounded-tl-sm p-3 flex gap-1"><span class="w-2 h-2 bg-muted rounded-full animate-bounce"></span><span class="w-2 h-2 bg-muted rounded-full animate-bounce [animation-delay:.15s]"></span><span class="w-2 h-2 bg-muted rounded-full animate-bounce [animation-delay:.3s]"></span></div>
+      </div>
+    </div>
+    <div class="absolute bottom-0 inset-x-0 bg-white border-t border-line px-3 pt-2 pb-6">
+      <div class="flex gap-2 overflow-x-auto pb-2 text-xs"><button class="shrink-0 bg-primary-soft text-primary-dark rounded-full px-3 py-1.5">О котрій сніданок?</button><button class="shrink-0 bg-primary-soft text-primary-dark rounded-full px-3 py-1.5">Пізній виїзд</button><button class="shrink-0 bg-primary-soft text-primary-dark rounded-full px-3 py-1.5">Що поруч?</button></div>
+      <div class="flex items-center gap-2"><div class="flex-1 border border-line rounded-full px-4 py-2.5 text-sm text-muted">Напишіть будь-якою мовою…</div><button class="w-11 h-11 rounded-full bg-ink text-white grid place-items-center"><i data-lucide="square" class="icon-sm fill-white"></i></button></div>
+    </div>
+    </div></div>
+  </div>
+
+  <p class="font-semibold mt-10 mb-2">AI-c · Десктоп: панель асистента поверх результатів пошуку</p>
+  <div class="desk-wrap"><div class="desk"><div class="screen">
+    <div data-header="search"></div>
+    <div class="max-w-[1100px] mx-auto py-6 pr-[420px] opacity-60"><p class="font-bold text-xl mb-3">Львів: знайдено 47 готелів</p><div class="space-y-3" data-cards-h="2"></div></div>
+    <div class="absolute top-0 right-0 bottom-0 w-[400px] bg-white border-l border-line shadow-2xl flex flex-col">
+      <div class="px-4 py-3 border-b border-line flex items-center gap-3"><div class="w-9 h-9 rounded-full bg-primary grid place-items-center text-white"><i data-lucide="sparkles" class="icon-sm"></i></div><div class="flex-1"><p class="font-semibold text-sm">Guesteria AI</p><p class="text-[11px] text-muted">Пошук · Львів · 12–15 гру</p></div><i data-lucide="x" class="icon text-muted"></i></div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-3 text-sm bg-bg">
+        <div class="max-w-[85%] ml-auto bg-primary text-white rounded-2xl rounded-tr-sm p-3">Який з цих найкращий для пари?</div>
+        <div class="bg-white border border-line rounded-2xl rounded-tl-sm p-3 space-y-2">
+          <p>Для пари я б обрав <b>Оселю на Ринку</b>: 92% відгуків пар позитивні, номери з видом на Ратушу, романтичний ресторан на даху.</p>
+          <div class="border border-line rounded-xl overflow-hidden flex"><div class="w-20 img-a"></div><div class="p-2 flex-1"><p class="font-semibold text-xs">Оселя на Ринку</p><p class="text-[11px] text-muted">8,9 · сніданок · скасування до 10 гру</p><div class="flex items-center justify-between mt-1"><b>6 840 ₴</b><button class="bg-primary text-white text-xs font-semibold rounded-lg px-3 py-1">Відкрити</button></div></div></div>
+        </div>
+      </div>
+      <div class="p-3 border-t border-line"><div class="flex items-center gap-2"><div class="flex-1 border border-line rounded-full px-4 py-2.5 text-sm text-muted">Напишіть будь-якою мовою…</div><button class="w-10 h-10 rounded-full bg-primary text-white grid place-items-center"><i data-lucide="send" class="icon-sm"></i></button></div></div>
+    </div>
+  </div></div></div>
+</section>
+
+<!-- =====================================================================
+     ВХІД
+====================================================================== -->
+<section>
+  <h2 id="auth" class="sec text-2xl font-bold">Вхід і реєстрація <span class="text-base font-normal text-muted">модалка</span></h2>
+  <div class="flex flex-wrap gap-10 mt-5 items-start">
+    <div><p class="font-semibold mb-2">Мобільна: bottom sheet</p>
+    <div class="phone"><div class="screen">
+      <div class="absolute inset-0 img-a opacity-40"></div><div class="absolute inset-0 bg-ink/40"></div>
+      <div class="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl p-5 pb-8">
+        <div class="w-10 h-1 bg-line rounded-full mx-auto mb-4"></div>
+        <h3 class="text-xl font-bold">Увійдіть, щоб забронювати</h3>
+        <p class="text-sm text-muted mt-1">Поїздки й AI-асистент будуть доступні з будь-якого пристрою.</p>
+        <div class="grid grid-cols-2 bg-bg rounded-xl p-1 mt-4 text-sm font-medium"><span class="bg-white rounded-lg py-2 text-center shadow-sm">Вхід</span><span class="py-2 text-center text-muted">Реєстрація</span></div>
+        <div class="space-y-3 mt-4"><div class="border border-line rounded-xl px-3 py-3 text-sm text-muted">Email</div><div class="border border-line rounded-xl px-3 py-3 text-sm text-muted flex justify-between">Пароль<i data-lucide="eye" class="icon-sm"></i></div></div>
+        <button class="w-full bg-primary text-white font-semibold rounded-xl py-3.5 mt-4">Увійти</button>
+        <div class="flex items-center gap-3 my-4 text-xs text-muted"><span class="flex-1 h-px bg-line"></span>або<span class="flex-1 h-px bg-line"></span></div>
+        <button class="w-full border-2 border-primary text-primary font-semibold rounded-xl py-3 flex items-center justify-center gap-2"><i data-lucide="play-circle" class="icon"></i>Увійти як демо</button>
+      </div>
+    </div></div></div>
+    <div><p class="font-semibold mb-2">Десктоп: модалка по центру</p>
+    <div class="w-[440px] bg-white rounded-2xl shadow-2xl p-6 border border-line">
+      <div class="flex justify-between items-start"><h3 class="text-xl font-bold">Вхід у Guesteria Stay</h3><i data-lucide="x" class="icon text-muted"></i></div>
+      <div class="grid grid-cols-2 bg-bg rounded-xl p-1 mt-4 text-sm font-medium"><span class="py-2 text-center text-muted">Вхід</span><span class="bg-white rounded-lg py-2 text-center shadow-sm">Реєстрація</span></div>
+      <div class="space-y-3 mt-4"><div class="border border-line rounded-xl px-3 py-3 text-sm text-muted">Ім'я</div><div class="border border-line rounded-xl px-3 py-3 text-sm text-muted">Email</div><div class="border border-line rounded-xl px-3 py-3 text-sm text-muted">Пароль (від 8 символів)</div></div>
+      <button class="w-full bg-primary text-white font-semibold rounded-xl py-3 mt-4">Створити акаунт</button>
+      <button class="w-full border-2 border-primary text-primary font-semibold rounded-xl py-2.5 mt-3">Увійти як демо</button>
+    </div></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// Shared pieces rendered into placeholders to keep the markup above readable.
+const hotels = [
+  { n: 'Оселя на Ринку', s: '★★★★', d: 'Центр · 300 м від Ратуші', r: '8,9', rt: 'Чудово · 1 240 відгуків', p: '6 840 ₴', img: 'img-a', ok: 'Безкоштовне скасування', fav: true },
+  { n: 'Ратуша Лофт', s: '★★★', d: 'Центр · 650 м', r: '8,4', rt: 'Дуже добре · 512 відгуків', p: '5 120 ₴', img: 'img-b', ok: 'Сніданок включено', fav: false },
+  { n: 'Grand Opera Suites', s: '★★★★★', d: 'Біля Оперного театру', r: '9,2', rt: 'Чудово · 864 відгуки', p: '11 400 ₴', img: 'img-f', ok: 'Безкоштовне скасування', fav: false },
+];
+const heart = h => `<i data-lucide="heart" class="icon ${h.fav ? 'text-danger fill-danger' : ''}"></i>`;
+
+document.querySelectorAll('[data-cards-v]').forEach(el => {
+  el.innerHTML = hotels.slice(0, +el.dataset.cardsV).map(h => `
+    <article class="bg-white rounded-2xl overflow-hidden border border-line">
+      <div class="h-40 ${h.img} relative"><button class="absolute top-3 right-3 w-9 h-9 bg-white rounded-full grid place-items-center">${heart(h)}</button></div>
+      <div class="p-3">
+        <div class="flex items-start justify-between gap-2">
+          <div><h3 class="font-semibold">${h.n}</h3><p class="text-accent text-xs">${h.s}</p><p class="text-xs text-muted mt-0.5">${h.d}</p></div>
+          <div class="text-right shrink-0"><span class="badge">${h.r}</span><p class="text-[11px] text-muted mt-1">${h.rt.split(' · ')[0]}</p></div>
+        </div>
+        <div class="flex items-end justify-between mt-3">
+          <p class="text-xs text-success font-medium">✓ ${h.ok}</p>
+          <div class="text-right"><p class="text-xl font-bold">${h.p}</p><p class="text-[11px] text-muted">за 3 ночі</p></div>
+        </div>
+      </div>
+    </article>`).join('');
+});
+
+document.querySelectorAll('[data-cards-h]').forEach(el => {
+  el.innerHTML = hotels.slice(0, +el.dataset.cardsH).map(h => `
+    <article class="bg-white rounded-2xl border border-line flex overflow-hidden">
+      <div class="w-60 ${h.img} relative shrink-0"><button class="absolute top-3 right-3 w-9 h-9 bg-white rounded-full grid place-items-center">${heart(h)}</button></div>
+      <div class="flex-1 p-4 flex gap-4">
+        <div class="flex-1">
+          <h3 class="font-bold text-lg text-primary">${h.n} <span class="text-accent text-sm">${h.s}</span></h3>
+          <p class="text-sm text-muted">${h.d}</p>
+          <p class="text-sm mt-3 font-medium">Стандарт з двоспальним ліжком</p>
+          <p class="text-sm text-success mt-1">✓ ${h.ok}</p>
+        </div>
+        <div class="w-48 flex flex-col items-end justify-between text-right">
+          <div class="flex items-center gap-2"><p class="text-xs text-muted leading-tight">${h.rt.replace(' · ', '<br>')}</p><span class="badge">${h.r}</span></div>
+          <div><p class="text-xs text-muted">3 ночі, 2 дорослих</p><p class="text-2xl font-bold">${h.p}</p><button class="mt-2 bg-primary text-white font-semibold rounded-lg px-4 py-2 text-sm">Переглянути</button></div>
+        </div>
+      </div>
+    </article>`).join('');
+});
+
+const tabs = [['search','search','Пошук'],['fav','heart','Обране'],['trips','luggage','Поїздки'],['profile','user','Кабінет']];
+document.querySelectorAll('[data-tabbar]').forEach(el => {
+  el.outerHTML = `<nav class="absolute bottom-0 inset-x-0 bg-white border-t border-line grid grid-cols-4 text-[11px] pb-4 pt-2">${
+    tabs.map(([k, i, t]) => `<a class="flex flex-col items-center gap-0.5 ${k === el.dataset.tabbar ? 'text-primary font-semibold' : 'text-muted'}"><i data-lucide="${i}" class="icon"></i>${t}</a>`).join('')
+  }</nav>`;
+});
+
+document.querySelectorAll('[data-fab]').forEach(el => {
+  el.outerHTML = `<button class="absolute right-4 bottom-20 w-14 h-14 rounded-full bg-primary text-white shadow-lg grid place-items-center" aria-label="Guesteria AI"><i data-lucide="sparkles" class="icon"></i></button>`;
+});
+document.querySelectorAll('[data-fab-desk]').forEach(el => {
+  el.outerHTML = `<button class="absolute right-6 bottom-6 bg-primary text-white shadow-lg rounded-full pl-4 pr-5 py-3 flex items-center gap-2 font-semibold text-sm"><i data-lucide="sparkles" class="icon"></i>Запитати Guesteria AI</button>`;
+});
+
+document.querySelectorAll('[data-header]').forEach(el => {
+  const a = el.dataset.header;
+  const link = (k, t) => `<span class="${a === k ? 'text-primary font-semibold' : 'text-muted'}">${t}</span>`;
+  el.outerHTML = `<div class="h-[61px] bg-white border-b border-line px-8 flex items-center gap-8 text-sm">
+    <span class="font-bold text-lg">Guesteria<span class="text-primary">Stay</span></span>
+    <div class="flex-1 flex items-center gap-2 border border-line rounded-full px-4 py-2 max-w-md text-muted"><i data-lucide="search" class="icon-sm"></i>Львів · 12–15 гру · 2 дорослих</div>
+    <nav class="ml-auto flex items-center gap-6">${link('search', 'Пошук')}${link('fav', 'Обране')}${link('trips', 'Поїздки')}
+      <span class="flex items-center gap-2"><span class="w-8 h-8 rounded-full bg-primary-soft text-primary font-bold grid place-items-center text-xs">КС</span><i data-lucide="chevron-down" class="icon-sm text-muted"></i></span></nav>
+  </div>`;
+});
+
+document.querySelectorAll('[data-chat-trip]').forEach(el => {
+  el.innerHTML = `
+    <div class="px-4 py-3 border-b border-line flex items-center gap-3"><div class="w-9 h-9 rounded-full bg-primary grid place-items-center text-white"><i data-lucide="sparkles" class="icon-sm"></i></div><div><p class="font-semibold text-sm">Guesteria AI</p><p class="text-[11px] text-muted">Ваша поїздка до Львова</p></div></div>
+    <div class="flex-1 overflow-y-auto p-4 space-y-3 text-sm bg-bg">
+      <div class="max-w-[85%] bg-white border border-line rounded-2xl rounded-tl-sm p-3">Чекін пройдено, ранній заїзд підтверджено ✓ Чим ще допомогти?</div>
+      <div class="max-w-[85%] ml-auto bg-primary text-white rounded-2xl rounded-tr-sm p-3">Хочу виїхати пізніше, о 14:00</div>
+      <div class="max-w-[92%] bg-white border border-line rounded-2xl rounded-tl-sm p-3 space-y-2">
+        <p>Стандартний виїзд — до 12:00. Надішлю готелю запит на пізній виїзд:</p>
+        <div class="border border-primary/30 bg-primary-soft/50 rounded-xl p-2.5"><p class="label">Запит до готелю</p><p class="font-medium">Пізній виїзд до 14:00 · 15 гру</p></div>
+        <div class="flex gap-2"><button class="flex-1 bg-primary text-white text-xs font-semibold rounded-lg py-2">Підтвердити</button><button class="flex-1 border border-line bg-white text-xs font-medium rounded-lg py-2">Скасувати</button></div>
+      </div>
+    </div>
+    <div class="p-3 border-t border-line">
+      <div class="flex gap-2 pb-2 text-xs"><button class="bg-primary-soft text-primary-dark rounded-full px-3 py-1.5">О котрій сніданок?</button><button class="bg-primary-soft text-primary-dark rounded-full px-3 py-1.5">Що поруч?</button></div>
+      <div class="flex items-center gap-2"><div class="flex-1 border border-line rounded-full px-4 py-2.5 text-sm text-muted">Напишіть будь-якою мовою…</div><button class="w-10 h-10 rounded-full bg-primary text-white grid place-items-center"><i data-lucide="send" class="icon-sm"></i></button></div>
+    </div>`;
+});
+
+lucide.createIcons();
+
+// Scale 1200 px desktop frames down to fit narrow windows.
+function fitDesktops() {
+  document.querySelectorAll('.desk-wrap').forEach(wrap => {
+    const desk = wrap.querySelector('.desk');
+    const s = Math.min(1, wrap.clientWidth / desk.offsetWidth);
+    desk.style.transform = `scale(${s})`;
+    desk.style.transformOrigin = 'top left';
+    wrap.style.height = `${desk.offsetHeight * s + 8}px`;
+  });
+}
+fitDesktops();
+addEventListener('resize', fitDesktops);
+</script>
+</body>
+</html>

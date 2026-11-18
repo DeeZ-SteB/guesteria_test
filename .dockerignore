@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.github
+.claude
+.vercel
+.env
+.env.*
+!.env.example
+coverage
+supabase/.branches
+supabase/.temp
+docs
+*.md
+Dockerfile
+docker-compose.yml

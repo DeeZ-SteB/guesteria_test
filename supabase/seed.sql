@@ -1,0 +1,1 @@
+-- Local-only seed data. Applied by `npm run db:reset`.
