@@ -2,17 +2,13 @@
 
 import { useState } from "react";
 import type { Review } from "@/lib/hotels/types";
-import { latestReviews, reviewLanguageLabel } from "@/lib/hotels/page";
+import { latestReviews, reviewLanguageLabel, reviewMonth } from "@/lib/hotels/page";
+import { pluralUk } from "@/lib/format";
 import { formatRating } from "@/lib/rating";
 import { RatingSummary } from "@/components/ui/rating";
 import { Sheet } from "@/components/ui/sheet";
 
-const MONTHS = ["січ", "лют", "бер", "кві", "тра", "чер", "лип", "сер", "вер", "жов", "лис", "гру"];
-const shortDate = (iso: string | null) => {
-  if (!iso) return null;
-  const [y, m] = iso.slice(0, 7).split("-").map(Number);
-  return m ? `${MONTHS[m - 1]} ${y}` : null;
-};
+const shortDate = reviewMonth;
 
 function ReviewItem({ review }: { review: Review }) {
   const language = reviewLanguageLabel(review.language);
@@ -49,7 +45,7 @@ export function ReviewsView({ reviews, rating, reviewCount }: { reviews: Review[
         </h2>
         {withText.length > 3 && (
           <button type="button" onClick={() => setOpen(true)} className="min-h-11 text-sm font-medium text-primary">
-            Усі відгуки
+            Ще відгуки
           </button>
         )}
       </div>
@@ -65,7 +61,7 @@ export function ReviewsView({ reviews, rating, reviewCount }: { reviews: Review[
           ))}
         </div>
       )}
-      <Sheet open={open} onClose={() => setOpen(false)} title="Відгуки гостей" description={`Останні ${withText.length} відгуків з текстом, мовою оригіналу.`}>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Відгуки гостей" description={`Останні ${withText.length} ${pluralUk(withText.length, ["відгук", "відгуки", "відгуків"])} з текстом, мовою оригіналу.`}>
         <div className="space-y-2">
           {latestReviews(withText, withText.length).map((review) => (
             <ReviewItem key={review.id} review={review} />

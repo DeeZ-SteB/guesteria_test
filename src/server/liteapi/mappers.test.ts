@@ -216,3 +216,13 @@ describe("strict top-level shape", () => {
     expect(hotel.images).toHaveLength(details.data.hotelImages.length - 2);
   });
 });
+
+describe("offer token validation at the mapper", () => {
+  it("drops rates whose offer token could not be used for checkout", () => {
+    const rooms = toHotelDetails(hotelDetailsSchema.parse(details)).rooms;
+    const copy = structuredClone(rates);
+    copy.data[0].roomTypes[0].offerId = "bad token/with spaces";
+    const offers = toRoomOffers(ratesSchema.parse(copy), rooms, NOW);
+    expect(offers[0].rates.map((r) => r.offerId)).toEqual(["offer-standard-breakfast"]);
+  });
+});

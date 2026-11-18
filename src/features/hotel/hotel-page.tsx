@@ -8,10 +8,10 @@ import { getCurrentUser } from "@/server/auth";
 import { getFavoriteHotelIds } from "@/server/favorites";
 import type { HotelDetails } from "@/lib/hotels/types";
 import type { LiteApiErrorKind } from "@/lib/liteapi-messages";
-import { defaultStay, todayInKyiv, type Stay } from "@/lib/booking/stay";
+import { defaultStay, todayInKyiv } from "@/lib/booking/stay";
 import { findCity, findCityByLiteApiName } from "@/lib/cities";
 import { galleryImages, mapsHref } from "@/lib/hotels/page";
-import { searchHref, stayKey, validateStay, type StayValues } from "@/lib/search/params";
+import { hotelStayState, searchHref, stayKey } from "@/lib/search/params";
 import { RatingSummary, Stars } from "@/components/ui/rating";
 import { Skeleton } from "@/components/ui/feedback";
 import { Gallery } from "./gallery";
@@ -20,18 +20,13 @@ import { Facilities } from "./facilities";
 import { Description } from "./description";
 import { StayForm } from "./stay-form";
 import { RoomsSection } from "./rooms-section";
-import { BookingSummary } from "./booking-summary";
+import { BookingBarSkeleton, BookingSummary } from "./booking-summary";
 import { ReviewsSection } from "./reviews-section";
 import { HotelError } from "./hotel-error";
 import { AskAiButton } from "./ask-ai";
 import { RoomsSkeleton } from "./hotel-skeleton";
 
 type Props = Pick<PageProps<"/hotels/[hotelId]">, "params" | "searchParams">;
-
-type StayState =
-  | { status: "none"; values: StayValues }
-  | { status: "invalid"; values: StayValues; errors: Partial<Record<"checkIn" | "checkOut" | "adults", string>> }
-  | { status: "ok"; stay: Stay };
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 
@@ -58,15 +53,7 @@ export async function HotelPage({ params, searchParams }: Props) {
   const { hotel } = loaded;
 
   const city = findCity(first(raw.city)) ?? findCityByLiteApiName(hotel.city);
-  const values: StayValues = { checkIn: first(raw.checkin), checkOut: first(raw.checkout), adults: first(raw.adults) || "2" };
-  const stayState: StayState = (() => {
-    if (!values.checkIn && !values.checkOut) {
-      const d = defaultStay(today);
-      return { status: "none", values: { checkIn: d.checkIn, checkOut: d.checkOut, adults: values.adults } };
-    }
-    const { stay, errors } = validateStay(values, today);
-    return stay ? { status: "ok", stay } : { status: "invalid", values, errors };
-  })();
+  const stayState = hotelStayState(raw, today);
 
   const backStay = stayState.status === "ok" ? stayState.stay : defaultStay(today);
   const backHref = city ? searchHref({ cityId: city.id, ...backStay }) : "/";
@@ -238,7 +225,7 @@ export async function HotelPage({ params, searchParams }: Props) {
 
       {/* Phones and tablets: sticky bar with the cheapest price. */}
       {stayState.status === "ok" ? (
-        <Suspense key={stayKey(stayState.stay)} fallback={null}>
+        <Suspense key={stayKey(stayState.stay)} fallback={<BookingBarSkeleton />}>
           <BookingSummary hotel={hotel} stay={stayState.stay} variant="bar" />
         </Suspense>
       ) : (

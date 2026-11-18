@@ -7,7 +7,7 @@ import { Stepper } from "@/components/ui/stepper";
 import { cn } from "@/lib/cn";
 import { adultsLabel } from "@/lib/format";
 import { addDays, adjustCheckOut, isIsoDate, MAX_DAYS_AHEAD, MAX_GUESTS, MAX_NIGHTS, nightsBetween } from "@/lib/booking/stay";
-import { hotelHref, validateStay, type StayValues } from "@/lib/search/params";
+import { hotelHref, stayKey, validateStay, type StayValues } from "@/lib/search/params";
 
 type Errors = Partial<Record<"checkIn" | "checkOut" | "adults", string>>;
 
@@ -37,7 +37,10 @@ export function StayForm({
     event.preventDefault();
     const { stay, errors: next } = validateStay({ checkIn, checkOut, adults: String(adults) }, today);
     setErrors(next);
-    if (stay) startTransition(() => router.push(`${hotelHref(hotelId, { ...stay, cityId })}#rooms`, { scroll: false }));
+    if (!stay) return;
+    // Same stay as now: nothing to reload (avoids a needless live rates call).
+    if (stayKey(stay) === stayKey({ checkIn: initial.checkIn, checkOut: initial.checkOut, adults: Number(initial.adults) })) return;
+    startTransition(() => router.push(`${hotelHref(hotelId, { ...stay, cityId })}#rooms`, { scroll: false }));
   }
 
   const field = (error?: string) =>

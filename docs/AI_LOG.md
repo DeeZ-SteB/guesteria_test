@@ -102,3 +102,34 @@ Format:
 | security | LOW | No cap on favorites per user (direct API inserts) | DB trigger caps at 500; pgTAP test. |
 | security | LOW | `hotel_name` is client-supplied | **Accepted risk**: self-only, React-escaped. Stage 8 must treat it as untrusted text in AI prompts. |
 | security | LOW | `city` not tied to the city list in the DB | Consumers already handle `findCity()` → undefined. |
+
+## 2026-11-18 — Stage 4: hotel page (`feat/hotel-page`)
+- Before planning-follow-up I probed LiteAPI live: unknown hotel → HTTP 400 / 4002 (fixture added); offer tokens are base64url, 976–1236 chars; review languages pl/uk/en-gb/en-us/ru/da/fr. This tightened the planner's proposed offer regex.
+- `planner` → `docs/plans/04-hotel-page.md`. Notable: resolved the 512-char return-path vs ~1.2k-char offer-token conflict (limit → 2048, structural checks kept), React.cache to share one rates call between rooms and both booking summaries, CSS-only FAB lift, dropping the header search row.
+- Caught by me in the browser: unknown hotel showed a generic error instead of 404 — errors thrown inside `"use cache"` come back as plain `Error`s (class/fields lost; verified with a probe route); FAB covering the sticky booking card on desktop; desktop hero image downloaded on phones; a stale orphaned dev server serving old CSS.
+- Findings: code-reviewer 15 (1 HIGH, 4 MEDIUM, 10 LOW), security-auditor 7 (1 MEDIUM, 6 LOW). 22 regression tests before fixes (192 unit total).
+
+| Agent | Sev | Finding | Resolution |
+|---|---|---|---|
+| code | HIGH | `reviveLiteApiError` only works in dev: in production React Flight keeps just a digest | **Disputed with evidence, fixed anyway.** `next build && next start` showed the 404 working with revival. But it relies on undocumented Flight behaviour, so cached functions now *return* `{ok:false, kind}` instead of throwing (conditional `cacheLife`: minutes for invalid ids, seconds for transient errors). Re-verified 404 on a production build twice. |
+| code | MED | Lightbox with 1–2 photos repeated keys; ±1 neighbours never preloaded (`display:none` + lazy) | `lightboxWindow` (unique, tested); neighbours invisible + eager. |
+| code | MED | Booking card/bar said «Немає вільних номерів» on a pricing *error* | Distinguishes `no_availability` from failures («Ціни тимчасово недоступні»). |
+| code | MED | A rate with a malformed offer token made «Обрати» silently throw | Mapper drops such rates (tested); click handler guarded. |
+| code | MED | Untested logic in components (stay state, carousel maths, review dates, lightbox) | Moved to `lib/` (`hotelStayState`, `carouselPosition`, `reviewMonth`, `lightboxWindow`) with tests. |
+| code | LOW | Sticky bar appeared late → 72 px layout shift | Bar-shaped skeleton with `data-sticky-cta`. |
+| code | LOW | Bar covered the footer at 768–1023 px | Footer bottom margin = bar height on tablets. |
+| code | LOW | Carousel counter read 11/60 on «all photos» | Clamped (tested). |
+| code | LOW | Mobile hero eager → desktop downloaded it too | Lazy + `fetchPriority="high"` (docs pattern for responsive variants). |
+| code | LOW | «Найдешевше» badge ignored active chips | Computed on visible rates (tested). |
+| code | LOW | Chips reset on date change | **Accepted & documented**: rates differ per stay anyway. |
+| code | LOW | Re-submitting the same dates re-fetched rates | Skipped when the stay is unchanged. |
+| code | LOW | `/checkout` is a 404 until stage 5 | **Accepted**: stage 5 is next; local only. |
+| code | LOW | Wrong plural «4 відгуків»; «Усі відгуки» overstated | `pluralUk`; «Ще відгуки». |
+| code | LOW | Duplicate fee labels; raw English fee names | De-duplicated; untranslated → «збір» (tested). |
+| security | MED | Unlimited live LiteAPI calls per anonymous visitor; random ids hit `/data/hotel` every time | Negative cache for invalid ids (minutes). **Per-IP limiter deferred to stage 8.** |
+| security | LOW | Longest accepted token made the checkout link exceed 2048 → silent drop to `/` after login | `OFFER_ID_MAX = 1900`; test with the longest token + 8 adults + 32-char hotel id. |
+| security | LOW | Offer token would be embedded in the sign-up confirmation email | `emailSafeReturnPath` swaps `/checkout?…` for the hotel page (tested). |
+| security | LOW | No security headers | `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`; config test; verified on `next start`. |
+| security | LOW | Offer token in history/logs | **Accepted** (not secret; prebook validates). Stage 5: don't log full checkout URLs. |
+| security | LOW | Assistant context (`hotelName`) is client-supplied | Stage 8 rule: send only `hotelId`, load facts server-side, delimit supplier text. |
+| security | LOW | /checkout must not trust URL data | Stage 5 checklist recorded: session check, Zod, prebook is the only source of hotel/stay/price, server `clientReference`, no `book` retry, per-user limit. |

@@ -40,3 +40,24 @@ export function reviewLanguageLabel(code: string | null): string | null {
     return base.toUpperCase();
   }
 }
+
+/** Current image and its neighbours, without repeats (1–2 photo hotels). */
+export function lightboxWindow(index: number, count: number): number[] {
+  if (count <= 0) return [];
+  return [...new Set([index - 1, index, index + 1].map((i) => (i + count) % count))];
+}
+
+/** 1-based photo number from the carousel scroll position; the «all photos» slide maps to the last photo shown. */
+export function carouselPosition(scrollLeft: number, slideWidth: number, slides: number, total: number): number {
+  if (slideWidth <= 0) return 1;
+  const slide = Math.round(scrollLeft / slideWidth) + 1;
+  return Math.max(1, Math.min(slide, slides, total));
+}
+
+const REVIEW_MONTHS = ["січ", "лют", "бер", "кві", "тра", "чер", "лип", "сер", "вер", "жов", "лис", "гру"];
+
+export function reviewMonth(iso: string | null): string | null {
+  const match = iso ? /^(\d{4})-(\d{2})/.exec(iso) : null;
+  const month = match ? Number(match[2]) : 0;
+  return match && month >= 1 && month <= 12 ? `${REVIEW_MONTHS[month - 1]} ${match[1]}` : null;
+}

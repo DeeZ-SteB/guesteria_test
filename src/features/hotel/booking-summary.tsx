@@ -12,6 +12,9 @@ import { loadRates } from "./data";
 export async function BookingSummary({ hotel, stay, variant }: { hotel: HotelDetails; stay: Stay | null; variant: "card" | "bar" }) {
   const rates = stay ? await loadRates(hotel.id, stay.checkIn, stay.checkOut, stay.adults) : null;
   const best = rates && "offers" in rates ? cheapestRate(rates.offers) : null;
+  // Only a real "no availability" may say so; other failures are a temporary pricing problem.
+  const failed = !!rates && "error" in rates && rates.error !== "no_availability";
+  const emptyText = !stay ? null : failed ? "Ціни тимчасово недоступні" : "Немає вільних номерів";
   const nights = stay ? nightsBetween(stay.checkIn, stay.checkOut) : 0;
   const cta = (
     <a href="#rooms" className={buttonClasses({ size: "lg", className: variant === "card" ? "w-full" : "" })}>
@@ -34,7 +37,7 @@ export async function BookingSummary({ hotel, stay, variant }: { hotel: HotelDet
               </p>
             </>
           ) : (
-            <p className="text-sm text-muted">{stay ? "Немає вільних номерів" : "Ціни — після вибору дат"}</p>
+            <p className="text-sm text-muted">{emptyText ?? "Ціни — після вибору дат"}</p>
           )}
         </div>
         {cta}
@@ -57,9 +60,20 @@ export async function BookingSummary({ hotel, stay, variant }: { hotel: HotelDet
           <span className="text-sm text-muted">за {nightsLabel(nights)}</span>
         </p>
       ) : (
-        <p className="mt-3 text-sm text-muted">{stay ? "Немає вільних номерів на ці дати" : "Оберіть дати, щоб побачити ціни"}</p>
+        <p className="mt-3 text-sm text-muted">{emptyText ?? "Оберіть дати, щоб побачити ціни"}</p>
       )}
       <div className="mt-4">{cta}</div>
     </div>
+  );
+}
+
+/** Same footprint as the bar while rates load, so the page and the AI button don't jump. */
+export function BookingBarSkeleton() {
+  return (
+    <div
+      data-sticky-cta
+      aria-hidden
+      className="fixed inset-x-0 z-30 h-[72px] animate-pulse border-t border-line bg-surface bottom-[calc(var(--gs-tabbar-height)+env(safe-area-inset-bottom))] md:bottom-0 lg:hidden"
+    />
   );
 }

@@ -86,7 +86,7 @@ describe("rates", () => {
       "+ 524 ₴ туристичний збір — сплачується в готелі",
     );
     expect(payAtHotelText([])).toBeNull();
-    expect(plain(payAtHotelText([{ label: "A", amount: { amount: 10, currency: "EUR" } }, { label: "B", amount: { amount: 100, currency: "UAH" } }]))).toMatch(/€.*a, .*₴ b/);
+    expect(plain(payAtHotelText([{ label: "A", amount: { amount: 10, currency: "EUR" } }, { label: "B", amount: { amount: 100, currency: "UAH" } }]))).toMatch(/€ збір, .*₴ збір/);
   });
 });
 
@@ -117,5 +117,88 @@ describe("hotel links and stay", () => {
     expect(findCityByLiteApiName("Ternopilʼ")?.id).toBe("ternopil");
     expect(findCityByLiteApiName("Lviv")?.id).toBe("lviv");
     expect(findCityByLiteApiName("Atlantis")).toBeUndefined();
+  });
+});
+
+// ---- Regressions found by the security-auditor agent (stage 4) ----
+import { offerIdSchema, OFFER_ID_MAX } from "@/lib/booking/offer";
+import { emailSafeReturnPath } from "@/lib/return-to";
+
+describe("offer token length vs return path", () => {
+  it("the longest accepted token still produces a checkout link that survives login", () => {
+    const longest = "A".repeat(OFFER_ID_MAX);
+    expect(offerIdSchema.safeParse(longest).success).toBe(true);
+    expect(offerIdSchema.safeParse(longest + "A").success).toBe(false);
+    const href = checkoutHref({ offerId: longest, hotelId: "abcdefghijklmnopqrstuvwxyz123456", stay: { checkIn: "2026-12-09", checkOut: "2026-12-12", adults: 8 } });
+    expect(safeReturnTo(href)).toBe(href);
+  });
+});
+
+describe("emailSafeReturnPath", () => {
+  it("never puts an offer token into a confirmation email; sends the guest to the hotel instead", () => {
+    const next = `/checkout?offerId=${"A".repeat(1200)}&hotel=lpbbb0c&checkin=2026-12-09&checkout=2026-12-12&adults=2`;
+    expect(emailSafeReturnPath(next)).toBe("/hotels/lpbbb0c?checkin=2026-12-09&checkout=2026-12-12&adults=2");
+  });
+  it("keeps short paths and drops anything long or unsafe", () => {
+    expect(emailSafeReturnPath("/account?tab=trips")).toBe("/account?tab=trips");
+    expect(emailSafeReturnPath(`/${"a".repeat(600)}`)).toBe("/");
+    expect(emailSafeReturnPath("//evil.com")).toBe("/");
+  });
+});
+
+// ---- Regressions found by the code-reviewer agent (stage 4) ----
+import { carouselPosition, lightboxWindow, reviewMonth } from "./page";
+import { hotelStayState } from "@/lib/search/params";
+
+describe("gallery maths", () => {
+  it("never repeats an image in the lightbox window (1 or 2 photos)", () => {
+    expect(lightboxWindow(0, 1)).toEqual([0]);
+    expect(lightboxWindow(1, 2)).toEqual([0, 1]);
+    expect(lightboxWindow(0, 10)).toEqual([9, 0, 1]);
+  });
+  it("counts photos, not carousel slides (the «all photos» slide is not photo 11)", () => {
+    expect(carouselPosition(0, 375, 10, 60)).toBe(1);
+    expect(carouselPosition(375 * 10, 375, 10, 60)).toBe(10);
+    expect(carouselPosition(375 * 2, 375, 10, 2)).toBe(2);
+    expect(carouselPosition(0, 0, 10, 60)).toBe(1);
+  });
+});
+
+describe("hotelStayState", () => {
+  const today = "2026-11-18";
+  it("suggests default dates when none are given, keeping adults", () => {
+    expect(hotelStayState({ adults: "3" }, today)).toEqual({
+      status: "none",
+      values: { checkIn: "2026-12-02", checkOut: "2026-12-05", adults: "3" },
+    });
+  });
+  it("treats a single date as invalid and validates full stays", () => {
+    expect(hotelStayState({ checkin: "2026-12-09" }, today).status).toBe("invalid");
+    expect(hotelStayState({ checkin: ["2026-12-09"], checkout: "2026-12-12" }, today)).toEqual({
+      status: "ok",
+      stay: { checkIn: "2026-12-09", checkOut: "2026-12-12", adults: 2 },
+    });
+  });
+});
+
+describe("review dates and fee text", () => {
+  it("formats the review month in Ukrainian", () => {
+    expect(reviewMonth("2026-11-14T00:00:00Z")).toBe("лис 2026");
+    expect(reviewMonth(null)).toBeNull();
+    expect(reviewMonth("garbage")).toBeNull();
+  });
+  it("de-duplicates fee labels and never shows raw English", () => {
+    expect(plain(payAtHotelText([
+      { label: "Туристичний збір", amount: { amount: 100, currency: "UAH" } },
+      { label: "Туристичний збір", amount: { amount: 50, currency: "UAH" } },
+      { label: "Eco charge", amount: { amount: 10, currency: "UAH" } },
+    ]))).toBe("+ 160 ₴ туристичний збір, збір — сплачується в готелі");
+  });
+});
+
+describe("cheapest among visible rates", () => {
+  it("is computed on the filtered offers", () => {
+    const filtered = filterOffers(offers, { breakfast: true, freeCancel: false }, NOW);
+    expect(cheapestRate(filtered)?.offerId).toBe("b");
   });
 });

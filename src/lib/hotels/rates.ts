@@ -33,10 +33,12 @@ export function cheapestRate(offers: RoomOffer[]): { offerId: string; price: Roo
 export function payAtHotelText(fees: PayAtHotel[]): string | null {
   if (fees.length === 0) return null;
   const sameCurrency = fees.every((f) => f.amount.currency === fees[0].amount.currency);
-  const labels = fees.map((f) => f.label.toLowerCase()).join(", ");
+  // Untranslated supplier labels are English: show the neutral "збір" in the Ukrainian UI.
+  const label = (raw: string) => (/[а-яіїєґ]/i.test(raw) ? raw.toLowerCase() : "збір");
+  const labels = [...new Set(fees.map((f) => label(f.label)))].join(", ");
   if (sameCurrency) {
     const total = fees.reduce((sum, f) => sum + f.amount.amount, 0);
     return `+ ${formatMoney({ amount: total, currency: fees[0].amount.currency })} ${labels} — сплачується в готелі`;
   }
-  return `+ ${fees.map((f) => `${formatMoney(f.amount)} ${f.label.toLowerCase()}`).join(", ")} — сплачується в готелі`;
+  return `+ ${fees.map((f) => `${formatMoney(f.amount)} ${label(f.label)}`).join(", ")} — сплачується в готелі`;
 }

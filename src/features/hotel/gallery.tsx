@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, Images } from "lucide-react";
 import type { HotelImage } from "@/lib/hotels/types";
-import { imageAlt } from "@/lib/hotels/page";
+import { carouselPosition, imageAlt } from "@/lib/hotels/page";
 import { HotelImage as Photo } from "@/components/ui/hotel-image";
 import { Lightbox } from "@/components/ui/lightbox";
 
@@ -14,7 +14,7 @@ const MOBILE_SLIDES = 10;
 /** Phones: scroll-snap carousel (10 slides + «Усі N фото»). Desktop: 1 + 4 grid. Both open the lightbox. */
 export function Gallery({ images, hotelName, backHref }: { images: HotelImage[]; hotelName: string; backHref: string }) {
   const [viewer, setViewer] = useState<number | null>(null);
-  const [current, setCurrent] = useState(0);
+  const [position, setPosition] = useState(1);
   const total = images.length;
   const lightbox = images.map((img, i) => ({ src: img.hdUrl ?? img.url, alt: imageAlt(hotelName, img.caption, i, total) }));
 
@@ -35,7 +35,7 @@ export function Gallery({ images, hotelName, backHref }: { images: HotelImage[];
           aria-label={`Фото: ${hotelName}`}
           onScroll={(e) => {
             const el = e.currentTarget;
-            setCurrent(Math.round(el.scrollLeft / el.clientWidth));
+            setPosition(carouselPosition(el.scrollLeft, el.clientWidth, MOBILE_SLIDES, total));
           }}
         >
           {images.slice(0, MOBILE_SLIDES).map((img, i) => (
@@ -47,7 +47,9 @@ export function Gallery({ images, hotelName, backHref }: { images: HotelImage[];
                   fill
                   sizes="100vw"
                   quality={75}
-                  loading={i === 0 ? "eager" : "lazy"}
+                  // Lazy + high priority (Next 16 docs for responsive variants): desktop, where this
+                  // carousel is hidden, never downloads it; on phones it is in view and loads first.
+                  loading="lazy"
                   fetchPriority={i === 0 ? "high" : "auto"}
                   className="object-cover"
                 />
@@ -67,7 +69,7 @@ export function Gallery({ images, hotelName, backHref }: { images: HotelImage[];
           <ChevronLeft className="size-5" />
         </Link>
         <span className="absolute bottom-3 right-3 rounded-full bg-ink/70 px-2.5 py-1 text-xs text-white" aria-hidden>
-          {Math.min(current + 1, total)} / {total}
+          {position} / {total}
         </span>
       </div>
 

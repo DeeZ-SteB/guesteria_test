@@ -23,13 +23,21 @@ type Props = { offers: RoomOffer[]; hotelId: string; hotelName: string; stay: St
 export function RoomsView({ offers, hotelId, hotelName, stay, signedIn }: Props) {
   const [filters, setFilters] = useState({ breakfast: false, freeCancel: false });
   const visible = useMemo(() => filterOffers(offers, filters), [offers, filters]);
-  const cheapest = useMemo(() => cheapestRate(offers), [offers]);
+  // Chip filters reset when the dates change (the list remounts per stay) — accepted: the
+  // available rates are different anyway.
+  // Badge the cheapest of what the guest can see (filters may hide the overall cheapest).
+  const cheapest = useMemo(() => cheapestRate(visible), [visible]);
   const nights = nightsBetween(stay.checkIn, stay.checkOut);
   const router = useRouter();
   const { open } = useAuthModal();
 
   function choose(rate: RateOption) {
-    const href = checkoutHref({ offerId: rate.offerId, hotelId, stay });
+    let href: string;
+    try {
+      href = checkoutHref({ offerId: rate.offerId, hotelId, stay });
+    } catch {
+      return; // unusable token; such rates are already dropped by the mapper
+    }
     if (signedIn) router.push(href);
     else open({ next: href, title: "Увійдіть, щоб забронювати" });
   }

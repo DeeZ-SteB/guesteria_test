@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { lightboxWindow } from "@/lib/hotels/page";
 
 export type LightboxImage = { src: string; alt: string };
 
@@ -57,12 +58,13 @@ export function Lightbox({
             setTouchX(null);
           }}
         >
-          {[-1, 0, 1].map((offset) => {
-            const i = (index + offset + count) % count;
+          {lightboxWindow(index, count).map((i) => {
+            const current = i === index;
             const image = images[i];
+            // Neighbours are rendered invisibly (not display:none) and eager, so they really preload.
             return (
-              <div key={i} className={offset === 0 ? "relative h-full w-full" : "hidden"} aria-hidden={offset !== 0}>
-                <Image src={image.src} alt={image.alt} fill sizes="100vw" quality={75} className="object-contain" loading={offset === 0 ? "eager" : "lazy"} />
+              <div key={i} className={current ? "relative h-full w-full" : "invisible absolute inset-0"} aria-hidden={!current}>
+                <Image src={image.src} alt={current ? image.alt : ""} fill sizes="100vw" quality={75} className="object-contain" loading="eager" />
               </div>
             );
           })}

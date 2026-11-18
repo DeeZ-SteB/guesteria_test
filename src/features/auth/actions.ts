@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { demoCredentials } from "@/server/env";
 import { authErrorMessage } from "./errors";
 import { fieldErrors, nextOnlySchema, signInSchema, signUpSchema } from "./schemas";
+import { emailSafeReturnPath } from "@/lib/return-to";
 
 export type AuthFormState = {
   error?: string;
@@ -50,7 +51,7 @@ export async function signUp(_prev: AuthFormState, formData: FormData): Promise<
   // Supabase only accepts URLs from the project's redirect allow-list.
   const origin = (await headers()).get("origin");
   const emailRedirectTo = origin
-    ? `${origin}/auth/confirm?next=${encodeURIComponent(parsed.data.next)}`
+    ? `${origin}/auth/confirm?next=${encodeURIComponent(emailSafeReturnPath(parsed.data.next))}`
     : undefined;
 
   const supabase = await createClient();

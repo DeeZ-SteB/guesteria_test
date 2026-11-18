@@ -44,3 +44,26 @@ export function safeReturnTo(raw: unknown, fallback = "/"): string {
 function isSamePath(path: string): boolean {
   return path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/\\");
 }
+
+const EMAIL_MAX = 512;
+
+/**
+ * Return path for links sent by email (sign-up confirmation). A checkout link carries a
+ * ~1.2k-char offer token that has no business in a mailbox and may exceed provider limits,
+ * so it is replaced by the hotel page for the same stay, where the guest can pick a room again.
+ */
+export function emailSafeReturnPath(raw: unknown): string {
+  const safe = safeReturnTo(raw);
+  const url = new URL(safe, "http://guesteria.invalid");
+  if (url.pathname === "/checkout") {
+    const hotel = url.searchParams.get("hotel");
+    if (!hotel || !/^[a-z0-9]{3,32}$/i.test(hotel)) return "/";
+    const stay = new URLSearchParams();
+    for (const key of ["checkin", "checkout", "adults"]) {
+      const value = url.searchParams.get(key);
+      if (value) stay.set(key, value);
+    }
+    return safeReturnTo(`/hotels/${hotel}?${stay}`);
+  }
+  return safe.length <= EMAIL_MAX ? safe : "/";
+}

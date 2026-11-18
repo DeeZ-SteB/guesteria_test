@@ -4,6 +4,7 @@ import { roundMoney } from "@/lib/money";
 import { boardLabel } from "@/lib/board";
 import { parseCancelTime } from "@/lib/cancellation";
 import { htmlToParagraphs } from "@/lib/text/html-to-text";
+import { offerIdSchema } from "@/lib/booking/offer";
 import type {
   HotelDetailsResponse,
   HotelListResponse,
@@ -176,6 +177,8 @@ export function toRoomOffers(rates: RatesResponse, rooms: Room[], now: Date = ne
   const groups = new Map<string, RoomOffer>();
 
   for (const roomType of rates.data[0]?.roomTypes ?? []) {
+    // A rate whose token can't be handed to checkout would make «Обрати» do nothing: drop it.
+    if (!offerIdSchema.safeParse(roomType.offerId).success) continue;
     const rate = roomType.rates[0];
     // Prefer LiteAPI's mapping; if the id is unknown, fall back to a room with the same name
     // so one room never shows up as two cards.

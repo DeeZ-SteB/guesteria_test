@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { offerIdSchema } from "@/lib/booking/offer";
 import { findCity } from "@/lib/cities";
-import { isPastCheckIn, isTooFarAhead, MAX_DAYS_AHEAD, MAX_GUESTS, staySchema, type Stay } from "@/lib/booking/stay";
+import { defaultStay, isPastCheckIn, isTooFarAhead, MAX_DAYS_AHEAD, MAX_GUESTS, staySchema, type Stay } from "@/lib/booking/stay";
 
 export type SearchQuery = { cityId: string } & Stay;
 
@@ -152,4 +152,24 @@ export function stayKey(stay: Stay): string {
 /** Stable identity of a search (excludes sort/filters) — used as a Suspense key. */
 export function searchKey(query: SearchQuery): string {
   return `${query.cityId}|${query.checkIn}|${query.checkOut}|${query.adults}`;
+}
+
+export type HotelStayState =
+  | { status: "none"; values: StayValues }
+  | { status: "invalid"; values: StayValues; errors: Partial<Record<Exclude<SearchField, "city">, string>> }
+  | { status: "ok"; stay: Stay };
+
+/** Hotel page: no dates → suggest defaults; one or bad dates → errors; else a valid stay. */
+export function hotelStayState(raw: Record<string, string | string[] | undefined>, today: string): HotelStayState {
+  const pick = (key: string) => {
+    const v = raw[key];
+    return (Array.isArray(v) ? v[0] : v) ?? "";
+  };
+  const values: StayValues = { checkIn: pick("checkin"), checkOut: pick("checkout"), adults: pick("adults") || "2" };
+  if (!values.checkIn && !values.checkOut) {
+    const d = defaultStay(today);
+    return { status: "none", values: { ...values, checkIn: d.checkIn, checkOut: d.checkOut } };
+  }
+  const { stay, errors } = validateStay(values, today);
+  return stay ? { status: "ok", stay } : { status: "invalid", values, errors };
 }
