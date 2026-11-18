@@ -36,7 +36,7 @@ export function to24h(value: string | null | undefined): string | null {
 
 /** Joins the hotel list with min-rates; hotels without a price are dropped, LiteAPI order kept. */
 export function toHotelSummaries(list: HotelListResponse, rates: MinRatesResponse, currency = "UAH"): HotelSummary[] {
-  const byHotel = new Map(rates.data.map((r) => [r.hotelId, r]));
+  const byHotel = new Map(rates.data.flatMap((r) => (r ? [[r.hotelId, r] as const] : [])));
   return list.data.flatMap((hotel) => {
     const rate = hotel && byHotel.get(hotel.id);
     if (!hotel || !rate) return [];
@@ -53,7 +53,6 @@ export function toHotelSummaries(list: HotelListResponse, rates: MinRatesRespons
         location:
           hotel.latitude != null && hotel.longitude != null ? { lat: hotel.latitude, lng: hotel.longitude } : null,
         price: money(publicPrice, currency),
-        netPrice: money(rate.price, currency),
       },
     ];
   });
@@ -113,25 +112,31 @@ export function toReviews({ data }: ReviewsResponse): Review[] {
   );
 }
 
-/** Free-cancellation deadline = earliest moment a penalty applies. */
+const NOT_REFUNDABLE = { refundable: false, freeCancellationUntil: null, penalty: null } as const;
+
+/**
+ * Free-cancellation deadline = earliest moment a penalty applies.
+ * Conservative: if any policy entry is unreadable or undatable, we promise nothing.
+ */
 function cancellationOf(rate: RateResponse, now: Date) {
   const policy = rate.cancellationPolicies;
-  if (!policy || policy.refundableTag !== "RFN") {
-    return { refundable: false, freeCancellationUntil: null, penalty: null };
-  }
-  const penalties = (policy.cancelPolicyInfos ?? [])
-    .filter((p) => p.amount > 0)
-    .map((p) => ({ at: parseCancelTime(p.cancelTime, p.timezone), amount: p.amount, currency: p.currency }))
-    .sort((a, b) => (a.at ?? "").localeCompare(b.at ?? ""));
-  const first = penalties[0];
-  // A deadline we cannot date, or one that has passed, is not a free cancellation.
-  if (first && (!first.at || new Date(first.at) <= now)) {
-    return { refundable: false, freeCancellationUntil: null, penalty: money(first.amount, first.currency) };
-  }
+  if (!policy || policy.refundableTag !== "RFN") return NOT_REFUNDABLE;
+  const infos = policy.cancelPolicyInfos ?? [];
+  if (infos.some((info) => info === null)) return NOT_REFUNDABLE;
+
+  const penalties = infos
+    .flatMap((p) => (p && p.amount > 0 ? [p] : []))
+    .map((p) => ({ ...p, at: parseCancelTime(p.cancelTime, p.timezone) }));
+  if (penalties.some((p) => p.at === null)) return NOT_REFUNDABLE;
+  if (penalties.length === 0) return { refundable: true, freeCancellationUntil: null, penalty: null };
+
+  const first = penalties.sort((a, b) => a.at!.localeCompare(b.at!))[0];
+  if (new Date(first.at!) <= now) return NOT_REFUNDABLE;
   return {
     refundable: true,
-    freeCancellationUntil: first?.at ?? null,
-    penalty: first ? money(first.amount, first.currency) : null,
+    freeCancellationUntil: first.at,
+    // Only a fixed amount can be shown as hryvnias; percent/nights penalties are not.
+    penalty: first.type === "amount" || first.type == null ? money(first.amount, first.currency) : null,
   };
 }
 
@@ -142,16 +147,17 @@ function toRateOption(
   const rate = roomType.rates[0];
   const net = roomType.offerRetailRate;
   const suggested = roomType.suggestedSellingPrice ?? rate.retailRate.suggestedSellingPrice[0] ?? null;
-  const publicAmount = Math.max(net.amount, suggested?.amount ?? 0);
+  // Ignore a suggested price in another currency rather than compare apples to oranges.
+  const suggestedAmount = suggested?.currency === net.currency ? suggested.amount : 0;
+  const publicAmount = Math.max(net.amount, suggestedAmount);
   return {
     offerId: roomType.offerId,
-    boardCode: rate.boardType,
+    boardCode: rate.boardType ?? null,
     boardLabel: boardLabel(rate.boardType, rate.boardName),
     ...cancellationOf(rate, now),
     price: money(publicAmount, net.currency),
-    netPrice: money(net.amount, net.currency),
     payAtHotel: (rate.retailRate.taxesAndFees ?? [])
-      .filter((fee) => !fee.included && fee.amount > 0)
+      .flatMap((fee) => (fee && !fee.included && fee.amount > 0 ? [fee] : []))
       .map((fee) => ({
         label: FEE_LABELS[fee.description.trim().toLowerCase()] ?? fee.description,
         amount: money(fee.amount, fee.currency),
@@ -165,11 +171,17 @@ function toRateOption(
  */
 export function toRoomOffers(rates: RatesResponse, rooms: Room[], now: Date = new Date()): RoomOffer[] {
   const roomsById = new Map(rooms.map((r) => [r.id, r]));
+  const roomsByName = new Map(rooms.map((r) => [r.name.trim().toLowerCase(), r]));
   const groups = new Map<string, RoomOffer>();
 
   for (const roomType of rates.data[0]?.roomTypes ?? []) {
     const rate = roomType.rates[0];
-    const room = rate.mappedRoomId != null ? (roomsById.get(rate.mappedRoomId) ?? null) : null;
+    // Prefer LiteAPI's mapping; if the id is unknown, fall back to a room with the same name
+    // so one room never shows up as two cards.
+    const room =
+      (rate.mappedRoomId != null ? roomsById.get(rate.mappedRoomId) : undefined) ??
+      roomsByName.get(rate.name.trim().toLowerCase()) ??
+      null;
     const key = room ? `room:${room.id}` : `name:${rate.name.trim().toLowerCase()}`;
     const group = groups.get(key) ?? { room, name: room?.name ?? rate.name, rates: [] };
     group.rates.push(toRateOption(roomType, now));

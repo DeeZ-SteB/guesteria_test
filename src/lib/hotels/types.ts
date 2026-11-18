@@ -13,8 +13,8 @@ export type HotelSummary = {
   location: { lat: number; lng: number } | null;
   /** Public price for the whole stay (suggested selling price, never below it). */
   price: Money;
-  /** What LiteAPI charges us. Server-side only concern; kept for booking. */
-  netPrice: Money;
+  // Our net cost is deliberately absent: these objects reach client components and the AI.
+  // Booking (stage 5) gets the payable price from prebook instead.
 };
 
 export type HotelImage = { url: string; hdUrl: string | null; caption: string | null };
@@ -52,15 +52,18 @@ export type PayAtHotel = { label: string; amount: Money };
 
 export type RateOption = {
   offerId: string;
-  boardCode: string;
+  boardCode: string | null;
   boardLabel: string;
+  /**
+   * true + deadline → free until then; true + null → no penalty at all;
+   * false → non-refundable or the supplier's policy could not be read safely.
+   */
   refundable: boolean;
-  /** ISO UTC; null when non-refundable or the deadline is unknown. */
+  /** ISO UTC. */
   freeCancellationUntil: string | null;
-  /** Penalty after the deadline, when known. */
+  /** Penalty after the deadline, when it is a fixed amount. */
   penalty: Money | null;
   price: Money;
-  netPrice: Money;
   payAtHotel: PayAtHotel[];
 };
 

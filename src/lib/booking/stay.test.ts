@@ -41,3 +41,13 @@ describe("staySchema", () => {
     expect(staySchema.safeParse({ ...valid, adults: "0" }).success).toBe(false);
   });
 });
+
+describe("isPastCheckIn", () => {
+  it("compares against today's date in Kyiv, not UTC", async () => {
+    const { isPastCheckIn } = await import("./stay");
+    // 23:30 UTC on 17 Nov is already 18 Nov in Kyiv.
+    const now = new Date("2026-11-17T23:30:00Z");
+    expect(isPastCheckIn("2026-11-17", now)).toBe(true);
+    expect(isPastCheckIn("2026-11-18", now)).toBe(false);
+  });
+});

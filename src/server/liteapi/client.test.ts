@@ -109,3 +109,40 @@ describe("LiteAPI client: errors", () => {
     }
   });
 });
+
+// ---- Regressions found by the review agents (stage 2) ----
+describe("LiteAPI client: more error branches", () => {
+  it("classifies an unlisted 4xxx code by HTTP status, not as a server error", async () => {
+    const fetch = fakeFetch({ status: 400, body: { error: { code: 4001, message: "x" } } });
+    expect(await caught(createLiteApiClient({ apiKey: "k", fetch }).getRates(stayQuery))).toMatchObject({
+      kind: "invalid_request",
+      code: 4001,
+    });
+  });
+
+  it("falls back to the HTTP status when the error has no numeric code", async () => {
+    const fetch = fakeFetch({ status: 503, body: { error: { message: "down" } } });
+    expect((await caught(createLiteApiClient({ apiKey: "k", fetch }).getRates(stayQuery))).kind).toBe("upstream");
+  });
+
+  it("does not retry a timed-out GET", async () => {
+    const timeout = Object.assign(new Error("t"), { name: "TimeoutError" });
+    const fetch = fakeFetch(timeout, ok(hotelsEmpty));
+    expect((await caught(createLiteApiClient({ apiKey: "k", fetch }).getHotel("lpbbb0c"))).kind).toBe("timeout");
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports network when the retry also fails", async () => {
+    const fetch = fakeFetch(new TypeError("a"), new TypeError("b"));
+    expect((await caught(createLiteApiClient({ apiKey: "k", fetch }).getHotel("lpbbb0c"))).kind).toBe("network");
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects booking ids that could change the request path", async () => {
+    const fetch = fakeFetch();
+    const client = createLiteApiClient({ apiKey: "k", fetch });
+    expect((await caught(client.getBooking(".."))).kind).toBe("invalid_request");
+    expect((await caught(client.cancelBooking("a/../b"))).kind).toBe("invalid_request");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});

@@ -30,8 +30,13 @@ export function formatKyivDateTime(iso: string): string {
   return `${Number(get("day"))} ${MONTHS[Number(get("month")) - 1]}, ${get("hour")}:${get("minute")}`;
 }
 
-/** Shown under a rate: free-cancellation deadline or "non-refundable". */
-export function cancellationText(freeCancellationUntil: string | null, now: Date = new Date()): string {
-  if (!freeCancellationUntil || new Date(freeCancellationUntil) <= now) return "Без повернення коштів";
+/** Shown under a rate. Takes both fields so data and text can never disagree. */
+export function cancellationText(
+  { refundable, freeCancellationUntil }: { refundable: boolean; freeCancellationUntil: string | null },
+  now: Date = new Date(),
+): string {
+  if (!refundable) return "Без повернення коштів";
+  if (!freeCancellationUntil) return "Безкоштовне скасування";
+  if (new Date(freeCancellationUntil) <= now) return "Без повернення коштів";
   return `Безкоштовне скасування до ${formatKyivDateTime(freeCancellationUntil)}`;
 }

@@ -53,9 +53,11 @@ describe("cancellation text in Kyiv time", () => {
 
   it("promises free cancellation only while the deadline is in the future", () => {
     const now = new Date("2026-11-18T12:00:00Z");
-    expect(cancellationText("2026-12-06T10:00:00Z", now)).toBe("Безкоштовне скасування до 6 гру, 12:00");
-    expect(cancellationText("2026-11-01T10:00:00Z", now)).toBe("Без повернення коштів");
-    expect(cancellationText(null, now)).toBe("Без повернення коштів");
+    const free = (until: string | null) => ({ refundable: true, freeCancellationUntil: until });
+    expect(cancellationText(free("2026-12-06T10:00:00Z"), now)).toBe("Безкоштовне скасування до 6 гру, 12:00");
+    expect(cancellationText(free("2026-11-01T10:00:00Z"), now)).toBe("Без повернення коштів");
+    expect(cancellationText(free(null), now)).toBe("Безкоштовне скасування");
+    expect(cancellationText({ refundable: false, freeCancellationUntil: null }, now)).toBe("Без повернення коштів");
   });
 });
 
@@ -71,6 +73,15 @@ describe("htmlToParagraphs", () => {
   it("drops scripts and never returns markup", () => {
     const out = htmlToParagraphs('<p>Hi<script>alert(1)</script><img src=x onerror="x"></p>');
     expect(out).toEqual(["Hi"]);
+  });
+
+  // Found by the security-auditor agent: String.fromCodePoint throws on these.
+  it("survives out-of-range and surrogate numeric entities", () => {
+    expect(htmlToParagraphs("<p>A&#99999999;B&#x110000;C&#xD800;D</p>")).toEqual(["A\ufffdB\ufffdC\ufffdD"]);
+  });
+
+  it("removes invisible bidi and zero-width characters that could hide text from people", () => {
+    expect(htmlToParagraphs("Safe&#8238;txet\u200b hidden")).toEqual(["Safetxet hidden"]);
   });
 
   it("handles empty input", () => {

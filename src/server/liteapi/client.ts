@@ -18,14 +18,20 @@ export const BOOK_HOST = "https://book.liteapi.travel/v3.0";
 const TIMEOUT = { data: 10_000, rates: 20_000, booking: 120_000, bookingRead: 30_000 } as const;
 
 export type Occupancy = { adults: number };
+/** Currency and nationality are fixed (UAH / UA) and deliberately not caller-controlled. */
 export type RatesQuery = {
   hotelIds: string[];
   checkin: string;
   checkout: string;
   occupancies: Occupancy[];
-  currency?: string;
-  guestNationality?: string;
 };
+
+/** Ids that end up in a URL path: no dots, slashes or encoding tricks. */
+const PATH_ID = /^[A-Za-z0-9_-]{1,64}$/;
+function pathId(value: string, endpoint: string): string {
+  if (!PATH_ID.test(value)) throw new LiteApiError("invalid_request", endpoint);
+  return value;
+}
 
 type RequestOptions<T extends z.ZodType> = {
   method?: "GET" | "POST" | "PUT";
@@ -86,7 +92,9 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
     } catch (error) {
       const normalised = fromThrown(error, endpoint);
       // Never log headers or the key: endpoint + kind + code is enough to debug.
-      console.error(`[liteapi] ${normalised.endpoint} → ${normalised.kind}`, normalised.code ?? normalised.httpStatus ?? "");
+      // "No availability" is a normal search outcome, not an error.
+      const log = normalised.kind === "no_availability" ? console.info : console.error;
+      log(`[liteapi] ${normalised.endpoint} → ${normalised.kind}`, normalised.code ?? normalised.httpStatus ?? "");
       throw normalised;
     }
   }
@@ -121,7 +129,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
     getMinRates: (q: RatesQuery) =>
       request(DATA_HOST, "/hotels/min-rates", {
         method: "POST",
-        body: { ...rateDefaults, ...q },
+        body: { ...q, ...rateDefaults },
         timeoutMs: TIMEOUT.rates,
         schema: minRatesSchema,
       }),
@@ -129,7 +137,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
     getRates: (q: RatesQuery) =>
       request(DATA_HOST, "/hotels/rates", {
         method: "POST",
-        body: { ...rateDefaults, roomMapping: true, ...q },
+        body: { ...q, ...rateDefaults, roomMapping: true },
         timeoutMs: TIMEOUT.rates,
         schema: ratesSchema,
       }),
@@ -160,16 +168,16 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
       }),
 
     /** Untested against sandbox until stage 5. */
-    getBooking: (bookingId: string) =>
-      request(BOOK_HOST, `/bookings/${encodeURIComponent(bookingId)}`, {
+    getBooking: async (bookingId: string) =>
+      request(BOOK_HOST, `/bookings/${pathId(bookingId, "GET /bookings/{id}")}`, {
         query: { timeout: 25 },
         timeoutMs: TIMEOUT.bookingRead,
         schema: bookingSchema,
       }),
 
     /** Untested against sandbox until stage 5. */
-    cancelBooking: (bookingId: string) =>
-      request(BOOK_HOST, `/bookings/${encodeURIComponent(bookingId)}`, {
+    cancelBooking: async (bookingId: string) =>
+      request(BOOK_HOST, `/bookings/${pathId(bookingId, "PUT /bookings/{id}")}`, {
         method: "PUT",
         query: { timeout: 25 },
         timeoutMs: TIMEOUT.bookingRead,

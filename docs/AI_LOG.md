@@ -41,3 +41,36 @@ Format:
 
 - Caught by me (missed by agents): Next.js 16 `Date.now()` prerender error from Supabase `getClaims()` in the header → `connection()` in `getCurrentUser`.
 - Manual checks (browser, 375 px and 1280 px): protected-page redirect → modal → demo login → back to `/account?tab=trips`; sign-up; wrong password copy; `?next=//evil.com` stays on `/`; reopening the modal after sign-out; Esc on the account menu; no horizontal scroll.
+
+## 2026-11-18 — Stage 2: LiteAPI data layer (`feat/liteapi-client`)
+- Before planning, I captured real sandbox responses (incl. errors) into `__fixtures__` so agents worked from ground truth, not docs. This surfaced: `HTTP 200 + error 2001`, `hotelIds: ""`, board code `BI` (not `BB`), untaxed tourism fee, 1 250-char `offerId`.
+- `planner` → `docs/plans/02-liteapi-client.md`. It found the separate booking host (`book.liteapi.travel`) and the rule that public prices must not go below `suggestedSellingPrice`.
+- `scripts/check-cities.mjs` (proposed by planner) caught 3 wrong city spellings that returned ~2 hotels instead of 80–150: LiteAPI uses `Ternopilʼ`, `Ivano-Frankivsʼk` (U+02BC) and `Vinnytsya`. Lutsk removed (1 hotel). Threshold raised to ≥ 20 hotels to catch near-misses.
+- Findings: code-reviewer 17 (2 HIGH, 6 MEDIUM, 9 LOW), security-auditor 8 (2 MEDIUM, 6 LOW). Overlap 2. **All accepted** except where noted; every behavioural fix got a failing test first (20 new tests, 118 total).
+
+| Agent | Sev | Finding | Resolution |
+|---|---|---|---|
+| code | HIGH | One malformed cancel-policy entry wiped the penalty list → RFN rate shown as free cancellation the supplier never promised | Per-item parsing; any unreadable/undatable entry → not refundable. Test. |
+| code | HIGH | RFN with no penalties: data said refundable, UI said "Без повернення" | `cancellationText` now takes `{refundable, freeCancellationUntil}`; "Безкоштовне скасування" without a date. Test. |
+| code | MED | One malformed fee dropped all fees → tourism fee hidden | Per-item fee parsing. Test. |
+| code | MED | Penalty `type` ignored (percent shown as ₴) | Only `type: amount` becomes a hryvnia penalty. Test. |
+| code | MED | `data.catch([])` turned a broken upstream shape into "no hotels", cached for days | Top-level `data` strict → upstream error, never cached. Test. |
+| code | MED | Unlisted 2xxx/4xxx codes classified as server errors (`code >= 500`) | Unknown codes fall back to HTTP status. Test. |
+| code | MED | Past check-in reached LiteAPI and looked like "no rooms" | `isPastCheckIn` (Kyiv date) → `invalid_request`. Test incl. UTC/Kyiv midnight edge. |
+| code | MED | `netPrice` (our cost/margin) in public types that reach client components and the AI | Removed from domain types; stage 5 takes the payable price from prebook. Test asserts absence. |
+| security | MED | `&#99999999;` in a supplier description → `RangeError` → hotel page permanently broken | Range-checked decoding (U+FFFD). Reproduced with a failing test first. |
+| security | MED | Booking calls act on all bookings under our key | No change now (not wired). **Stage 5 must**: session check, Zod, ownership lookup in `bookings` before get/cancel, server-generated unique `clientReference`, no retry of `book`, server-only `bookings` writes, per-user rate limit, never expose to AI without the same checks. |
+| security | LOW | `..` as bookingId would retarget the booking-host path | `pathId` allowlist before building the URL. Test. |
+| both | LOW | `cacheTag` built from unvalidated `hotelId` | Validation moved to uncached wrappers; cached functions only see parsed ids. |
+| security | LOW | Supplier image URLs could be `javascript:`/`http:` | `https` only. Test. |
+| security | LOW | Bidi/zero-width characters survive into text and AI prompts | Stripped after decoding. Test. |
+| security | LOW | Caller could override `currency`/`guestNationality` | Removed from the input type; defaults applied last. |
+| security | LOW | Error `cause` may hold supplier internals | Documented contract: callers return only `{kind, message}`. |
+| code | LOW | Unknown `mappedRoomId` duplicated a room card | Fallback match by room name. Test. |
+| code | LOW | Missing board became "Без харчування"; empty `boardName` → empty label | Neutral "уточнюйте в готелі". Test. |
+| code | LOW | Suggested price in another currency compared numerically | Ignored unless currencies match. |
+| code | LOW | Expected 2001 logged as `console.error` | Logged at info level. |
+| code | LOW | Mixed error types from `searchHotels` (ZodError vs LiteApiError) | Single `LiteApiError("invalid_request")`. |
+| code | LOW | Missing retry/timeout/unknown-code tests | Added. |
+
+- Caught by me: one of my own tests asserted the wrong ranking ("ри" is a prefix of both Рим and Рига) — fixed the test, not the code. Live probe after fixes: Lviv 16 hotels, no `netPrice` keys in output, past date / unknown city / `../etc` all → `invalid_request` without calling LiteAPI.

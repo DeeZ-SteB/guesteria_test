@@ -7,6 +7,9 @@ import { z } from "zod";
  */
 
 const nullableString = z.string().nullish().catch(null);
+/** Supplier media: https only, so a javascript:/data:/http: URL can never reach an <a> or the image proxy. */
+const httpsUrl = z.url({ protocol: /^https$/ });
+const nullableHttpsUrl = httpsUrl.nullish().catch(null);
 const nullableNumber = z.number().nullish().catch(null);
 const stringList = z.array(z.string()).catch([]);
 
@@ -23,14 +26,16 @@ export const hotelListItemSchema = z.object({
   reviewCount: z.number().catch(0),
   address: nullableString,
   city: nullableString,
-  main_photo: nullableString,
-  thumbnail: nullableString,
+  main_photo: nullableHttpsUrl,
+  thumbnail: nullableHttpsUrl,
   latitude: nullableNumber,
   longitude: nullableNumber,
 });
 
+// Top-level `data` stays strict: a changed upstream shape must be an error (not cached),
+// never a silent "no hotels". Leniency applies per item and to cosmetic fields only.
 export const hotelListSchema = z.object({
-  data: z.array(hotelListItemSchema.nullable().catch(null)).catch([]),
+  data: z.array(hotelListItemSchema.nullable().catch(null)),
   // Quirk: an empty string instead of [] when nothing is found.
   hotelIds: z.union([z.array(z.string()), z.literal("")]).catch([]),
   total: z.number().catch(0),
@@ -38,16 +43,17 @@ export const hotelListSchema = z.object({
 
 // ---------- /hotels/min-rates ----------
 export const minRatesSchema = z.object({
-  data: z
-    .array(
-      z.object({
+  data: z.array(
+    z
+      .object({
         hotelId: z.string(),
         price: z.number(),
         suggestedSellingPrice: nullableNumber,
         offerId: nullableString,
-      }),
-    )
-    .catch([]),
+      })
+      .nullable()
+      .catch(null),
+  ),
 });
 
 // ---------- /data/hotel ----------
@@ -58,7 +64,7 @@ const roomSchema = z.object({
   bedTypes: z
     .array(z.object({ quantity: z.number().catch(1), bedType: z.string() }).nullable().catch(null))
     .catch([]),
-  photos: z.array(z.object({ url: z.string(), hd_url: nullableString }).nullable().catch(null)).catch([]),
+  photos: z.array(z.object({ url: httpsUrl, hd_url: nullableHttpsUrl }).nullable().catch(null)).catch([]),
 });
 
 export const hotelDetailsSchema = z.object({
@@ -79,9 +85,9 @@ export const hotelDetailsSchema = z.object({
       .nullish()
       .catch(null),
     hotelImages: z
-      .array(z.object({ url: z.string(), urlHd: nullableString, caption: nullableString }).nullable().catch(null))
+      .array(z.object({ url: httpsUrl, urlHd: nullableHttpsUrl, caption: nullableString }).nullable().catch(null))
       .catch([]),
-    main_photo: nullableString,
+    main_photo: nullableHttpsUrl,
     city: nullableString,
     address: nullableString,
     starRating: nullableNumber,
@@ -120,32 +126,49 @@ export const reviewsSchema = z.object({
 // ---------- /hotels/rates ----------
 const rateSchema = z.object({
   name: z.string().catch(""),
-  boardType: z.string().catch("RO"),
+  // Missing board must not turn into a "room only" claim.
+  boardType: z.string().min(1).nullish().catch(null),
   boardName: nullableString,
   mappedRoomId: nullableNumber,
   retailRate: z.object({
     total: moneyList,
     suggestedSellingPrice: moneyList,
+    // Per-item leniency: one bad fee must not hide the tourism fee the guest pays at the hotel.
     taxesAndFees: z
-      .array(z.object({ included: z.boolean(), description: z.string().catch(""), amount: z.number(), currency: z.string() }))
+      .array(
+        z
+          .object({ included: z.boolean(), description: z.string().catch(""), amount: z.number(), currency: z.string() })
+          .nullable()
+          .catch(null),
+      )
       .nullish()
       .catch([]),
   }),
   cancellationPolicies: z
     .object({
       refundableTag: z.string().catch("NRFN"),
+      // A malformed entry becomes null (not dropped): the mapper then refuses to promise free cancellation.
       cancelPolicyInfos: z
-        .array(z.object({ cancelTime: z.string(), amount: z.number(), currency: z.string(), timezone: nullableString }))
-        .nullish()
-        .catch([]),
+        .array(
+          z
+            .object({
+              cancelTime: z.string(),
+              amount: z.number(),
+              currency: z.string(),
+              type: z.string().nullish().catch(null),
+              timezone: nullableString,
+            })
+            .nullable()
+            .catch(null),
+        )
+        .nullish(),
     })
     .nullish()
     .catch(null),
 });
 
 export const ratesSchema = z.object({
-  data: z
-    .array(
+  data: z.array(
       z.object({
         hotelId: z.string(),
         roomTypes: z.array(
@@ -157,8 +180,7 @@ export const ratesSchema = z.object({
           }),
         ),
       }),
-    )
-    .catch([]),
+    ),
 });
 
 // ---------- booking host (untested against sandbox until stage 5) ----------

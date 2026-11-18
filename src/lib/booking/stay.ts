@@ -33,3 +33,13 @@ export function nightsBetween(checkIn: string, checkOut: string): number {
   const end = Date.parse(`${checkOut}T00:00:00Z`);
   return Math.round((end - start) / MS_PER_DAY);
 }
+
+/** Today's date (YYYY-MM-DD) in Kyiv, where our guests search from. */
+export function todayInKyiv(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Kyiv" }).format(now);
+}
+
+/** LiteAPI answers "no availability" for past dates; we report a date error instead. */
+export function isPastCheckIn(checkIn: string, now: Date = new Date()): boolean {
+  return checkIn < todayInKyiv(now);
+}

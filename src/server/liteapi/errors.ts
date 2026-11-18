@@ -20,13 +20,15 @@ const INVALID_REQUEST_CODES = new Set([4000, 4002, 4003, 4004, 4005]);
 const TIMEOUT_CODES = new Set([4011, 4016]);
 const UNAUTHORIZED_CODES = new Set([401, 403, 40302]);
 
-function kindForCode(code: number): LiteApiErrorKind {
+/** Known LiteAPI codes only; null means "decide by HTTP status". */
+function kindForCode(code: number): LiteApiErrorKind | null {
   if (code === 2001) return "no_availability";
   if (UNAUTHORIZED_CODES.has(code)) return "unauthorized";
   if (INVALID_REQUEST_CODES.has(code)) return "invalid_request";
   if (TIMEOUT_CODES.has(code)) return "timeout";
-  if (code === 4290 || code === 429 || code >= 500) return "upstream";
-  return "unknown";
+  if (code === 4290 || code === 429) return "upstream";
+  if ((code >= 500 && code < 600) || (code >= 5000 && code < 6000)) return "upstream";
+  return null;
 }
 
 function kindForStatus(status: number): LiteApiErrorKind {
@@ -34,7 +36,7 @@ function kindForStatus(status: number): LiteApiErrorKind {
   if (status === 408 || status === 504) return "timeout";
   if (status === 429 || status >= 500) return "upstream";
   if (status >= 400) return "invalid_request";
-  return "unknown";
+  return "unknown"; // e.g. HTTP 200 with an unknown error code
 }
 
 /**
@@ -45,7 +47,7 @@ export function toLiteApiError(httpStatus: number, body: unknown, endpoint: stri
   if (body && typeof body === "object" && "error" in body && body.error) {
     const raw = (body.error as { code?: unknown }).code;
     const code = typeof raw === "number" ? raw : Number(raw);
-    const kind = Number.isFinite(code) ? kindForCode(code) : kindForStatus(httpStatus);
+    const kind = (Number.isFinite(code) ? kindForCode(code) : null) ?? kindForStatus(httpStatus);
     return new LiteApiError(kind, endpoint, { code: Number.isFinite(code) ? code : undefined, httpStatus });
   }
   if (httpStatus < 200 || httpStatus >= 300) {
