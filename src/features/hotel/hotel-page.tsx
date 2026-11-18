@@ -188,7 +188,7 @@ export async function HotelPage({ params, searchParams }: Props) {
             <div className="mt-4">
               {stayState.status === "ok" ? (
                 <Suspense key={stayKey(stayState.stay)} fallback={<RoomsSkeleton />}>
-                  <RoomsSection hotelId={hotel.id} hotelName={hotel.name} stay={stayState.stay} />
+                  <RoomsSection hotelId={hotel.id} hotelName={hotel.name} stay={stayState.stay} cityId={city?.id ?? null} />
                 </Suspense>
               ) : (
                 <p className="rounded-button bg-primary-soft p-4 text-sm text-primary-dark">

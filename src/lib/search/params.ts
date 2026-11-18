@@ -133,8 +133,11 @@ export function hotelHref(hotelId: string, query: Stay & { cityId?: string | nul
   return `/hotels/${encodeURIComponent(hotelId)}?${params}`;
 }
 
-/** Hand-off to checkout (stage 5). Throws on a malformed offer token rather than building a bad link. */
-export function checkoutHref({ offerId, hotelId, stay }: { offerId: string; hotelId: string; stay: Stay }): string {
+/**
+ * Hand-off to checkout. Throws on a malformed offer token rather than building a bad link.
+ * `price` (whole ₴ shown on the hotel page) is a display-only hint for the price-change banner.
+ */
+export function checkoutHref({ offerId, hotelId, stay, price, cityId }: { offerId: string; hotelId: string; stay: Stay; price?: number; cityId?: string | null }): string {
   const params = new URLSearchParams({
     offerId: offerIdSchema.parse(offerId),
     hotel: hotelId,
@@ -142,7 +145,32 @@ export function checkoutHref({ offerId, hotelId, stay }: { offerId: string; hote
     checkout: stay.checkOut,
     adults: String(stay.adults),
   });
+  if (price != null && Number.isFinite(price)) params.set("price", String(Math.ceil(price)));
+  if (cityId) params.set("city", cityId);
   return `/checkout?${params}`;
+}
+
+export type CheckoutParams =
+  | { status: "ok"; offerId: string; hotelId: string; stay: Stay; shownPrice: number | null; cityId: string | null }
+  | { status: "invalid"; backHref: string };
+
+/** Everything here is untrusted and only used to *match* the prebook result. */
+export function parseCheckoutParams(raw: Record<string, string | string[] | undefined>, today: string): CheckoutParams {
+  const pick = (key: string) => {
+    const v = raw[key];
+    return (Array.isArray(v) ? v[0] : v) ?? "";
+  };
+  const hotelId = pick("hotel");
+  const validHotel = /^[a-z0-9]{3,32}$/i.test(hotelId);
+  const city = findCity(pick("city"));
+  const { stay } = validateStay({ checkIn: pick("checkin"), checkOut: pick("checkout"), adults: pick("adults") }, today);
+  const offer = offerIdSchema.safeParse(pick("offerId"));
+  if (!validHotel || !stay || !offer.success) {
+    return { status: "invalid", backHref: validHotel ? (stay ? hotelHref(hotelId, { ...stay, cityId: city?.id }) : `/hotels/${hotelId}`) : "/" };
+  }
+  const priceRaw = Number(pick("price"));
+  const shownPrice = Number.isInteger(priceRaw) && priceRaw > 0 && priceRaw < 100_000_000 ? priceRaw : null;
+  return { status: "ok", offerId: offer.data, hotelId, stay, shownPrice, cityId: city?.id ?? null };
 }
 
 export function stayKey(stay: Stay): string {

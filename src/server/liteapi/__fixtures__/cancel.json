@@ -1,0 +1,13 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "data": {
+      "bookingId": "wHbOotXkt",
+      "cancellation_fee": 0,
+      "currency": "UAH",
+      "refund_amount": 23173.02,
+      "status": "CANCELLED"
+    },
+    "sandbox": true
+  }
+}

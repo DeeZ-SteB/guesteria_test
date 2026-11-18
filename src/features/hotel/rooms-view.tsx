@@ -18,9 +18,9 @@ import { EmptyState } from "@/components/ui/feedback";
 import { HotelImage } from "@/components/ui/hotel-image";
 import { useAuthModal } from "@/features/auth/auth-modal";
 
-type Props = { offers: RoomOffer[]; hotelId: string; hotelName: string; stay: Stay; signedIn: boolean };
+type Props = { offers: RoomOffer[]; hotelId: string; hotelName: string; stay: Stay; signedIn: boolean; cityId: string | null };
 
-export function RoomsView({ offers, hotelId, hotelName, stay, signedIn }: Props) {
+export function RoomsView({ offers, hotelId, hotelName, stay, signedIn, cityId }: Props) {
   const [filters, setFilters] = useState({ breakfast: false, freeCancel: false });
   const visible = useMemo(() => filterOffers(offers, filters), [offers, filters]);
   // Chip filters reset when the dates change (the list remounts per stay) — accepted: the
@@ -34,7 +34,7 @@ export function RoomsView({ offers, hotelId, hotelName, stay, signedIn }: Props)
   function choose(rate: RateOption) {
     let href: string;
     try {
-      href = checkoutHref({ offerId: rate.offerId, hotelId, stay });
+      href = checkoutHref({ offerId: rate.offerId, hotelId, stay, price: rate.price.amount, cityId });
     } catch {
       return; // unusable token; such rates are already dropped by the mapper
     }

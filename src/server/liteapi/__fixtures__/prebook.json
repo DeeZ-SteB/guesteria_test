@@ -1,0 +1,109 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "data": {
+      "prebookId": "4bFPhxkgn",
+      "offerId": "AwJ2MQAAAABq_1l_mu5tpahGqMcFNnf-m8si7l-xSxZwbU2_uata2YP7Y2u3HjpdTYuoQq3C_ifqYO3UmdylwRpaxfXPbNWYTDZ1tq09IFzzdntA3Wkp9Wc3tCifMdDoWNUyF9MDfIu-OxSDYQlPs4keuRD74EXeWy1M0atn1U1gI56sheLNRc-5KKJpyyCE18RWgiqg40ilDvshXqedWQTGmF6sxKa8N95m8jaqR3b5uFXCuqUmxPZRTSLAmm0RMtpRxSkJIjuFFEZeK3NMM5nOdNUxiX99BlCv0YMQVpHt9NCNiqtqLQgesR9VHCmiqPqadW8PkT0bAUDnFda8Z6LhzrU7zRFuzRDwv7Gyt1B-2_cKC9DClRFYCRfn35zQNOARq8KLGCXXi4isPhsV-N-1k9DxNi5nK0qpzO8XRwbJmg8O91Zda_iLB58fmDQADw0xnP840YULxVCes1-V4WSoka1HDGLmqcN839oPTtWg1afoGJ-bkcv9jE2Ya9kps6-Eu061D_9bOe1AnrLsUUqkynxgPJ8B4-4R5DrkDPNlS-TYVIJ-zgoDB0Yb1nu9h1VfI_x2kOtffC3gIMvErNN82mglrIYh3T8Ks0jgaNqpx0YcUTa3NSt5jJ3UgbJhQ-UJnaAtKbkgwLIklbHQbaHeQb6RmpNbCZuMl9DqxlA6d4Z8WwfiD4rjVOevqG9s-a8Puj_UqVlNOWmSL2uVp3C3feds6Sn5bzWP-4h5vZ12sYyoAUxqck-eXThb_FaIpSEGj4TNxjHG-jSUydkOLhW174Wx7p_c4K_HnccGNlD9Qqnn32zhyGclqGSOv2_gKMvYeP77FSi2sGGGEycDGz18GijqdILg7LQcThSaRh1gLTqNlALqFr4RqzPMFnlsuGrfmxMDEEna1rdYZx-QMBPEqY2AWg9YV3ijLsxUsQA7NSo101Da8Q8NOLzpnwAtcryV_oxui7I_cFKLOEMMyPu0EFqGNgmJO-YxAPfFl1MS9OmxJoZ1r0xwj21AOe2PxNkOI4qXJ7kfcOJWr3Lif4sdg45mrGr5vO_0uz-M8HOiYbW1wSPlKQzMzzoo5KBGxI3vT5FPbkMDnBl0leIlCjjma_90-Kt0pb6-XsFGE7QwONAo7WaO7ZRNflxmuDAZakHhQrOGOh66bgKPk14qjjBGUeZSJ_Nhwn0CaM8OUqVJaYMWD0UYmhnWiiAsx-sxuOCb2Q==",
+      "hotelId": "lpbbb0c",
+      "currency": "UAH",
+      "termsAndConditions": "",
+      "roomTypes": [
+        {
+          "rates": [
+            {
+              "rateId": "I5MTERCNLJJFQR2VGNCEKTSUIRDVSMSUIVNFEWCHKEZVIT2OKJNEOWSTKRCU2QSTJBAVUVCFJVJFCRZULFCE2TSKK5GVSM2UIFHFIRCHLEZFIRKPJQ2EORKSKRCU2QSTI5MVSVCFJVBFUUCRLJCECTKSK5DUKWSEINGVINCNKZMEMNSWJNKFAUSLKVBTOQ2WJFDEKSCZJVJUER2CIJMFSTSCKZDUSNCYLEZEWUKNGVFVKUJXIJJEONBUKRFU2QSUI5GVSRCRJZJFOR2RGNDEOM2ULBGUKUSUJ5HFEWKHGQ2EIQKJLJJEOUK2KRCUYSSYI5MTIRCPJ5BFCUCSJJCU2VCUGRDUSWKEIVHFEUSHJFMUITKNJJIUOQKZJBMU2VBUJNEVSVCDJZFFCUCRLJCEOTKKLBDU2WKEIVETEU2KGRJFMRKSKNHUKTK2IRAU2USXIZKVSVCFJRFFCR2ZKFCEGTKCGJDUCWKDI56DEMZRG4ZS4MBSPQZDAMRWFUYTELJQGYQDCMB2GAYDUMBQPRJE67D4PR6EI33VMJWGKL2UO5UW4IBIGIQFAZLPOBWGKKL4GAXDAMD4GAXDAMD4PQYC4MBQPQYC4MBQ",
+              "occupancyNumber": 1,
+              "name": "Double/Twin (2 People)",
+              "maxOccupancy": 2,
+              "adultCount": 2,
+              "childCount": 0,
+              "childrenAges": [],
+              "boardType": "RO",
+              "boardName": "Room Only",
+              "remarks": "<br/><br/>Any cancellation with less than 2 day(s) before of the arrival of the client   the hotel will charge 1 nights for cancellation fees. <br/>",
+              "priceType": "commission",
+              "commission": [
+                {
+                  "amount": 0,
+                  "currency": "UAH"
+                }
+              ],
+              "retailRate": {
+                "total": [
+                  {
+                    "amount": 23173.02,
+                    "currency": "UAH"
+                  }
+                ],
+                "suggestedSellingPrice": [
+                  {
+                    "amount": 26648.98,
+                    "currency": "UAH",
+                    "source": ""
+                  }
+                ],
+                "initialPrice": null,
+                "taxesAndFees": [
+                  {
+                    "included": true,
+                    "description": "VAT",
+                    "amount": 1515.99,
+                    "currency": "UAH"
+                  },
+                  {
+                    "included": false,
+                    "description": "Tourism fee",
+                    "amount": 523.42,
+                    "currency": "UAH"
+                  }
+                ]
+              },
+              "cancellationPolicies": {
+                "cancelPolicyInfos": [
+                  {
+                    "cancelTime": "2026-12-06 10:00:00",
+                    "amount": 7724.34,
+                    "currency": "UAH",
+                    "type": "amount",
+                    "timezone": "GMT"
+                  }
+                ],
+                "hotelRemarks": [],
+                "refundableTag": "RFN"
+              },
+              "paymentTypes": [
+                "NUITEE_PAY"
+              ],
+              "providerCommission": {
+                "amount": 0,
+                "currency": ""
+              },
+              "perks": [],
+              "promotions": null
+            }
+          ]
+        }
+      ],
+      "suggestedSellingPrice": 26648.98,
+      "isPackageRate": true,
+      "commission": 0,
+      "price": 23173.02,
+      "priceType": "commission",
+      "priceDifferencePercent": 0,
+      "cancellationChanged": false,
+      "boardChanged": false,
+      "supplier": "nuitee",
+      "supplierId": 2,
+      "paymentTypes": [
+        "NUITEE_PAY",
+        "ACC_CREDIT_CARD",
+        "WALLET"
+      ],
+      "checkin": "2026-12-09",
+      "checkout": "2026-12-12",
+      "sellingPriceToUser": 23173.02
+    },
+    "guestLevel": 0,
+    "sandbox": true
+  }
+}

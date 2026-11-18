@@ -1,12 +1,16 @@
-import type { HotelDetails, HotelSummary, RateOption, Review, Room, RoomOffer } from "@/lib/hotels/types";
+import type { HotelDetails, HotelSummary, PayAtHotel, RateOption, Review, Room, RoomOffer } from "@/lib/hotels/types";
+import type { CheckoutQuote, ConfirmedBooking } from "@/lib/booking/checkout";
 import type { Money } from "@/lib/money";
 import { roundMoney } from "@/lib/money";
 import { boardLabel } from "@/lib/board";
 import { parseCancelTime } from "@/lib/cancellation";
 import { htmlToParagraphs } from "@/lib/text/html-to-text";
 import { offerIdSchema } from "@/lib/booking/offer";
+import { LiteApiError } from "./errors";
 import type {
+  BookingData,
   HotelDetailsResponse,
+  PrebookResponse,
   HotelListResponse,
   MinRatesResponse,
   RateResponse,
@@ -142,28 +146,92 @@ function cancellationOf(rate: RateResponse, now: Date) {
   };
 }
 
+/** Public price rule (stage 2): never below LiteAPI's suggested selling price, same currency only. */
+export function publicPrice(net: Money, suggested: Money | null | undefined): Money {
+  const suggestedAmount = suggested && suggested.currency === net.currency ? suggested.amount : 0;
+  return money(Math.max(net.amount, suggestedAmount), net.currency);
+}
+
+function payAtHotelOf(rate: RateResponse): PayAtHotel[] {
+  return (rate.retailRate.taxesAndFees ?? [])
+    .flatMap((fee) => (fee && !fee.included && fee.amount > 0 ? [fee] : []))
+    .map((fee) => ({
+      label: FEE_LABELS[fee.description.trim().toLowerCase()] ?? fee.description,
+      amount: money(fee.amount, fee.currency),
+    }));
+}
+
 function toRateOption(
   roomType: RatesResponse["data"][number]["roomTypes"][number],
   now: Date,
 ): RateOption {
   const rate = roomType.rates[0];
   const net = roomType.offerRetailRate;
-  const suggested = roomType.suggestedSellingPrice ?? rate.retailRate.suggestedSellingPrice[0] ?? null;
-  // Ignore a suggested price in another currency rather than compare apples to oranges.
-  const suggestedAmount = suggested?.currency === net.currency ? suggested.amount : 0;
-  const publicAmount = Math.max(net.amount, suggestedAmount);
   return {
     offerId: roomType.offerId,
     boardCode: rate.boardType ?? null,
     boardLabel: boardLabel(rate.boardType, rate.boardName),
     ...cancellationOf(rate, now),
-    price: money(publicAmount, net.currency),
-    payAtHotel: (rate.retailRate.taxesAndFees ?? [])
-      .flatMap((fee) => (fee && !fee.included && fee.amount > 0 ? [fee] : []))
-      .map((fee) => ({
-        label: FEE_LABELS[fee.description.trim().toLowerCase()] ?? fee.description,
-        amount: money(fee.amount, fee.currency),
-      })),
+    price: publicPrice(net, roomType.suggestedSellingPrice ?? rate.retailRate.suggestedSellingPrice[0]),
+    payAtHotel: payAtHotelOf(rate),
+  };
+}
+
+/**
+ * Quote for the checkout page, from prebook only. We sell one room per booking, so anything
+ * else is treated as an upstream surprise rather than guessed at.
+ */
+export function toCheckoutQuote({ data: p }: PrebookResponse, now: Date = new Date()): CheckoutQuote {
+  const rates = p.roomTypes.flatMap((t) => t.rates);
+  if (rates.length !== 1) throw new LiteApiError("upstream", "POST /rates/prebook");
+  const rate = rates[0];
+  const net = rate.retailRate.total[0] ?? { amount: p.price, currency: p.currency };
+  const suggested = p.suggestedSellingPrice != null ? { amount: p.suggestedSellingPrice, currency: p.currency } : rate.retailRate.suggestedSellingPrice[0];
+  return {
+    prebookId: p.prebookId,
+    hotelId: p.hotelId,
+    checkIn: p.checkin,
+    checkOut: p.checkout,
+    adults: rate.adultCount,
+    occupancyNumber: rate.occupancyNumber,
+    roomName: rate.name.trim() || "Номер",
+    boardCode: rate.boardType ?? null,
+    boardLabel: boardLabel(rate.boardType, rate.boardName),
+    ...cancellationOf(rate, now),
+    price: publicPrice({ amount: Math.max(net.amount, p.price), currency: net.currency }, suggested),
+    payAtHotel: payAtHotelOf(rate),
+    changes: {
+      price: (p.priceDifferencePercent ?? 0) !== 0,
+      cancellation: p.cancellationChanged === true,
+      board: p.boardChanged === true,
+    },
+  };
+}
+
+/** Normalises a book / get-booking response. Room and board come from the prebook, not from here. */
+export function toConfirmedBooking(b: BookingData): ConfirmedBooking {
+  const deadlines: Array<string | null> = [];
+  const policy = b.cancellationPolicies;
+  if (policy?.refundableTag === "RFN") {
+    for (const info of policy.cancelPolicyInfos ?? []) {
+      if (info && info.amount > 0) deadlines.push(parseCancelTime(info.cancelTime, info.timezone));
+      if (info === null) deadlines.push(null);
+    }
+  }
+  if (b.lastFreeCancellationDate) {
+    const t = Date.parse(b.lastFreeCancellationDate);
+    deadlines.push(Number.isNaN(t) ? null : new Date(t).toISOString());
+  }
+  const unknown = policy?.refundableTag !== "RFN" || deadlines.length === 0 || deadlines.some((d) => d === null);
+  return {
+    liteapiBookingId: b.bookingId,
+    clientReference: b.clientReference ?? null,
+    prebookId: b.prebookId ?? null,
+    hotelId: b.hotelId ?? b.hotel?.hotelId ?? null,
+    checkIn: b.checkin,
+    checkOut: b.checkout,
+    confirmed: b.status.toUpperCase() === "CONFIRMED",
+    refundableUntil: unknown ? null : (deadlines as string[]).sort()[0],
   };
 }
 

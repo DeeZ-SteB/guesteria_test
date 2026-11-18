@@ -7,9 +7,9 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
   ('00000000-0000-0000-0000-00000000000b', 'b@test.local');
 
-insert into public.bookings (id, user_id, liteapi_booking_id, hotel_id, hotel_name, check_in, check_out, adults, total_amount, currency)
+insert into public.bookings (id, user_id, liteapi_booking_id, hotel_id, hotel_name, check_in, check_out, adults, total_amount, currency, client_reference, prebook_id, room_name)
 values ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a',
-        'LITE-A', 'h1', 'Hotel A', '2026-12-01', '2026-12-03', 2, 200, 'EUR');
+        'LITE-A', 'h1', 'Hotel A', '2026-12-01', '2026-12-03', 2, 200, 'EUR', 'gs-aaaaaaaaaaaaaaaaaaaaaaaa', 'PRE1', 'Standard');
 
 insert into public.favorites (user_id, hotel_id, hotel_name)
 values ('00000000-0000-0000-0000-00000000000a', 'h1', 'Hotel A');
@@ -22,8 +22,8 @@ select is((select count(*) from public.bookings)::int, 0, 'B cannot see A''s boo
 select is((select count(*) from public.favorites)::int, 0, 'B cannot see A''s favorites');
 
 select throws_ok(
-  $$ insert into public.bookings (user_id, liteapi_booking_id, hotel_id, hotel_name, check_in, check_out, adults, total_amount, currency)
-     values ('00000000-0000-0000-0000-00000000000b', 'FORGED', 'h1', 'X', '2026-12-01', '2026-12-02', 1, 0, 'EUR') $$,
+  $$ insert into public.bookings (user_id, liteapi_booking_id, hotel_id, hotel_name, check_in, check_out, adults, total_amount, currency, client_reference, prebook_id, room_name)
+     values ('00000000-0000-0000-0000-00000000000b', 'FORGED', 'h1', 'X', '2026-12-01', '2026-12-02', 1, 0, 'EUR', 'gs-bbbbbbbbbbbbbbbbbbbbbbbb', 'P', 'R') $$,
   '42501', null, 'Clients cannot create bookings directly');
 
 select throws_ok(

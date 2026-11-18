@@ -125,7 +125,7 @@ export const reviewsSchema = z.object({
 });
 
 // ---------- /hotels/rates ----------
-const rateSchema = z.object({
+export const rateSchema = z.object({
   name: z.string().catch(""),
   // Missing board must not turn into a "room only" claim.
   boardType: z.string().min(1).nullish().catch(null),
@@ -184,33 +184,65 @@ export const ratesSchema = z.object({
     ),
 });
 
-// ---------- booking host (untested against sandbox until stage 5) ----------
+// ---------- booking host (verified against sandbox fixtures in stage 5) ----------
 export const prebookSchema = z.object({
   data: z.object({
-    prebookId: z.string(),
+    prebookId: z.string().min(1),
     offerId: z.string().nullish(),
-    hotelId: z.string().nullish(),
+    hotelId: z.string().min(1),
     currency: z.string(),
     price: z.number(),
     suggestedSellingPrice: nullableNumber,
     priceDifferencePercent: nullableNumber,
     cancellationChanged: z.boolean().nullish().catch(null),
     boardChanged: z.boolean().nullish().catch(null),
+    checkin: z.iso.date(),
+    checkout: z.iso.date(),
+    roomTypes: z.array(
+      z.object({
+        rates: z.array(
+          rateSchema.extend({
+            adultCount: z.number().int().catch(0),
+            occupancyNumber: z.number().int().catch(1),
+          }),
+        ),
+      }),
+    ),
   }),
 });
 
-export const bookingSchema = z.object({
-  data: z.object({
-    bookingId: z.string(),
-    clientReference: nullableString,
-    status: z.string(),
-    hotelConfirmationCode: nullableString,
-    price: nullableNumber,
-    currency: nullableString,
-    checkin: nullableString,
-    checkout: nullableString,
-  }),
+const bookingDataSchema = z.object({
+  bookingId: z.string().min(1),
+  clientReference: nullableString,
+  status: z.string(),
+  hotelConfirmationCode: nullableString,
+  prebookId: nullableString,
+  hotelId: nullableString,
+  hotel: z.object({ hotelId: z.string(), name: z.string() }).nullish().catch(null),
+  checkin: z.iso.date(),
+  checkout: z.iso.date(),
+  adults: nullableNumber,
+  price: nullableNumber,
+  currency: nullableString,
+  // Quirk: bookedRooms[].rate.boardType/boardName are swapped in sandbox; use bookedRooms[].boardType.
+  bookedRooms: z
+    .array(
+      z
+        .object({
+          roomType: z.object({ name: z.string().catch("") }).nullish().catch(null),
+          boardType: nullableString,
+          boardName: nullableString,
+        })
+        .nullable()
+        .catch(null),
+    )
+    .catch([]),
+  cancellationPolicies: rateSchema.shape.cancellationPolicies,
+  lastFreeCancellationDate: nullableString,
 });
+
+export const bookingSchema = z.object({ data: bookingDataSchema });
+export const bookingListSchema = z.object({ data: z.array(bookingDataSchema) });
 
 export const cancelBookingSchema = z.object({
   data: z.object({
@@ -223,6 +255,9 @@ export const cancelBookingSchema = z.object({
   }),
 });
 
+export type PrebookResponse = z.infer<typeof prebookSchema>;
+export type BookingResponse = z.infer<typeof bookingSchema>;
+export type BookingData = z.infer<typeof bookingDataSchema>;
 export type HotelListResponse = z.infer<typeof hotelListSchema>;
 export type MinRatesResponse = z.infer<typeof minRatesSchema>;
 export type HotelDetailsResponse = z.infer<typeof hotelDetailsSchema>;

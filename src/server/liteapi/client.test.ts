@@ -44,7 +44,8 @@ describe("LiteAPI client: requests", () => {
   });
 
   it("sends booking calls to the booking host with ACC_CREDIT_CARD (sandbox) payment", async () => {
-    const fetch = fakeFetch(ok({ data: { bookingId: "B1", status: "CONFIRMED" } }));
+    const { default: book } = await import("./__fixtures__/book.json");
+    const fetch = fakeFetch({ status: book.httpStatus, body: book.body });
     await createLiteApiClient({ apiKey: "k", fetch }).book({
       prebookId: "P1",
       clientReference: "ref-1",
@@ -173,5 +174,44 @@ describe("reviveLiteApiError", () => {
     expect(reviveLiteApiError(real)).toBe(real);
     expect(reviveLiteApiError(new Error("boom")).kind).toBe("unknown");
     expect(reviveLiteApiError(Object.assign(new Error("LiteAPI x: hacked"), { name: "LiteApiError" })).kind).toBe("unknown");
+  });
+});
+
+
+// ---- Stage 5: booking host verified against real sandbox responses ----
+describe("booking host schemas and errors (sandbox fixtures)", () => {
+  it("parses prebook, book, booking, cancel and both lookups", async () => {
+    const fx = (n: string) => import(`./__fixtures__/${n}.json`).then((m) => m.default);
+    const { prebookSchema, bookingSchema, bookingListSchema, cancelBookingSchema } = await import("./schemas");
+    expect(prebookSchema.safeParse((await fx("prebook")).body).success).toBe(true);
+    expect(bookingSchema.safeParse((await fx("book")).body).success).toBe(true);
+    expect(bookingSchema.safeParse((await fx("booking")).body).success).toBe(true);
+    expect(cancelBookingSchema.safeParse((await fx("cancel")).body).success).toBe(true);
+    expect(bookingListSchema.parse((await fx("bookings-by-reference")).body).data).toHaveLength(1);
+    expect(bookingListSchema.parse((await fx("bookings-by-reference-empty")).body).data).toEqual([]);
+  });
+
+  it("maps a repeated clientReference (4005) to its own kind", async () => {
+    const { default: dup } = await import("./__fixtures__/error-book-duplicate.json");
+    const fetch = fakeFetch({ status: dup.httpStatus, body: dup.body });
+    const err = await caught(
+      createLiteApiClient({ apiKey: "k", fetch }).book({
+        prebookId: "P1",
+        clientReference: "gs-0123456789abcdef01234567",
+        holder: { firstName: "A", lastName: "B", email: "a@b.co" },
+        guests: [{ occupancyNumber: 1, firstName: "A", lastName: "B", email: "a@b.co" }],
+      }),
+    );
+    expect(err).toMatchObject({ kind: "duplicate", code: 4005 });
+  });
+
+  it("looks bookings up by a well-formed reference only, without the query in logs", async () => {
+    const { default: empty } = await import("./__fixtures__/bookings-by-reference-empty.json");
+    const fetch = fakeFetch({ status: 200, body: empty.body });
+    const client = createLiteApiClient({ apiKey: "k", fetch });
+    await client.listBookingsByReference("gs-0123456789abcdef01234567");
+    expect(fetch.mock.calls[0][0]).toBe(`${BOOK_HOST}/bookings?clientReference=gs-0123456789abcdef01234567&timeout=15`);
+    expect((await caught(client.listBookingsByReference("x&status=all"))).kind).toBe("invalid_request");
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

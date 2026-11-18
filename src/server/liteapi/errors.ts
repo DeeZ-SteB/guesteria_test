@@ -16,13 +16,15 @@ export class LiteApiError extends Error {
   }
 }
 
-const INVALID_REQUEST_CODES = new Set([4000, 4002, 4003, 4004, 4005]);
+const INVALID_REQUEST_CODES = new Set([4000, 4002, 4003, 4004]);
 const TIMEOUT_CODES = new Set([4011, 4016]);
 const UNAUTHORIZED_CODES = new Set([401, 403, 40302]);
 
 /** Known LiteAPI codes only; null means "decide by HTTP status". */
 function kindForCode(code: number): LiteApiErrorKind | null {
   if (code === 2001) return "no_availability";
+  // Same clientReference booked before (verified in sandbox): resolved by looking the booking up.
+  if (code === 4005) return "duplicate";
   if (UNAUTHORIZED_CODES.has(code)) return "unauthorized";
   if (INVALID_REQUEST_CODES.has(code)) return "invalid_request";
   if (TIMEOUT_CODES.has(code)) return "timeout";
@@ -65,7 +67,7 @@ export function fromThrown(error: unknown, endpoint: string): LiteApiError {
   return new LiteApiError("unknown", endpoint, { cause: error });
 }
 
-const KINDS = new Set<LiteApiErrorKind>(["no_availability", "unauthorized", "invalid_request", "timeout", "network", "upstream", "unknown"]);
+const KINDS = new Set<LiteApiErrorKind>(["no_availability", "unauthorized", "invalid_request", "duplicate", "timeout", "network", "upstream", "unknown"]);
 const MESSAGE = /^LiteAPI (.+): ([a-z_]+)(?: \((\d+)\))?$/;
 
 /**

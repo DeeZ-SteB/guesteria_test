@@ -2,6 +2,7 @@ export type LiteApiErrorKind =
   | "no_availability"
   | "unauthorized"
   | "invalid_request"
+  | "duplicate"
   | "timeout"
   | "network"
   | "upstream"
@@ -11,6 +12,7 @@ const MESSAGES: Record<LiteApiErrorKind, string> = {
   no_availability: "Немає вільних номерів на ці дати. Спробуйте інші дати.",
   unauthorized: "Сервіс бронювання тимчасово недоступний. Спробуйте пізніше.",
   invalid_request: "Не вдалося виконати запит. Перевірте параметри й спробуйте ще.",
+  duplicate: "Це бронювання вже створено.",
   timeout: "Сервіс відповідає надто довго. Спробуйте ще раз.",
   network: "Немає зв'язку із сервісом бронювання. Перевірте з'єднання.",
   upstream: "Сервіс бронювання повернув помилку. Спробуйте ще раз.",

@@ -9,7 +9,9 @@ import { findCity } from "@/lib/cities";
 import { liteApiKey } from "@/server/env";
 import { createLiteApiClient } from "./client";
 import { LiteApiError, reviveLiteApiError } from "./errors";
-import { toHotelDetails, toReviews } from "./mappers";
+import { toCheckoutQuote, toConfirmedBooking, toHotelDetails, toReviews } from "./mappers";
+import { offerIdSchema } from "@/lib/booking/offer";
+import type { CheckoutQuote, ConfirmedBooking, Guest } from "@/lib/booking/checkout";
 import * as service from "./service";
 
 export { LiteApiError } from "./errors";
@@ -135,4 +137,39 @@ export async function getRoomRates(hotelId: string, stayInput: Stay): Promise<Ro
   const stay = parseStay(stayInput, "getRoomRates");
   const details = await fromCache(() => cachedHotel(id), "getRoomRates");
   return service.getRoomRates(client(), { hotelId: id, stay, rooms: details.rooms });
+}
+
+// ---------- booking (never cached; server-only callers check the session first) ----------
+
+/** Prebook an offer and return the quote to show. Validates the token shape first. */
+export async function prebookOffer(offerId: string): Promise<CheckoutQuote> {
+  if (!offerIdSchema.safeParse(offerId).success) invalid("prebookOffer");
+  return toCheckoutQuote(await client().prebook(offerId));
+}
+
+/** Book once. Never retried here: the caller resolves timeouts / 4005 via the reference. */
+export async function bookPrebook(input: {
+  prebookId: string;
+  clientReference: string;
+  occupancyNumber: number;
+  guest: Guest;
+}): Promise<ConfirmedBooking> {
+  const person = { firstName: input.guest.firstName, lastName: input.guest.lastName, email: input.guest.email };
+  const result = await client().book({
+    prebookId: input.prebookId,
+    clientReference: input.clientReference,
+    holder: person,
+    guests: [{ occupancyNumber: input.occupancyNumber, ...person }],
+  });
+  return toConfirmedBooking(result.data);
+}
+
+export async function findBookingsByReference(clientReference: string): Promise<ConfirmedBooking[]> {
+  const result = await client().listBookingsByReference(clientReference);
+  return result.data.map(toConfirmedBooking);
+}
+
+/** Stage 6 calls this only after checking the booking belongs to the user. */
+export async function cancelLiteApiBooking(liteapiBookingId: string) {
+  return (await client().cancelBooking(liteapiBookingId)).data;
 }

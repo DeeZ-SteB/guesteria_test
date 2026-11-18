@@ -12,4 +12,12 @@ describe("security headers", () => {
     expect(map["x-content-type-options"]).toBe("nosniff");
     expect(map["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   });
+
+  it("never caches or indexes checkout", async () => {
+    const rules = (await nextConfig.headers?.()) ?? [];
+    const checkout = rules.find((r) => r.source === "/checkout");
+    const map = Object.fromEntries((checkout?.headers ?? []).map((h) => [h.key.toLowerCase(), h.value]));
+    expect(map["cache-control"]).toBe("private, no-store");
+    expect(map["x-robots-tag"]).toBe("noindex");
+  });
 });

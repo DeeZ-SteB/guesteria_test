@@ -1,0 +1,193 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "data": {
+      "bookingId": "wHbOotXkt",
+      "clientReference": "gs-probe-1795033089190",
+      "supplierBookingId": "wHbOotXkt",
+      "supplierBookingName": "nuitee",
+      "supplier": "nuitee",
+      "supplierId": 2,
+      "status": "CONFIRMED",
+      "hotelConfirmationCode": "test",
+      "checkin": "2026-12-09",
+      "checkout": "2026-12-12",
+      "hotel": {
+        "hotelId": "lpbbb0c",
+        "name": "Grand Hotel Lviv Casino & Spa",
+        "parentHotelId": "lpbbb0c",
+        "phone": "",
+        "email": ""
+      },
+      "bookedRooms": [
+        {
+          "roomType": {
+            "roomTypeId": "",
+            "name": "Test rate 1"
+          },
+          "boardType": "RO",
+          "boardName": "Room Only",
+          "adults": 1,
+          "children": 0,
+          "rate": {
+            "rateId": "I5MTERCNLJJFQR2VGNCEKTSUIRDVSMSUIVNFEWCHKEZVIT2OKJNEOWSTKRCU2QSTJBAVUVCFJVJFCRZULFCE2TSKK5GVSM2UIFHFIRCHLEZFIRKPJQ2EORKSKRCU2QSTI5MVSVCFJVBFUUCRLJCECTKSK5DUKWSEINGVINCNKZMEMNSWJNKFAUSLKVBTOQ2WJFDEKSCZJVJUER2CIJMFSTSCKZDUSNCYLEZEWUKNGVFVKUJXIJJEONBUKRFU2QSUI5GVSRCRJZJFOR2RGNDEOM2ULBGUKUSUJ5HFEWKHGQ2EIQKJLJJEOUK2KRCUYSSYI5MTIRCPJ5BFCUCSJJCU2VCUGRDUSWKEIVHFEUSHJFMUITKNJJIUOQKZJBMU2VBUJNEVSVCDJZFFCUCRLJCEOTKKLBDU2WKEIVETEU2KGRJFMRKSKNHUKTK2IRAU2USXIZKVSVCFJRFFCR2ZKFCEGTKCGJDUCWKDI56DEMZRG4ZS4MBSPQZDAMRWFUYTELJQGYQDCMB2GAYDUMBQPRJE67D4PR6EI33VMJWGKL2UO5UW4IBIGIQFAZLPOBWGKKL4GAXDAMD4GAXDAMD4PQYC4MBQPQYC4MBQ",
+            "retailRate": {
+              "total": {
+                "amount": 23173.02,
+                "currency": "UAH"
+              },
+              "suggestedSellingPrice": {
+                "source": ""
+              },
+              "taxesAndFees": [
+                {
+                  "included": true,
+                  "description": "VAT",
+                  "amount": 1515.99,
+                  "currency": "UAH"
+                },
+                {
+                  "included": false,
+                  "description": "Tourism fee",
+                  "amount": 523.42,
+                  "currency": "UAH"
+                }
+              ]
+            },
+            "cancellationPolicies": {
+              "cancelPolicyInfos": [
+                {
+                  "cancelTime": "2026-12-09 23:59:59",
+                  "amount": 23173.02,
+                  "type": "amount",
+                  "timezone": "GMT",
+                  "currency": "UAH"
+                }
+              ],
+              "hotelRemarks": [],
+              "refundableTag": "RFN"
+            },
+            "maxOccupancy": 1,
+            "boardType": "Room Only",
+            "boardName": "RO",
+            "remarks": "",
+            "perks": []
+          },
+          "firstName": "Demo",
+          "lastName": "Guest",
+          "childrenAges": null,
+          "board": "Room Only",
+          "boardCode": "RO",
+          "cancellationPolicies": {
+            "cancelPolicyInfos": [
+              {
+                "cancelTime": "2026-12-09 23:59:59",
+                "amount": 23173.02,
+                "type": "amount",
+                "timezone": "GMT",
+                "currency": "UAH"
+              }
+            ],
+            "hotelRemarks": [],
+            "refundableTag": "RFN"
+          },
+          "room_id": "I5MTERCNLJJFQR2VGNCEKTSUIRDVSMSUIVNFEWCHKEZVIT2OKJNEOWSTKRCU2QSTJBAVUVCFJVJFCRZULFCE2TSKK5GVSM2UIFHFIRCHLEZFIRKPJQ2EORKSKRCU2QSTI5MVSVCFJVBFUUCRLJCECTKSK5DUKWSEINGVINCNKZMEMNSWJNKFAUSLKVBTOQ2WJFDEKSCZJVJUER2CIJMFSTSCKZDUSNCYLEZEWUKNGVFVKUJXIJJEONBUKRFU2QSUI5GVSRCRJZJFOR2RGNDEOM2ULBGUKUSUJ5HFEWKHGQ2EIQKJLJJEOUK2KRCUYSSYI5MTIRCPJ5BFCUCSJJCU2VCUGRDUSWKEIVHFEUSHJFMUITKNJJIUOQKZJBMU2VBUJNEVSVCDJZFFCUCRLJCEOTKKLBDU2WKEIVETEU2KGRJFMRKSKNHUKTK2IRAU2USXIZKVSVCFJRFFCR2ZKFCEGTKCGJDUCWKDI56DEMZRG4ZS4MBSPQZDAMRWFUYTELJQGYQDCMB2GAYDUMBQPRJE67D4PR6EI33VMJWGKL2UO5UW4IBIGIQFAZLPOBWGKKL4GAXDAMD4GAXDAMD4PQYC4MBQPQYC4MBQ",
+          "occupancy_number": 1,
+          "amount": 23173.02,
+          "currency": "UAH",
+          "children_count": 0,
+          "remarks": "",
+          "guests": [
+            {
+              "firstName": "Demo",
+              "lastName": "Guest",
+              "email": "demo@guesteria.stay",
+              "phone": "",
+              "remarks": "",
+              "occupancyNumber": 1
+            }
+          ]
+        }
+      ],
+      "holder": {
+        "firstName": "Demo",
+        "lastName": "Guest",
+        "email": "demo@guesteria.stay",
+        "phone": ""
+      },
+      "createdAt": "2026-11-18T20:18:10",
+      "updatedAt": "",
+      "cancellationPolicies": {
+        "cancelPolicyInfos": [
+          {
+            "cancelTime": "2026-12-09 23:59:59",
+            "amount": 23173.02,
+            "type": "amount",
+            "timezone": "GMT",
+            "currency": "UAH"
+          }
+        ],
+        "hotelRemarks": [],
+        "refundableTag": "RFN"
+      },
+      "specialRemarks": "Example special remarks",
+      "optionalFees": "Optional fees",
+      "mandatoryFees": "Mandatory fees",
+      "knowBeforeYouGo": "Know before you go",
+      "price": 23173.02,
+      "sellingPriceToUser": 23173.02,
+      "commission": 0,
+      "addonsTotalAmount": 0,
+      "currency": "UAH",
+      "remarks": "",
+      "voucherCode": "",
+      "voucherTotalAmount": 0,
+      "addons": null,
+      "guestId": 326083,
+      "distributorCommission": 0,
+      "distributorPrice": 0,
+      "trackingId": "",
+      "firstName": "Demo",
+      "lastName": "Guest",
+      "adults": 2,
+      "children": "",
+      "childrenCount": 0,
+      "prebookId": "4bFPhxkgn",
+      "paymentStatus": "succeeded",
+      "paymentTransactionId": "tr_cts_AePQneJ_OXP9WgAt_mWoJ",
+      "sellingPrice": "23173.02",
+      "exchangeRate": 0.020114582817489367,
+      "exchangeRateUsd": 0.022123787141557567,
+      "email": "demo@guesteria.stay",
+      "tag": "RFN",
+      "lastFreeCancellationDate": "2026-12-09T23:59:59Z",
+      "userId": 390222,
+      "nationality": "UA",
+      "holderTitle": "",
+      "hotelId": "lpbbb0c",
+      "hotelName": "Grand Hotel Lviv Casino & Spa",
+      "cancelledAt": null,
+      "refundedAt": null,
+      "loyaltyGuestId": 326083,
+      "sandbox": 1,
+      "clientCommission": 0,
+      "voucherId": null,
+      "voucherTransationId": null,
+      "processingFee": 5.13,
+      "amountRefunded": 0,
+      "refundType": "",
+      "addonsRedemptions": null,
+      "rebookFrom": "",
+      "agentId": null,
+      "cancelledBy": null,
+      "feed": "liteapionboarding",
+      "goodwillPayment": null,
+      "newCharges": 0,
+      "compensationAmount": 0,
+      "hotelRemarks": "<br/><br/>Any cancellation with less than 2 day(s) before of the arrival of the client   the hotel will charge 1 nights for cancellation fees. <br/>",
+      "payLaterDeadline": null
+    },
+    "guestLevel": 0,
+    "sandbox": true
+  }
+}

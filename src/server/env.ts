@@ -26,3 +26,17 @@ export function liteApiKey(): string {
   if (!parsed.success) throw new LiteApiConfigError();
   return parsed.data;
 }
+
+/** HMAC key for checkout tokens and client references. Throws without revealing anything. */
+export function checkoutSecret(): string {
+  const parsed = z.string().min(32).safeParse(process.env.CHECKOUT_SECRET);
+  if (!parsed.success) throw new Error("CHECKOUT_SECRET is not configured");
+  return parsed.data;
+}
+
+/** Supabase secret (service) key. Only src/server/db/admin.ts may use it. */
+export function supabaseSecretKey(): string {
+  const parsed = z.string().min(20).safeParse(process.env.SUPABASE_SECRET_KEY);
+  if (!parsed.success) throw new Error("SUPABASE_SECRET_KEY is not configured");
+  return parsed.data;
+}

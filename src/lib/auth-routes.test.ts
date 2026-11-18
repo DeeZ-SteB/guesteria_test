@@ -5,6 +5,7 @@ describe("isProtectedPath", () => {
   it("protects the account page and everything under it", () => {
     expect(isProtectedPath("/account")).toBe(true);
     expect(isProtectedPath("/account/trips/123")).toBe(true);
+    expect(isProtectedPath("/checkout")).toBe(true);
   });
 
   it("does not protect public pages or look-alike paths", () => {

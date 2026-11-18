@@ -129,7 +129,8 @@ describe("offer token length vs return path", () => {
     const longest = "A".repeat(OFFER_ID_MAX);
     expect(offerIdSchema.safeParse(longest).success).toBe(true);
     expect(offerIdSchema.safeParse(longest + "A").success).toBe(false);
-    const href = checkoutHref({ offerId: longest, hotelId: "abcdefghijklmnopqrstuvwxyz123456", stay: { checkIn: "2026-12-09", checkOut: "2026-12-12", adults: 8 } });
+    // Worst case incl. the price hint and the longest city id.
+    const href = checkoutHref({ offerId: longest, hotelId: "abcdefghijklmnopqrstuvwxyz123456", stay: { checkIn: "2026-12-09", checkOut: "2026-12-12", adults: 8 }, price: 99_999_999, cityId: "ivano-frankivsk" });
     expect(safeReturnTo(href)).toBe(href);
   });
 });
@@ -200,5 +201,26 @@ describe("cheapest among visible rates", () => {
   it("is computed on the filtered offers", () => {
     const filtered = filterOffers(offers, { breakfast: true, freeCancel: false }, NOW);
     expect(cheapestRate(filtered)?.offerId).toBe("b");
+  });
+});
+
+describe("parseCheckoutParams", () => {
+  const today = "2026-11-18";
+  const offerId = "A".repeat(100);
+  const ok = { offerId, hotel: "lpbbb0c", checkin: "2026-12-09", checkout: "2026-12-12", adults: "2", price: "26649", city: "lviv" };
+  it("accepts a valid hand-off and keeps the price only as a hint", async () => {
+    const { parseCheckoutParams } = await import("@/lib/search/params");
+    expect(parseCheckoutParams(ok, today)).toEqual({
+      status: "ok", offerId, hotelId: "lpbbb0c", stay: { checkIn: "2026-12-09", checkOut: "2026-12-12", adults: 2 }, shownPrice: 26649, cityId: "lviv",
+    });
+    expect(parseCheckoutParams({ ...ok, price: "-5" }, today)).toMatchObject({ shownPrice: null });
+  });
+  it("sends broken links back to the hotel (or home)", async () => {
+    const { parseCheckoutParams } = await import("@/lib/search/params");
+    expect(parseCheckoutParams({ ...ok, offerId: "../x" }, today)).toEqual({
+      status: "invalid", backHref: "/hotels/lpbbb0c?checkin=2026-12-09&checkout=2026-12-12&adults=2&city=lviv",
+    });
+    expect(parseCheckoutParams({ ...ok, hotel: "<x>" }, today)).toEqual({ status: "invalid", backHref: "/" });
+    expect(parseCheckoutParams({ ...ok, checkin: "2020-01-01" }, today)).toEqual({ status: "invalid", backHref: "/hotels/lpbbb0c" });
   });
 });

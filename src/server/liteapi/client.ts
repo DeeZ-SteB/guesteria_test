@@ -2,6 +2,7 @@ import "server-only";
 import type { z } from "zod";
 import { fromThrown, LiteApiError, toLiteApiError } from "./errors";
 import {
+  bookingListSchema,
   bookingSchema,
   cancelBookingSchema,
   hotelDetailsSchema,
@@ -15,7 +16,9 @@ import {
 export const DATA_HOST = "https://api.liteapi.travel/v3.0";
 export const BOOK_HOST = "https://book.liteapi.travel/v3.0";
 
-const TIMEOUT = { data: 10_000, rates: 20_000, booking: 120_000, bookingRead: 30_000 } as const;
+// Book must leave room for a reference lookup inside the page's 120 s maxDuration.
+const TIMEOUT = { data: 10_000, rates: 20_000, prebook: 120_000, book: 95_000, lookup: 20_000, bookingRead: 30_000 } as const;
+const CLIENT_REFERENCE = /^gs-[0-9a-f]{24}$/;
 
 export type Occupancy = { adults: number };
 /** Currency and nationality are fixed (UAH / UA) and deliberately not caller-controlled. */
@@ -142,17 +145,17 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
         schema: ratesSchema,
       }),
 
-    /** Untested against sandbox until stage 5. */
+    /** Verified in sandbox (stage 5). */
     prebook: (offerId: string) =>
       request(BOOK_HOST, "/rates/prebook", {
         method: "POST",
         query: { timeout: 110 },
         body: { offerId, usePaymentSdk: false },
-        timeoutMs: TIMEOUT.booking,
+        timeoutMs: TIMEOUT.prebook,
         schema: prebookSchema,
       }),
 
-    /** Untested against sandbox until stage 5. Not idempotent: never retried. */
+    /** Verified in sandbox. Never retried; LiteAPI rejects a repeated clientReference with 4005. */
     book: (input: {
       prebookId: string;
       clientReference: string;
@@ -161,13 +164,24 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
     }) =>
       request(BOOK_HOST, "/rates/book", {
         method: "POST",
-        query: { timeout: 110 },
+        query: { timeout: 90 },
         body: { ...input, payment: { method: "ACC_CREDIT_CARD" } },
-        timeoutMs: TIMEOUT.booking,
+        timeoutMs: TIMEOUT.book,
         schema: bookingSchema,
       }),
 
-    /** Untested against sandbox until stage 5. */
+    /** Resolves a book that timed out or hit 4005. Verified in sandbox (empty → `data: []`). */
+    listBookingsByReference: async (clientReference: string) => {
+      if (!CLIENT_REFERENCE.test(clientReference)) throw new LiteApiError("invalid_request", "GET /bookings");
+      return request(BOOK_HOST, "/bookings", {
+        query: { clientReference, timeout: 15 },
+        timeoutMs: TIMEOUT.lookup,
+        schema: bookingListSchema,
+        retryNetwork: true,
+      });
+    },
+
+    /** Verified in sandbox. */
     getBooking: async (bookingId: string) =>
       request(BOOK_HOST, `/bookings/${pathId(bookingId, "GET /bookings/{id}")}`, {
         query: { timeout: 25 },
@@ -175,7 +189,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
         schema: bookingSchema,
       }),
 
-    /** Untested against sandbox until stage 5. */
+    /** Verified in sandbox. */
     cancelBooking: async (bookingId: string) =>
       request(BOOK_HOST, `/bookings/${pathId(bookingId, "PUT /bookings/{id}")}`, {
         method: "PUT",

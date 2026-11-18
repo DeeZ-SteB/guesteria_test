@@ -1,0 +1,9 @@
+{
+  "httpStatus": 400,
+  "body": {
+    "error": {
+      "code": 4005,
+      "message": "duplicate booking attempt with existing client reference"
+    }
+  }
+}
