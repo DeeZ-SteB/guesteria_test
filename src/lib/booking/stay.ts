@@ -43,3 +43,30 @@ export function todayInKyiv(now: Date = new Date()): string {
 export function isPastCheckIn(checkIn: string, now: Date = new Date()): boolean {
   return checkIn < todayInKyiv(now);
 }
+
+/** Adds days to an ISO date (UTC arithmetic, DST-safe). */
+export function addDays(iso: string, days: number): string {
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+export const DEFAULT_LEAD_DAYS = 14;
+export const DEFAULT_NIGHTS = 3;
+
+/** Suggested stay for empty forms and popular-city links. */
+export function defaultStay(today: string): Stay {
+  const checkIn = addDays(today, DEFAULT_LEAD_DAYS);
+  return { checkIn, checkOut: addDays(checkIn, DEFAULT_NIGHTS), adults: 2 };
+}
+
+/**
+ * After the guest picks a new check-in: keep the previous stay length if the check-out
+ * no longer fits, and never exceed the maximum stay.
+ */
+export function adjustCheckOut(checkIn: string, checkOut: string, previousNights = DEFAULT_NIGHTS): string {
+  const nights = nightsBetween(checkIn, checkOut);
+  if (nights >= 1 && nights <= MAX_NIGHTS) return checkOut;
+  const keep = Math.min(Math.max(previousNights, 1), MAX_NIGHTS);
+  return addDays(checkIn, keep);
+}

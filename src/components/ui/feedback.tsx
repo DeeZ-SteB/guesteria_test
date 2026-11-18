@@ -39,3 +39,16 @@ export function EmptyState({ icon: Icon, title, text, action, className }: State
     </div>
   );
 }
+
+export function ErrorState({ title, text, action, className }: { title: string; text?: string; action?: ReactNode; className?: string }) {
+  return (
+    <div role="alert" className={cn("flex flex-col items-center px-6 py-12 text-center", className)}>
+      <span className="grid size-14 place-items-center rounded-full bg-danger/10 text-danger" aria-hidden>
+        !
+      </span>
+      <h2 className="mt-4 text-lg font-semibold">{title}</h2>
+      {text && <p className="mt-1 max-w-sm text-sm text-muted">{text}</p>}
+      {action && <div className="mt-5">{action}</div>}
+    </div>
+  );
+}
