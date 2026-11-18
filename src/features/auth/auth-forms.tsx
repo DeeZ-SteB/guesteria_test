@@ -1,13 +1,22 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { CirclePlay } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { signIn, signInAsDemo, signUp, type AuthFormState } from "./actions";
+import { useAuthModal } from "./auth-modal";
 import { PASSWORD_MIN } from "./schemas";
 
 const initial: AuthFormState = {};
+
+/** Closes the modal and navigates once an action reports success. */
+function useFinishOnSuccess(state: AuthFormState) {
+  const { finish } = useAuthModal();
+  useEffect(() => {
+    if (state.redirectTo) finish(state.redirectTo);
+  }, [state, finish]);
+}
 
 function FormMessage({ state }: { state: AuthFormState }) {
   if (state.error) {
@@ -29,6 +38,7 @@ function FormMessage({ state }: { state: AuthFormState }) {
 
 export function SignInForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState(signIn, initial);
+  useFinishOnSuccess(state);
   return (
     <form action={action} className="space-y-3" noValidate>
       <input type="hidden" name="next" value={next} />
@@ -60,6 +70,7 @@ export function SignInForm({ next }: { next: string }) {
 
 export function SignUpForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState(signUp, initial);
+  useFinishOnSuccess(state);
   return (
     <form action={action} className="space-y-3" noValidate>
       <input type="hidden" name="next" value={next} />
@@ -100,6 +111,7 @@ export function SignUpForm({ next }: { next: string }) {
 
 export function DemoButton({ next }: { next: string }) {
   const [state, action, pending] = useActionState(signInAsDemo, initial);
+  useFinishOnSuccess(state);
   return (
     <form action={action} className="space-y-2">
       <input type="hidden" name="next" value={next} />

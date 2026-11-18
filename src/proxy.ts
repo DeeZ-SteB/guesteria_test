@@ -3,21 +3,32 @@ import { updateSession } from "@/lib/supabase/proxy";
 import { isProtectedPath, signInRedirectPath } from "@/lib/auth-routes";
 
 export async function proxy(request: NextRequest) {
-  const { response, isSignedIn } = await updateSession(request);
+  const { response, authHeaders, isSignedIn } = await updateSession(request);
+  const { nextUrl } = request;
 
-  // Optimistic gate only: protected pages still verify the session themselves.
-  if (!isSignedIn && isProtectedPath(request.nextUrl.pathname)) {
-    const target = new URL(
-      signInRedirectPath(request.nextUrl.pathname + request.nextUrl.search),
-      request.url,
-    );
-    const redirect = NextResponse.redirect(target);
-    // Keep any cookie changes made while refreshing (e.g. clearing an expired session).
-    response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
-    return redirect;
+  // Signed-out visitor on a protected page → home with the auth modal open.
+  // Optimistic only: protected pages still verify the session themselves.
+  if (!isSignedIn && isProtectedPath(nextUrl.pathname)) {
+    return redirectKeepingAuth(new URL(signInRedirectPath(nextUrl.pathname + nextUrl.search), request.url));
+  }
+
+  // Signed-in visitor with a stale ?auth= link (bookmark, back button) → drop the modal params.
+  if (isSignedIn && nextUrl.searchParams.has("auth")) {
+    const clean = nextUrl.clone();
+    clean.searchParams.delete("auth");
+    clean.searchParams.delete("next");
+    return redirectKeepingAuth(clean);
   }
 
   return response;
+
+  function redirectKeepingAuth(target: URL) {
+    const redirect = NextResponse.redirect(target);
+    // Keep cookie changes made while refreshing, plus the no-store headers that must travel with them.
+    response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+    Object.entries(authHeaders).forEach(([name, value]) => redirect.headers.set(name, value));
+    return redirect;
+  }
 }
 
 export const config = {

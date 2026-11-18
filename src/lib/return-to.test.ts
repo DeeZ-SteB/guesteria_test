@@ -22,6 +22,12 @@ describe("safeReturnTo", () => {
     ["control character", "/account\n"],
     ["relative path without slash", "account"],
     ["broken percent-encoding", "/%E0%A4%A"],
+    // Found by the security-auditor agent: URL normalisation turns these into "//evil.com".
+    ["dot-segment escape", "/..//evil.com"],
+    ["single-dot escape", "/.//evil.com"],
+    ["encoded dot-segment escape", "/%2e%2e//evil.com"],
+    ["nested dot-segment escape", "/a/..//evil.com"],
+    ["dot + backslash escape", "/./\\evil.com"],
   ])("rejects a %s", (_name, value) => {
     expect(safeReturnTo(value)).toBe("/");
   });

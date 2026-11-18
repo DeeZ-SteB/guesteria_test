@@ -31,7 +31,8 @@ export function Sheet({ open, onClose, title, description, children, className }
   return (
     <dialog
       ref={ref}
-      onClose={onClose}
+      // onClose is called only for user dismissals (Esc, backdrop, ✕), never when the
+      // parent closes the sheet itself, so a programmatic close cannot trigger side effects.
       onCancel={(event) => {
         event.preventDefault();
         onClose();

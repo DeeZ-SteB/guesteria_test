@@ -11,7 +11,13 @@ export type AuthTab = "signin" | "signup";
 type OpenOptions = { tab?: AuthTab; next?: string; title?: string };
 type ModalState = { open: boolean; tab: AuthTab; next: string; title?: string };
 
-const AuthModalContext = createContext<{ open: (options?: OpenOptions) => void } | null>(null);
+type AuthModalApi = {
+  open: (options?: OpenOptions) => void;
+  /** Close after a successful sign-in and go to the (already sanitised) target. */
+  finish: (redirectTo: string) => void;
+};
+
+const AuthModalContext = createContext<AuthModalApi | null>(null);
 
 export function useAuthModal() {
   const context = useContext(AuthModalContext);
@@ -49,7 +55,17 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     }
   }, [router]);
 
-  const value = useMemo(() => ({ open }), [open]);
+  const finish = useCallback(
+    (redirectTo: string) => {
+      setState((s) => ({ ...s, open: false }));
+      router.replace(safeReturnTo(redirectTo));
+      // Re-render server components (header, account) with the new session cookie.
+      router.refresh();
+    },
+    [router],
+  );
+
+  const value = useMemo(() => ({ open, finish }), [open, finish]);
 
   return (
     <AuthModalContext.Provider value={value}>

@@ -9,6 +9,8 @@ import { AUTH_COOKIE_NAME, serverSupabaseConfig } from "./config";
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const { url, key } = serverSupabaseConfig();
+  /** Headers Supabase requires alongside auth cookies (e.g. Cache-Control: private, no-store). */
+  const authHeaders: Record<string, string> = {};
 
   const supabase = createServerClient(url, key, {
     cookieOptions: { name: AUTH_COOKIE_NAME },
@@ -16,12 +18,14 @@ export async function updateSession(request: NextRequest) {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
         );
+        Object.assign(authHeaders, headers);
+        Object.entries(headers).forEach(([name, value]) => response.headers.set(name, value));
       },
     },
   });
@@ -29,5 +33,5 @@ export async function updateSession(request: NextRequest) {
   // Validates the JWT and triggers a refresh when it is close to expiry.
   const { data } = await supabase.auth.getClaims();
 
-  return { response, isSignedIn: Boolean(data?.claims?.sub) };
+  return { response, authHeaders, isSignedIn: Boolean(data?.claims?.sub) };
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { demoCredentials } from "@/server/env";
@@ -12,6 +13,11 @@ export type AuthFormState = {
   fieldErrors?: Record<string, string>;
   /** Echo back non-secret input so the form keeps it after a failed attempt. */
   values?: { email?: string; firstName?: string };
+  /**
+   * Set on success. The client closes the modal and navigates there itself:
+   * the modal lives in the root layout, which a server redirect would not reset.
+   */
+  redirectTo?: string;
 };
 
 function formValues(formData: FormData) {
@@ -31,7 +37,7 @@ export async function signIn(_prev: AuthFormState, formData: FormData): Promise<
   });
   if (error) return { error: authErrorMessage(error), values };
 
-  redirect(parsed.data.next);
+  return { redirectTo: parsed.data.next };
 }
 
 export async function signUp(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
@@ -40,15 +46,23 @@ export async function signUp(_prev: AuthFormState, formData: FormData): Promise<
   const values = { email: String(raw.email ?? ""), firstName: String(raw.firstName ?? "") };
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error), values };
 
+  // Where the confirmation email link lands when confirmations are on (Supabase Cloud).
+  // Supabase only accepts URLs from the project's redirect allow-list.
+  const origin = (await headers()).get("origin");
+  const emailRedirectTo = origin
+    ? `${origin}/auth/confirm?next=${encodeURIComponent(parsed.data.next)}`
+    : undefined;
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { data: { first_name: parsed.data.firstName } },
+    options: { data: { first_name: parsed.data.firstName }, emailRedirectTo },
   });
   if (error) return { error: authErrorMessage(error), values };
 
-  // With email confirmation on, Supabase hides existing accounts behind a user with no identities.
+  // Accepted risk (see docs/AI_LOG.md): we tell the visitor the email is taken, which
+  // reveals that an account exists. Supabase hides this behind a user with no identities.
   if (data.user && data.user.identities?.length === 0) {
     return { error: authErrorMessage({ code: "user_already_exists" }), values };
   }
@@ -56,7 +70,7 @@ export async function signUp(_prev: AuthFormState, formData: FormData): Promise<
     return { notice: "Перевірте пошту: ми надіслали лист для підтвердження email", values };
   }
 
-  redirect(parsed.data.next);
+  return { redirectTo: parsed.data.next };
 }
 
 export async function signInAsDemo(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
@@ -68,11 +82,12 @@ export async function signInAsDemo(_prev: AuthFormState, formData: FormData): Pr
   const { error } = await supabase.auth.signInWithPassword(demo);
   if (error) return { error: "Демо-доступ зараз недоступний" };
 
-  redirect(next);
+  return { redirectTo: next };
 }
 
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  // Local scope: the demo account is shared, so a global sign-out would log out every reviewer.
+  await supabase.auth.signOut({ scope: "local" });
   redirect("/");
 }

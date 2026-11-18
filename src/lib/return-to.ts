@@ -32,5 +32,14 @@ export function safeReturnTo(raw: unknown, fallback = "/"): string {
   if (url.origin !== base) return fallback;
 
   INTERNAL_PARAMS.forEach((param) => url.searchParams.delete(param));
-  return `${url.pathname}${url.search}${url.hash}`;
+  const result = `${url.pathname}${url.search}${url.hash}`;
+
+  // Normalisation (dot segments, backslashes) can produce "//host" from a safe-looking input,
+  // so validate the final value too, not only the raw one.
+  if (!isSamePath(result)) return fallback;
+  return result;
+}
+
+function isSamePath(path: string): boolean {
+  return path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/\\");
 }
