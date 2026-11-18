@@ -1,0 +1,9 @@
+{
+  "httpStatus": 401,
+  "body": {
+    "error": {
+      "code": 401,
+      "message": "unauthorized"
+    }
+  }
+}

@@ -1,0 +1,220 @@
+{
+  "data": [
+    {
+      "hotelId": "lpbbb0c",
+      "roomTypes": [
+        {
+          "roomTypeId": "GE2DGMRNG43DQNZYGB6FERSOPQZDAMRWGEZDANRR",
+          "offerId": "offer-standard-room-only",
+          "supplier": "nuitee",
+          "supplierId": 2,
+          "rates": [
+            {
+              "rateId": "I5MTERCNLJJFQR2VGNCEKTSUIRDVSMSUIVNFEWCH",
+              "occupancyNumber": 1,
+              "name": "Double/Twin (2 People)",
+              "maxOccupancy": 2,
+              "adultCount": 2,
+              "childCount": 0,
+              "childrenAges": [],
+              "boardType": "RO",
+              "boardName": "Room Only",
+              "remarks": "From the date of: 09/01/2019 Accommodation tax should be paid by foreign tourists directly at the hotel.<br/>",
+              "priceType": "commission",
+              "commission": [
+                {
+                  "amount": 0,
+                  "currency": "UAH"
+                }
+              ],
+              "retailRate": {
+                "total": [
+                  {
+                    "amount": 23173.02,
+                    "currency": "UAH"
+                  }
+                ],
+                "suggestedSellingPrice": [
+                  {
+                    "amount": 26648.98,
+                    "currency": "UAH",
+                    "source": ""
+                  }
+                ],
+                "initialPrice": [
+                  {
+                    "amount": 23173.02,
+                    "currency": "UAH"
+                  }
+                ],
+                "taxesAndFees": [
+                  {
+                    "included": true,
+                    "description": "VAT",
+                    "amount": 1515.99,
+                    "currency": "UAH"
+                  },
+                  {
+                    "included": false,
+                    "description": "Tourism fee",
+                    "amount": 523.42,
+                    "currency": "UAH"
+                  }
+                ]
+              },
+              "cancellationPolicies": {
+                "cancelPolicyInfos": [
+                  {
+                    "cancelTime": "2026-12-06 10:00:00",
+                    "amount": 7724.34,
+                    "currency": "UAH",
+                    "type": "amount",
+                    "timezone": "GMT"
+                  }
+                ],
+                "hotelRemarks": [],
+                "refundableTag": "RFN"
+              },
+              "mappedRoomId": 1205296,
+              "paymentTypes": [
+                "NUITEE_PAY"
+              ],
+              "providerCommission": {
+                "amount": 0,
+                "currency": ""
+              },
+              "perks": [],
+              "promotions": null
+            }
+          ],
+          "offerRetailRate": {
+            "amount": 23173.02,
+            "currency": "UAH"
+          },
+          "suggestedSellingPrice": {
+            "amount": 26648.98,
+            "currency": "UAH",
+            "source": ""
+          },
+          "offerInitialPrice": {
+            "amount": 23173.02,
+            "currency": "UAH"
+          },
+          "priceType": "commission",
+          "rateType": "package",
+          "paymentTypes": [
+            "NUITEE_PAY"
+          ],
+          "paymentSchedule": "now"
+        },
+        {
+          "roomTypeId": "GE2DGMRNG43DQNZYGB6FERSOPQZDAMRWGEZDANRR",
+          "offerId": "offer-standard-breakfast",
+          "supplier": "nuitee",
+          "supplierId": 2,
+          "rates": [
+            {
+              "rateId": "I5MTERCNLJJFQR2VGNCEKTSUIRDVSMSUIVNFEWCH",
+              "occupancyNumber": 1,
+              "name": "Double/Twin (2 People)",
+              "maxOccupancy": 2,
+              "adultCount": 2,
+              "childCount": 0,
+              "childrenAges": [],
+              "boardType": "BI",
+              "boardName": "Breakfast Included",
+              "remarks": "From the date of: 09/01/2019 Accommodation tax should be paid by foreign tourists directly at the hotel.<br/>",
+              "priceType": "commission",
+              "commission": [
+                {
+                  "amount": 0,
+                  "currency": "UAH"
+                }
+              ],
+              "retailRate": {
+                "total": [
+                  {
+                    "amount": 27545.7,
+                    "currency": "UAH"
+                  }
+                ],
+                "suggestedSellingPrice": [
+                  {
+                    "amount": 31677.55,
+                    "currency": "UAH",
+                    "source": ""
+                  }
+                ],
+                "initialPrice": [
+                  {
+                    "amount": 27545.7,
+                    "currency": "UAH"
+                  }
+                ],
+                "taxesAndFees": [
+                  {
+                    "included": true,
+                    "description": "VAT",
+                    "amount": 1802.06,
+                    "currency": "UAH"
+                  },
+                  {
+                    "included": false,
+                    "description": "Tourism fee",
+                    "amount": 523.42,
+                    "currency": "UAH"
+                  }
+                ]
+              },
+              "cancellationPolicies": {
+                "cancelPolicyInfos": [
+                  {
+                    "cancelTime": "2026-12-06 10:00:00",
+                    "amount": 9181.9,
+                    "currency": "UAH",
+                    "type": "amount",
+                    "timezone": "GMT"
+                  }
+                ],
+                "hotelRemarks": [],
+                "refundableTag": "RFN"
+              },
+              "mappedRoomId": 1205296,
+              "paymentTypes": [
+                "NUITEE_PAY"
+              ],
+              "providerCommission": {
+                "amount": 0,
+                "currency": ""
+              },
+              "perks": [],
+              "promotions": null
+            }
+          ],
+          "offerRetailRate": {
+            "amount": 27545.7,
+            "currency": "UAH"
+          },
+          "suggestedSellingPrice": {
+            "amount": 31677.55,
+            "currency": "UAH",
+            "source": ""
+          },
+          "offerInitialPrice": {
+            "amount": 27545.7,
+            "currency": "UAH"
+          },
+          "priceType": "commission",
+          "rateType": "package",
+          "paymentTypes": [
+            "NUITEE_PAY"
+          ],
+          "paymentSchedule": "now"
+        }
+      ],
+      "et": 10800
+    }
+  ],
+  "guestLevel": 0,
+  "sandbox": true
+}

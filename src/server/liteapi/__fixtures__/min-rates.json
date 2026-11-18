@@ -1,0 +1,23 @@
+{
+  "data": [
+    {
+      "hotelId": "lp55ef0",
+      "price": 14100.83,
+      "suggestedSellingPrice": 16215.95,
+      "offerId": "AwJ2MQAAAABq_z-sojwT2eJNrvZjwbkH0EAJK-Crz4EScJd-KiAcGQFacJav"
+    },
+    {
+      "hotelId": "lp301f7",
+      "price": 14982.35,
+      "suggestedSellingPrice": 17229.7,
+      "offerId": "AwJ2MQAAAABq_z-spacPUC51MuUwI2iJ2tifFpW5rA1czfe7SdV_zu3468ja"
+    },
+    {
+      "hotelId": "lpbbb0c",
+      "price": 23173.02,
+      "suggestedSellingPrice": 26648.98,
+      "offerId": "AwJ2MQAAAABq_z-sWuEB295_TiGBSiSC4uJAee9IgJOvzUUXu-DFIrgNFdFy"
+    }
+  ],
+  "sandbox": true
+}

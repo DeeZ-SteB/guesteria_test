@@ -1,0 +1,510 @@
+{
+  "data": {
+    "id": "lpbbb0c",
+    "name": "Grand Hotel Lviv Casino & Spa",
+    "hotelDescription": "<p><strong>Luxurious Accommodation</strong><br>The Grand Hotel in the heart of Lviv offers a blend of modern comfort and classical charm. Each guest room is equipped with air conditioning, a minibar, and satellite TV, ensuring a luxurious stay for all visitors.</p><p><strong>Gourmet Dining Experience</strong><br>Start your day with a delicious buffet breakfast included in your room rate, and indulge in a full menu at the elegant GrandSoLie restaurant. Whether you're craving a hearty meal or a light snack, the hotel's dining options are sure to satisfy your taste buds.</p><p><strong>Relaxation ",
+    "hotelImportantInformation": "Please inform  of your expected arrival time in advance. You can use the Special Requests box when booking, or contact the property directly using the contact details in your confirmation.\nGuests are required to show a photo ID and credit card upon check-in. Please note that all Special Requests are",
+    "checkinCheckoutTimes": {
+      "checkin_start": "02:00 PM",
+      "checkin_end": "",
+      "checkout": "12:00 PM",
+      "instructions": [],
+      "special_instructions": ""
+    },
+    "hotelImages": [
+      {
+        "url": "https://static.cupid.travel/hotels/537462569.jpg",
+        "urlHd": "https://static.cupid.travel/hotels/537462569.jpg",
+        "caption": "",
+        "order": 0,
+        "defaultImage": true
+      },
+      {
+        "url": "https://static.cupid.travel/hotels/439056890.jpg",
+        "urlHd": "https://static.cupid.travel/hotels/439056890.jpg",
+        "caption": "",
+        "order": 0,
+        "defaultImage": false
+      },
+      {
+        "url": "https://static.cupid.travel/hotels/386004926.jpg",
+        "urlHd": "https://static.cupid.travel/hotels/386004926.jpg",
+        "caption": "",
+        "order": 0,
+        "defaultImage": false
+      },
+      {
+        "url": "https://static.cupid.travel/hotels/138370548.jpg",
+        "urlHd": "https://static.cupid.travel/hotels/138370548.jpg",
+        "caption": "",
+        "order": 0,
+        "defaultImage": false
+      }
+    ],
+    "main_photo": "https://static.cupid.travel/hotels/537462569.jpg",
+    "thumbnail": "https://static.cupid.travel/hotels/thumbnail/537462569.jpg",
+    "currency": "UAH",
+    "country": "ua",
+    "city": "Lviv",
+    "starRating": 5,
+    "location": {
+      "latitude": 49.840842,
+      "longitude": 24.027424
+    },
+    "address": "Prospekt Svobody 13",
+    "hotelFacilities": [
+      "Fitness facilities",
+      "WiFi available",
+      "Free WiFi",
+      "Non-smoking rooms",
+      "Air conditioning",
+      "Fitness center",
+      "Swimming pool",
+      "24-hour front desk",
+      "Restaurant",
+      "Room service",
+      "Business center",
+      "Heating"
+    ],
+    "zip": "79000",
+    "chain": "Not Available",
+    "facilities": [
+      {
+        "facilityId": 492,
+        "name": "Fitness facilities"
+      },
+      {
+        "facilityId": 47,
+        "name": "WiFi available"
+      },
+      {
+        "facilityId": 107,
+        "name": "Free WiFi"
+      },
+      {
+        "facilityId": 16,
+        "name": "Non-smoking rooms"
+      },
+      {
+        "facilityId": 109,
+        "name": "Air conditioning"
+      },
+      {
+        "facilityId": 11,
+        "name": "Fitness center"
+      },
+      {
+        "facilityId": 301,
+        "name": "Swimming pool"
+      },
+      {
+        "facilityId": 8,
+        "name": "24-hour front desk"
+      },
+      {
+        "facilityId": 3,
+        "name": "Restaurant"
+      },
+      {
+        "facilityId": 5,
+        "name": "Room service"
+      },
+      {
+        "facilityId": 20,
+        "name": "Business center"
+      },
+      {
+        "facilityId": 80,
+        "name": "Heating"
+      }
+    ],
+    "rooms": [
+      {
+        "id": 1205296,
+        "roomName": "Standard Twin Room",
+        "roomTitle": "",
+        "description": "Air-conditioned room features a TV and a private bathroom.",
+        "markdownDescription": "",
+        "normalizedDescription": "",
+        "roomSizeSquare": 20,
+        "roomSizeUnit": "sqm",
+        "hotelId": "lpbbb0c",
+        "maxAdults": 2,
+        "maxChildren": 1,
+        "maxOccupancy": 2,
+        "ranking": null,
+        "bedTypes": [
+          {
+            "quantity": 2,
+            "bedType": "Twin bed",
+            "bedSize": "90-130 cm wide",
+            "id": 166
+          }
+        ],
+        "roomAmenities": [
+          {
+            "amenitiesId": 216,
+            "name": "Minibar",
+            "sort": 0
+          },
+          {
+            "amenitiesId": 293,
+            "name": "Safety deposit box",
+            "sort": 17
+          },
+          {
+            "amenitiesId": 339,
+            "name": "TV",
+            "sort": 0
+          },
+          {
+            "amenitiesId": 342,
+            "name": "Telephone",
+            "sort": 0
+          },
+          {
+            "amenitiesId": 11,
+            "name": "Air conditioning",
+            "sort": 0
+          }
+        ],
+        "photos": [
+          {
+            "url": "https://static.cupid.travel/rooms-large-pictures/378162333.jpg",
+            "imageDescription": "",
+            "imageClass1": "hotel room",
+            "imageClass2": "",
+            "failoverPhoto": "https://q-xx.bstatic.com/xdata/images/hotel/max1200/378162333.jpg?k=84bdf71a09c2f4f7e45b9430e6bdde13789f581a23db570287c9450b29e8ebf6&o=",
+            "mainPhoto": true,
+            "score": 0,
+            "classId": 80,
+            "classOrder": 0,
+            "hd_url": "https://static.cupid.travel/rooms-large-pictures/378162333.jpg"
+          },
+          {
+            "url": "https://static.cupid.travel/rooms-large-pictures/390404589.jpg",
+            "imageDescription": "",
+            "imageClass1": "bathroom",
+            "imageClass2": "",
+            "failoverPhoto": "https://q-xx.bstatic.com/xdata/images/hotel/max1200/390404589.jpg?k=1e4972a65aeeb100144516684aec1dec9cb3678c3965f33340bbbca342ce3881&o=",
+            "mainPhoto": false,
+            "score": 0,
+            "classId": 26,
+            "classOrder": 0,
+            "hd_url": "https://static.cupid.travel/rooms-large-pictures/390404589.jpg"
+          }
+        ],
+        "views": [],
+        "bedRelation": "NONE",
+        "officialSiteRoomName": null,
+        "attributes": {
+          "television": true,
+          "televisionSize": null,
+          "airConditioner": true,
+          "hairDryer": true,
+          "iron": null,
+          "hangers": null,
+          "coffeeMaker": null,
+          "crib": true,
+          "laptopFriendlyWorkplace": true,
+          "kitchen": null,
+          "smokeDetector": true,
+          "carbonMonoxideDetector": null
+        },
+        "parentRoomId": null
+      },
+      {
+        "id": 1205297,
+        "roomName": "Junior Suite",
+        "roomTitle": "",
+        "description": "Air-conditioned junior suite features a TV and a private bathroom.\n\nOffers a seating area.",
+        "markdownDescription": "",
+        "normalizedDescription": "",
+        "roomSizeSquare": 35,
+        "roomSizeUnit": "sqm",
+        "hotelId": "lpbbb0c",
+        "maxAdults": 2,
+        "maxChildren": 2,
+        "maxOccupancy": 3,
+        "ranking": null,
+        "bedTypes": [
+          {
+            "quantity": 1,
+            "bedType": "Queen bed",
+            "bedSize": "151-180 cm wide",
+            "id": 167
+          }
+        ],
+        "roomAmenities": [
+          {
+            "amenitiesId": 216,
+            "name": "Minibar",
+            "sort": 0
+          },
+          {
+            "amenitiesId": 293,
+            "name": "Safety deposit box",
+            "sort": 17
+          },
+          {
+            "amenitiesId": 339,
+            "name": "TV",
+            "sort": 0
+          },
+          {
+            "amenitiesId": 342,
+            "name": "Telephone",
+            "sort": 0
+          },
+          {
+            "amenitiesId": 11,
+            "name": "Air conditioning",
+            "sort": 0
+          }
+        ],
+        "photos": [
+          {
+            "url": "https://static.cupid.travel/rooms-large-pictures/439053587.jpg",
+            "imageDescription": "",
+            "imageClass1": "hotel room",
+            "imageClass2": "",
+            "failoverPhoto": "https://q-xx.bstatic.com/xdata/images/hotel/max1200/439053587.jpg?k=47942f93eb8c03158ca999a1e3d0e9337f6e5dc3089f44e9d7b72976e3984919&o=",
+            "mainPhoto": true,
+            "score": 0,
+            "classId": 80,
+            "classOrder": 0,
+            "hd_url": "https://static.cupid.travel/rooms-large-pictures/439053587.jpg"
+          },
+          {
+            "url": "https://static.cupid.travel/rooms-large-pictures/390404589.jpg",
+            "imageDescription": "",
+            "imageClass1": "",
+            "imageClass2": "",
+            "failoverPhoto": "https://q-xx.bstatic.com/xdata/images/hotel/max1200/390404589.jpg?k=1e4972a65aeeb100144516684aec1dec9cb3678c3965f33340bbbca342ce3881&o=",
+            "mainPhoto": false,
+            "score": 0,
+            "classId": 0,
+            "classOrder": 0,
+            "hd_url": "https://static.cupid.travel/rooms-large-pictures/390404589.jpg"
+          }
+        ],
+        "views": [],
+        "bedRelation": "NONE",
+        "officialSiteRoomName": null,
+        "attributes": {
+          "television": true,
+          "televisionSize": null,
+          "airConditioner": true,
+          "hairDryer": true,
+          "iron": null,
+          "hangers": null,
+          "coffeeMaker": true,
+          "crib": true,
+          "laptopFriendlyWorkplace": true,
+          "kitchen": null,
+          "smokeDetector": true,
+          "carbonMonoxideDetector": null
+        },
+        "parentRoomId": null
+      }
+    ],
+    "phone": "+380 93 170 6444",
+    "fax": "",
+    "email": "",
+    "hotelType": "Hotels",
+    "hotelTypeId": 204,
+    "airportCode": "LWO",
+    "rating": 9.3,
+    "reviewCount": 1546,
+    "parking": "FREE",
+    "groupRoomMin": 0,
+    "childAllowed": true,
+    "petsAllowed": false,
+    "policies": [],
+    "rohId": 1205294,
+    "sentiment_analysis": {
+      "cons": [
+        "Weak hairdryer",
+        "Outdated room decor",
+        "Limited storage in the bathroom"
+      ],
+      "pros": [
+        "Great location",
+        "Friendly staff",
+        "Good service",
+        "Pleasant spa facilities"
+      ],
+      "categories": [
+        {
+          "name": "Cleanliness",
+          "rating": 8.68,
+          "description": "Cleanly presented rooms, but some reviews noted issues like weak hairdryers."
+        },
+        {
+          "name": "Service",
+          "rating": 9.65,
+          "description": "Friendly staff and good service mentioned throughout the reviews."
+        },
+        {
+          "name": "Location",
+          "rating": 10,
+          "description": "Great location in the center, convenient for attractions and restaurants."
+        },
+        {
+          "name": "Room Quality",
+          "rating": 9.64,
+          "description": "Rooms are good, though some comments suggest areas for improvement, such as outdated decor."
+        },
+        {
+          "name": "Amenities",
+          "rating": 9.17,
+          "description": "Good amenities like a spa, although some guests mentioned a lack of practicality in the room setups."
+        },
+        {
+          "name": "Value for Money",
+          "rating": 8.63,
+          "description": "While the price is considered high, many reviews reflect satisfaction with the offerings."
+        },
+        {
+          "name": "Food and Beverage",
+          "rating": 8.68,
+          "description": "Breakfast has been praised, but some quality inconsistencies noted for coffee."
+        },
+        {
+          "name": "Overall Experience",
+          "rating": 9.97,
+          "description": "Overall positive experiences with high likelihood of return visits."
+        }
+      ]
+    },
+    "sentiment_updated_at": "2025-12-11T08:47:37Z",
+    "deletedAt": null,
+    "state": null,
+    "website": null,
+    "contact": {
+      "legalEntity": null,
+      "registrationNumber": null,
+      "licenceNumbers": null
+    },
+    "policyAttributes": {
+      "checkIn": {
+        "from": "14:00",
+        "until": null
+      },
+      "checkOut": {
+        "until": "12:00"
+      },
+      "minimumCheckInAge": null,
+      "saleCutoff": {
+        "time": null,
+        "daysBefore": null
+      },
+      "children": {
+        "allowed": true,
+        "infantsAllowed": null,
+        "cribAvailable": true,
+        "cribFee": null,
+        "cribAgeMax": null
+      },
+      "pets": {
+        "allowed": true,
+        "fee": null,
+        "feeAmount": null,
+        "feeCurrency": null,
+        "feeBasis": null,
+        "weightLimitLb": null,
+        "feeRefundable": null,
+        "terms": null
+      },
+      "deposit": {
+        "required": null,
+        "amount": null,
+        "currency": null,
+        "basis": null,
+        "collectedAt": null,
+        "refundedAt": null,
+        "method": null
+      },
+      "payment": {
+        "cardsAccepted": true,
+        "cashAccepted": null
+      },
+      "wifi": {
+        "inRoom": true,
+        "free": true,
+        "feeAmount": null,
+        "feePeriod": null,
+        "freeInPublicAreas": null
+      },
+      "parking": {
+        "selfParking": true,
+        "free": true,
+        "chargeMode": "free",
+        "feeAmount": null,
+        "feePeriod": null,
+        "location": null,
+        "reservationRequired": null,
+        "valet": false,
+        "evCharger": false
+      },
+      "facilities": {
+        "nonSmokingProperty": true,
+        "elevator": true,
+        "fitnessCenter": true,
+        "fitnessOpen24h": null,
+        "pool": true,
+        "poolType": "indoor",
+        "poolCurrentlyClosed": null,
+        "hotTub": true,
+        "spaServices": true,
+        "sauna": true,
+        "saunaCurrentlyClosed": null
+      },
+      "foodAndDrink": {
+        "bar": true,
+        "restaurant": true,
+        "restaurantNames": null,
+        "roomService": true,
+        "breakfastAvailable": true,
+        "breakfastIncluded": null,
+        "breakfastPrice": {
+          "amount": null,
+          "currency": null,
+          "period": null
+        },
+        "breakfastType": null
+      },
+      "renovation": {
+        "underway": null,
+        "notes": null
+      },
+      "resortFee": {
+        "amount": null,
+        "currency": null,
+        "period": null
+      },
+      "cancellationTerms": null,
+      "houseRules": null,
+      "facilityClosures": null,
+      "roomAmenitiesAllRooms": {
+        "television": true,
+        "televisionSize": null,
+        "airConditioner": true,
+        "hairDryer": true,
+        "iron": null,
+        "hangers": null,
+        "coffeeMaker": null,
+        "crib": false,
+        "laptopFriendlyWorkplace": null,
+        "kitchen": null,
+        "smokeDetector": null,
+        "carbonMonoxideDetector": null
+      }
+    },
+    "operatingStatus": {
+      "status": null,
+      "checkedAt": null
+    },
+    "connectivityType": "Pull"
+  }
+}

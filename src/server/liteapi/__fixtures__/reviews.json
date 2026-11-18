@@ -1,0 +1,70 @@
+{
+  "data": [
+    {
+      "reviewId": 5362390178,
+      "averageScore": 10,
+      "country": "pl",
+      "type": "couple",
+      "name": "Paweł",
+      "date": "2026-11-14T00:00:00Z",
+      "headline": "",
+      "language": "pl",
+      "pros": "Super SPA.Super obsługa.",
+      "cons": "",
+      "source": "nuitee"
+    },
+    {
+      "reviewId": 5362167818,
+      "averageScore": 10,
+      "country": "ua",
+      "type": "family_with_children",
+      "name": "Катерина",
+      "date": "2026-11-13T00:00:00Z",
+      "headline": "",
+      "language": "uk",
+      "pros": "",
+      "cons": "",
+      "source": "nuitee"
+    },
+    {
+      "reviewId": 5361113545,
+      "averageScore": 10,
+      "country": "gb",
+      "type": "family_with_children",
+      "name": "Nataliya",
+      "date": "2026-11-09T00:00:00Z",
+      "headline": "",
+      "language": "en-gb",
+      "pros": "",
+      "cons": "",
+      "source": "nuitee"
+    },
+    {
+      "reviewId": 5361169670,
+      "averageScore": 7,
+      "country": "ua",
+      "type": "family_with_children",
+      "name": "Maksym",
+      "date": "2026-11-09T00:00:00Z",
+      "headline": "Концепція а-ля 90 рокі",
+      "language": "uk",
+      "pros": "Разташування",
+      "cons": "Наявність казино",
+      "source": "nuitee"
+    },
+    {
+      "reviewId": 5360963908,
+      "averageScore": 10,
+      "country": "ua",
+      "type": "solo_traveller",
+      "name": "Trach",
+      "date": "2026-11-08T00:00:00Z",
+      "headline": "",
+      "language": "uk",
+      "pros": "",
+      "cons": "",
+      "source": "nuitee"
+    }
+  ],
+  "total": 1546
+}

@@ -12,3 +12,17 @@ export function demoCredentials(): { email: string; password: string } | null {
   if (!parsed.success) return null;
   return { email: parsed.data.DEMO_EMAIL, password: parsed.data.DEMO_PASSWORD };
 }
+
+export class LiteApiConfigError extends Error {
+  constructor() {
+    super("LITEAPI_KEY is not configured");
+    this.name = "LiteApiConfigError";
+  }
+}
+
+/** LiteAPI key (server-only). Throws without revealing any value when missing. */
+export function liteApiKey(): string {
+  const parsed = z.string().min(10).safeParse(process.env.LITEAPI_KEY);
+  if (!parsed.success) throw new LiteApiConfigError();
+  return parsed.data;
+}

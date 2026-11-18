@@ -1,0 +1,10 @@
+{
+  "httpStatus": 400,
+  "body": {
+    "error": {
+      "code": 4002,
+      "description": "invalid offerId",
+      "message": "required request field is missing or wrong input"
+    }
+  }
+}
