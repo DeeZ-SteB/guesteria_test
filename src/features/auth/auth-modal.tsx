@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Sheet } from "@/components/ui/sheet";
 import { Tabs } from "@/components/ui/tabs";
 import { safeReturnTo } from "@/lib/return-to";
+import { clearPending } from "@/lib/favorites/pending";
 import { DemoButton, SignInForm, SignUpForm } from "./auth-forms";
 
 export type AuthTab = "signin" | "signup";
@@ -46,6 +47,9 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
 
   const close = useCallback(() => {
     setState((s) => ({ ...s, open: false }));
+    // Dismissed without signing in: forget the heart tap, so it never replays later
+    // (e.g. for someone else on a shared device).
+    clearPending();
     // If the modal was opened from ?auth=…, drop those params so it does not reopen.
     const url = new URL(window.location.href);
     if (url.searchParams.has("auth") || url.searchParams.has("next")) {
@@ -58,8 +62,11 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   const finish = useCallback(
     (redirectTo: string) => {
       setState((s) => ({ ...s, open: false }));
-      router.replace(safeReturnTo(redirectTo));
-      // Re-render server components (header, account) with the new session cookie.
+      const target = safeReturnTo(redirectTo);
+      // Same page: one refresh is enough (a replace + refresh would render it twice and,
+      // on the results page, call LiteAPI twice).
+      if (target !== `${window.location.pathname}${window.location.search}`) router.replace(target);
+      // Re-render server components (header, account, hearts) with the new session cookie.
       router.refresh();
     },
     [router],

@@ -104,3 +104,41 @@ describe("facets", () => {
     expect(activeFilterCount({ ...DEFAULT_VIEW, stars: [4], rating: 9 })).toBe(2);
   });
 });
+
+// ---- Regressions found by the code-reviewer agent (stage 3) ----
+import { clampPrice } from "./filter";
+import { findCityByName } from "@/lib/cities";
+import { searchKey, validateSearch } from "./params";
+
+describe("clampPrice", () => {
+  const bounds = { min: 3000, max: 9000 };
+  it("clamps a shared/stale URL range into the current bounds", () => {
+    expect(clampPrice({ min: 1000, max: 5000 }, bounds)).toEqual({ min: 3000, max: 5000 });
+  });
+  it("treats the full range, an empty range or missing bounds as no filter", () => {
+    expect(clampPrice({ min: 3000, max: 9000 }, bounds)).toBeNull();
+    expect(clampPrice({ min: 10000, max: 20000 }, bounds)).toEqual({ min: 9000, max: 9000 });
+    expect(clampPrice({ min: 1000, max: 2000 }, null)).toBeNull();
+  });
+});
+
+describe("findCityByName", () => {
+  it("resolves typed names in Ukrainian or English, ignoring case and apostrophes", () => {
+    expect(findCityByName("Львів")?.id).toBe("lviv");
+    expect(findCityByName("  lviv ")?.id).toBe("lviv");
+    expect(findCityByName("Ternopilʼ")?.id).toBe("ternopil");
+    expect(findCityByName("Львів, Україна")?.id).toBe("lviv");
+    expect(findCityByName("Льв")).toBeUndefined();
+  });
+});
+
+describe("validateSearch and searchKey", () => {
+  it("accepts a typed city name and uses today as the boundary", () => {
+    const values = { city: "lviv", checkIn: "2026-11-18", checkOut: "2026-11-20", adults: "2" };
+    expect(validateSearch(values, "2026-11-18").query?.cityId).toBe("lviv");
+    expect(validateSearch(values, "2026-11-19").errors.checkIn).toBe("Дата заїзду не може бути в минулому");
+  });
+  it("identifies a search without view params", () => {
+    expect(searchKey({ cityId: "lviv", checkIn: "2026-12-09", checkOut: "2026-12-12", adults: 2 })).toBe("lviv|2026-12-09|2026-12-12|2");
+  });
+});

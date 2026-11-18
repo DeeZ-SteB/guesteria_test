@@ -60,3 +60,17 @@ describe("rating", () => {
     expect(formatRating(9)).toBe("9,0");
   });
 });
+
+// ---- Regressions found by the code-reviewer agent (stage 3) ----
+describe("date helpers never throw on bad input from date fields", () => {
+  it("addDays returns an empty string for empty or invalid dates", () => {
+    expect(addDays("", 1)).toBe("");
+    expect(addDays("20261-12-10", 1)).toBe("");
+    expect(addDays("2026-12-10", Number.NaN)).toBe("");
+  });
+
+  it("adjustCheckOut falls back to the default stay length when the old one is unknown", () => {
+    expect(adjustCheckOut("2026-12-10", "", Number.NaN)).toBe("2026-12-13");
+    expect(adjustCheckOut("20261-12-10", "2026-12-12")).toBe("2026-12-12");
+  });
+});

@@ -47,7 +47,7 @@ function StartLayout({ initial, errors, today }: { initial: FormValues; errors: 
       </section>
       <div className="mx-auto -mt-14 max-w-[1200px] px-4 md:-mt-16 md:px-8">
         <div className="rounded-card bg-surface p-3 shadow-lg">
-          <SearchForm initial={initial} errors={errors} today={today} layout="inline" />
+          <SearchForm key={JSON.stringify({ initial, errors })} initial={initial} errors={errors} today={today} layout="inline" />
         </div>
       </div>
       <div className="mx-auto max-w-[1200px] space-y-6 px-4 py-6 md:px-8">

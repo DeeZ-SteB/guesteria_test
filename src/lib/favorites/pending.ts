@@ -36,3 +36,11 @@ export function takePending(): PendingFavorite | null {
     return null;
   }
 }
+
+export function clearPending(): void {
+  try {
+    window.sessionStorage.removeItem(PENDING_FAVORITE_KEY);
+  } catch {
+    /* ignore */
+  }
+}

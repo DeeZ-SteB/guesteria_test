@@ -37,12 +37,43 @@ describe("images and favorite input", () => {
     expect(isAllowedImageUrl("https://static.cupid.travel.evil.com/1.jpg")).toBe(false);
     expect(isAllowedImageUrl("https://user:pw@static.cupid.travel/1.jpg")).toBe(false);
     expect(isAllowedImageUrl("javascript:alert(1)")).toBe(false);
+    // Found by the security-auditor agent: a port lets the optimizer probe other services.
+    expect(isAllowedImageUrl("https://static.cupid.travel:8443/hotels/1.jpg")).toBe(false);
   });
 
   it("validates favorite input and drops foreign image URLs", () => {
     const base = { hotelId: "lpbbb0c", hotelName: "  Grand  ", cityId: "lviv", favorite: true };
     expect(favoriteInputSchema.parse({ ...base, hotelImage: "https://evil.com/x.jpg" })).toMatchObject({ hotelName: "Grand", hotelImage: null });
+    // Zod must agree with the DB check, which accepts only the exact https://static.cupid.travel/ prefix.
+    for (const tricky of [
+      "https://static.cupid.travel@evil.com/x.jpg",
+      "https:\\static.cupid.travel\\x.jpg",
+      "HTTPS://STATIC.cupid.travel/x.jpg",
+      "https://static.cupid.travel:443/x.jpg",
+    ]) {
+      expect(favoriteInputSchema.parse({ ...base, hotelImage: tricky }).hotelImage).toBeNull();
+    }
     expect(favoriteInputSchema.safeParse({ ...base, hotelImage: null, hotelId: "a/b" }).success).toBe(false);
     expect(favoriteInputSchema.safeParse({ ...base, hotelImage: null, cityId: "atlantis" }).success).toBe(false);
+  });
+});
+
+// ---- Regression found by the code-reviewer agent (stage 3): double-click rollback race ----
+import { createRequestTracker } from "./tracker";
+
+describe("createRequestTracker", () => {
+  it("only lets the latest request for a hotel roll back, restoring the value before it", () => {
+    const tracker = createRequestTracker();
+    const first = tracker.begin("lp1", false); // was not saved → user saves
+    const second = tracker.begin("lp1", true); // was saved (optimistically) → user unsaves
+    expect(tracker.rollbackValue("lp1", first)).toBeUndefined(); // stale: ignore
+    expect(tracker.rollbackValue("lp1", second)).toBe(true); // restore pre-click value
+  });
+
+  it("tracks hotels independently", () => {
+    const tracker = createRequestTracker();
+    const a = tracker.begin("a", false);
+    tracker.begin("b", true);
+    expect(tracker.rollbackValue("a", a)).toBe(false);
   });
 });

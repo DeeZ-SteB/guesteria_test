@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { findCity } from "@/lib/cities";
-import { isPastCheckIn, MAX_GUESTS, staySchema, type Stay } from "@/lib/booking/stay";
+import { isPastCheckIn, isTooFarAhead, MAX_DAYS_AHEAD, MAX_GUESTS, staySchema, type Stay } from "@/lib/booking/stay";
 
 export type SearchQuery = { cityId: string } & Stay;
 
@@ -52,6 +52,8 @@ export function validateSearch(values: FormValues, today: string): {
     }
   } else if (isPastCheckIn(stay.data.checkIn, new Date(`${today}T12:00:00Z`))) {
     errors.checkIn = "Дата заїзду не може бути в минулому";
+  } else if (isTooFarAhead(stay.data.checkIn, new Date(`${today}T12:00:00Z`))) {
+    errors.checkIn = `Бронювання доступне на ${MAX_DAYS_AHEAD} днів уперед`;
   }
 
   if (Object.keys(errors).length > 0 || !city || !stay.success) return { errors };

@@ -23,7 +23,8 @@ export async function setFavorite(input: FavoriteInput): Promise<SetFavoriteResu
     ? await supabase
         .from("favorites")
         .insert({ hotel_id: hotelId, hotel_name: hotelName, hotel_image: hotelImage, city: cityId })
-    : await supabase.from("favorites").delete().eq("hotel_id", hotelId);
+    : // RLS already scopes this to the user; the explicit filter is defence in depth.
+      await supabase.from("favorites").delete().eq("hotel_id", hotelId).eq("user_id", user.id);
 
   // 23505 = already saved: the desired state already holds.
   if (error && error.code !== "23505") {

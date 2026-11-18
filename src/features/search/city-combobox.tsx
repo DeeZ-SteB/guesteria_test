@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import { MapPin } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { findCity, searchCities, type City } from "@/lib/cities";
+import { findCity, findCityByName, searchCities, type City } from "@/lib/cities";
 
 type CityComboboxProps = {
   name: string;
@@ -36,7 +36,11 @@ export function CityCombobox({ name, defaultCityId, error, onSelect }: CityCombo
   function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setOpen(true);
+      if (!open) {
+        setOpen(true);
+        setActive(0);
+        return;
+      }
       setActive((i) => Math.min(i + 1, options.length - 1));
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
@@ -49,15 +53,9 @@ export function CityCombobox({ name, defaultCityId, error, onSelect }: CityCombo
     }
   }
 
+  // Blur only closes the list (option clicks use preventDefault on mousedown).
   function onBlur() {
-    // Let a click on an option land first.
-    setTimeout(() => {
-      setOpen(false);
-      const exact = searchCities(text, 50).find(
-        (c) => c.nameUk.toLowerCase() === text.trim().toLowerCase() || c.cityName.toLowerCase() === text.trim().toLowerCase(),
-      );
-      if (exact && exact.id !== selected?.id) choose(exact);
-    }, 120);
+    setOpen(false);
   }
 
   return (
@@ -80,7 +78,7 @@ export function CityCombobox({ name, defaultCityId, error, onSelect }: CityCombo
             id={id}
             role="combobox"
             aria-expanded={open}
-            aria-controls={listId}
+            aria-controls={open ? listId : undefined}
             aria-autocomplete="list"
             aria-activedescendant={open && options[active] ? `${listId}-${options[active].id}` : undefined}
             aria-invalid={error ? true : undefined}
@@ -89,8 +87,11 @@ export function CityCombobox({ name, defaultCityId, error, onSelect }: CityCombo
             placeholder="Куди їдете?"
             value={text}
             onChange={(e) => {
+              // Resolve an exact typed name right away, so submitting "Львів" works first time.
+              const exact = findCityByName(e.target.value);
               setText(e.target.value);
-              setSelected(undefined);
+              setSelected(exact);
+              if (exact) onSelect?.(exact);
               setOpen(true);
               setActive(0);
             }}

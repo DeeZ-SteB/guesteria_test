@@ -62,6 +62,13 @@ function normalise(text: string): string {
   return text.toLocaleLowerCase("uk").replace(/['ʼ’`]/g, "").replace(/\s+/g, " ").trim();
 }
 
+/** Exact name typed by the guest ("Львів", "lviv", "Львів, Україна") → city, or undefined. */
+export function findCityByName(text: string): City | undefined {
+  const q = normalise(text.split(",")[0] ?? "");
+  if (!q) return undefined;
+  return CITIES.find((city) => normalise(city.nameUk) === q || normalise(city.cityName) === q);
+}
+
 /** Autocomplete: Ukrainian or English name, prefix matches first. */
 export function searchCities(query: string, limit = 8): City[] {
   const q = normalise(query);

@@ -48,3 +48,18 @@ export function priceBounds(hotels: HotelSummary[]): { min: number; max: number 
 export function activeFilterCount(view: ViewState): number {
   return (view.price ? 1 : 0) + (view.stars.length ? 1 : 0) + (view.rating ? 1 : 0);
 }
+
+/**
+ * A URL price range (shared link, reload with new prices) clamped into the current bounds.
+ * The full range counts as "no filter", so it does not show up as an active filter.
+ */
+export function clampPrice(
+  price: ViewState["price"],
+  bounds: { min: number; max: number } | null,
+): ViewState["price"] {
+  if (!price || !bounds) return null;
+  const min = Math.min(Math.max(price.min, bounds.min), bounds.max);
+  const max = Math.max(Math.min(price.max, bounds.max), min);
+  if (min <= bounds.min && max >= bounds.max) return null;
+  return { min, max };
+}

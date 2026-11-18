@@ -44,8 +44,19 @@ export function isPastCheckIn(checkIn: string, now: Date = new Date()): boolean 
   return checkIn < todayInKyiv(now);
 }
 
-/** Adds days to an ISO date (UTC arithmetic, DST-safe). */
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** True for a real YYYY-MM-DD date (what a date input yields when filled). */
+export function isIsoDate(value: string): boolean {
+  return ISO_DATE.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+}
+
+/**
+ * Adds days to an ISO date (UTC arithmetic, DST-safe).
+ * Returns "" for empty/invalid input: it is fed straight from date fields and must never throw.
+ */
 export function addDays(iso: string, days: number): string {
+  if (!isIsoDate(iso) || !Number.isFinite(days)) return "";
   const date = new Date(`${iso}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
@@ -65,8 +76,16 @@ export function defaultStay(today: string): Stay {
  * no longer fits, and never exceed the maximum stay.
  */
 export function adjustCheckOut(checkIn: string, checkOut: string, previousNights = DEFAULT_NIGHTS): string {
-  const nights = nightsBetween(checkIn, checkOut);
+  if (!isIsoDate(checkIn)) return checkOut;
+  const nights = isIsoDate(checkOut) ? nightsBetween(checkIn, checkOut) : Number.NaN;
   if (nights >= 1 && nights <= MAX_NIGHTS) return checkOut;
-  const keep = Math.min(Math.max(previousNights, 1), MAX_NIGHTS);
-  return addDays(checkIn, keep);
+  const previous = Number.isFinite(previousNights) && previousNights >= 1 ? previousNights : DEFAULT_NIGHTS;
+  return addDays(checkIn, Math.min(previous, MAX_NIGHTS));
+}
+
+/** Hotels rarely sell further out; also bounds how many distinct searches a script can generate. */
+export const MAX_DAYS_AHEAD = 365;
+
+export function isTooFarAhead(checkIn: string, now: Date = new Date()): boolean {
+  return checkIn > addDays(todayInKyiv(now), MAX_DAYS_AHEAD);
 }

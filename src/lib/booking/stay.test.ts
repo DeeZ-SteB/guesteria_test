@@ -51,3 +51,12 @@ describe("isPastCheckIn", () => {
     expect(isPastCheckIn("2026-11-18", now)).toBe(false);
   });
 });
+
+describe("isTooFarAhead", () => {
+  it("caps the booking horizon at 365 days from today (Kyiv)", async () => {
+    const { isTooFarAhead } = await import("./stay");
+    const now = new Date("2026-11-18T12:00:00Z");
+    expect(isTooFarAhead("2027-11-18", now)).toBe(false);
+    expect(isTooFarAhead("2027-11-19", now)).toBe(true);
+  });
+});

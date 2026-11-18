@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   images: {
     // Only LiteAPI's photo CDN, https only: the optimizer must not become an open proxy.
-    remotePatterns: [{ protocol: "https", hostname: IMAGE_HOST, pathname: "/**" }],
+    remotePatterns: [{ protocol: "https", hostname: IMAGE_HOST, port: "", pathname: "/**" }],
     qualities: [75],
   },
   turbopack: {

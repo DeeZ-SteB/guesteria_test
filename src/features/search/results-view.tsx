@@ -8,9 +8,10 @@ import { findCity } from "@/lib/cities";
 import { hotelsFoundLabel } from "@/lib/format";
 import { nightsBetween, todayInKyiv } from "@/lib/booking/stay";
 import { hotelHref, parseView, searchHref, SORTS, type SearchQuery, type Sort, type ViewState } from "@/lib/search/params";
-import { activeFilterCount, applyView, countMatching, priceBounds } from "@/lib/search/filter";
+import { activeFilterCount, applyView, clampPrice, countMatching, priceBounds } from "@/lib/search/filter";
 import { saveRecent } from "@/lib/search/recent";
 import { storePending, takePending } from "@/lib/favorites/pending";
+import { createRequestTracker } from "@/lib/favorites/tracker";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/feedback";
 import { Sheet } from "@/components/ui/sheet";
@@ -30,8 +31,12 @@ type ResultsViewProps = { hotels: HotelSummary[]; favoriteIds: string[]; query: 
 
 export function ResultsView({ hotels, favoriteIds, query, signedIn }: ResultsViewProps) {
   const params = useSearchParams();
-  const view = useMemo(() => parseView(params), [params]);
   const bounds = useMemo(() => priceBounds(hotels), [hotels]);
+  // URL price ranges (shared links, reloads with new prices) are clamped to today's bounds.
+  const view = useMemo(() => {
+    const parsed = parseView(params);
+    return { ...parsed, price: clampPrice(parsed.price, bounds) };
+  }, [params, bounds]);
   const visible = useMemo(() => applyView(hotels, view), [hotels, view]);
   const nights = nightsBetween(query.checkIn, query.checkOut);
   const city = findCity(query.cityId);
@@ -190,24 +195,30 @@ function useFavorites({
   const [message, setMessage] = useState<string | null>(null);
   const { open } = useAuthModal();
   const replayed = useRef(false);
+  const tracker = useRef(createRequestTracker());
+
+  const setOne = (hotelId: string, value: boolean) =>
+    setIds((prev) => {
+      const next = new Set(prev);
+      if (value) next.add(hotelId);
+      else next.delete(hotelId);
+      return next;
+    });
 
   const save = useCallback(
-    async (hotel: HotelSummary, favorite: boolean) => {
-      setIds((prev) => {
-        const next = new Set(prev);
-        if (favorite) next.add(hotel.id);
-        else next.delete(hotel.id);
-        return next;
-      });
+    async (hotel: HotelSummary, favorite: boolean, previous: boolean) => {
+      const token = tracker.current.begin(hotel.id, previous);
+      setOne(hotel.id, favorite);
       setMessage(null);
       const result = await setFavorite({ hotelId: hotel.id, hotelName: hotel.name, hotelImage: hotel.photo, cityId, favorite });
-      if (!result.ok) {
-        setIds((prev) => {
-          const next = new Set(prev);
-          if (favorite) next.delete(hotel.id);
-          else next.add(hotel.id);
-          return next;
-        });
+      if (result.ok) {
+        tracker.current.done(token);
+        return;
+      }
+      // Only the latest click for this hotel rolls back, to the value before that click.
+      const restore = tracker.current.rollbackValue(hotel.id, token);
+      if (restore !== undefined) {
+        setOne(hotel.id, restore);
         setMessage(result.reason === "unauthenticated" ? "Увійдіть, щоб зберігати готелі" : "Не вдалося зберегти. Спробуйте ще раз.");
       }
     },
@@ -215,13 +226,17 @@ function useFavorites({
   );
 
   useEffect(() => {
-    if (!signedIn || replayed.current) return;
+    if (!signedIn) {
+      replayed.current = false; // signed out in place: a later sign-in may replay again
+      return;
+    }
+    if (replayed.current) return;
     replayed.current = true;
     const pending = takePending();
     const hotel = pending && hotels.find((h) => h.id === pending.hotelId);
     // Syncing from sessionStorage (an external system) once after login; defer the state update
     // out of the effect body so it does not cascade into this render.
-    if (hotel && !favoriteIds.includes(hotel.id)) queueMicrotask(() => void save(hotel, true));
+    if (hotel && !favoriteIds.includes(hotel.id)) queueMicrotask(() => void save(hotel, true, false));
   }, [signedIn, hotels, favoriteIds, save]);
 
   const toggle = useCallback(
@@ -231,7 +246,8 @@ function useFavorites({
         open({ title: "Увійдіть, щоб зберегти готель" });
         return;
       }
-      void save(hotel, !ids.has(hotel.id));
+      const current = ids.has(hotel.id);
+      void save(hotel, !current, current);
     },
     [signedIn, ids, open, save],
   );

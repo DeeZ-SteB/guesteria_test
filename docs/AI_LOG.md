@@ -74,3 +74,31 @@ Format:
 | code | LOW | Missing retry/timeout/unknown-code tests | Added. |
 
 - Caught by me: one of my own tests asserted the wrong ranking ("ри" is a prefix of both Рим and Рига) — fixed the test, not the code. Live probe after fixes: Lviv 16 hotels, no `netPrice` keys in output, past date / unknown city / `../etc` all → `invalid_request` without calling LiteAPI.
+
+## 2026-11-18 — Stage 3: search page + favorites (`feat/search-page`)
+- `planner` → `docs/plans/03-search-page.md`. Key calls it got right from the Next 16 docs: client-only sort/filter via the History API (measured: **0 network requests** on sort), `use(browser())` for localStorage, `priority` deprecated → `loading="eager"` + `fetchPriority`, idempotent `setFavorite(bool)` instead of a toggle, and dropping the breakfast/free-cancellation filters because min-rates has no such data (SPEC §17).
+- Caught by me in the browser before review: `new Date()` during prerender on `/` (fixed with `connection()`), date text clipped at 375 px, heart overlapping the rating on desktop cards, no visible keyboard focus on cards, 28 px logo target.
+- Findings: code-reviewer 15 (1 HIGH, 8 MEDIUM, 6 LOW), security-auditor 6 (1 MEDIUM, 5 LOW). Accepted 19, deferred 1, accepted risk 1. 10 regression tests first (163 unit, 16 pgTAP total).
+
+| Agent | Sev | Finding | Resolution |
+|---|---|---|---|
+| code | HIGH | Clearing a date or a 5-digit year → `addDays` throws → whole search UI replaced by the error boundary | `addDays` returns "" on bad input, `adjustCheckOut` falls back to 3 nights, min/max only for valid dates. Reproduced (`RangeError`) in tests first, then in the browser. |
+| code | MED | Hearts not re-synced after sign-in/out (same Suspense key keeps client state) | `ResultsView` keyed by `signedIn` + favorite ids. Verified both saved hotels show after login. |
+| code | MED | Fast double-click rollback race could leave a "saved" heart that isn't in the DB | Per-hotel request tracker (`lib/favorites/tracker.ts`): only the latest request rolls back, to its own previous value. Unit tested. |
+| code | MED | Typing "Львів" and tapping «Знайти» failed once (match resolved on a 120 ms blur timer) | Exact name resolved synchronously in `onChange` via tested `findCityByName` (handles ʼ and "Львів, Україна"). Verified first-click submit. |
+| code | MED | Start form kept stale errors/values between URLs | Keyed by `{initial, errors}`. |
+| code | MED | Signing in from a heart re-rendered `/` twice → 2 extra LiteAPI searches | `finish` skips `replace` when the target is the current URL; one refresh remains (needed to load the user's hearts). |
+| code | MED | Pending heart not replayed after sign-out → sign-in in place; replayed later after a dismissed modal | Replay flag resets on sign-out; dismissing the modal clears the pending intent. |
+| code | MED | Pure logic without tests (name match, rollback order, price clamp, validateSearch boundary) | Extracted to `lib/` and tested. |
+| code | LOW | URL price range not clamped to current prices | `clampPrice`; full range = no filter. Tested. |
+| code | LOW | ArrowDown on a closed list skipped the first option; `aria-controls` to a missing element | Opens at index 0; `aria-controls` only when open. |
+| code | LOW | Duplicate date-field ids when the mobile + desktop form copies both mount | `useId()`. |
+| code | LOW | Auth failure shown as "couldn't get prices" | User lookup falls back to signed-out separately. |
+| code | LOW | Long supplier names (>200) failed the save | Truncated instead of rejected. |
+| code | LOW | Favorite delete relied only on RLS | Added `.eq("user_id", user.id)` (defence in depth). |
+| security | MED | Anonymous visitors can trigger unlimited live LiteAPI searches | **Deferred to stage 8** (shared per-IP limiter). Bounded now: check-in ≤ 365 days ahead (form `max` + server). |
+| security | LOW | Image pattern without `port` → optimizer could probe other ports on the CDN host | `port: ""` in `remotePatterns`; `isAllowedImageUrl` rejects ports. Test. |
+| security | LOW | Zod accepted URLs the DB check rejects (`@evil.com`, backslashes, uppercase) | Zod now requires the exact `https://static.cupid.travel/` prefix like the DB. Tests on both layers. |
+| security | LOW | No cap on favorites per user (direct API inserts) | DB trigger caps at 500; pgTAP test. |
+| security | LOW | `hotel_name` is client-supplied | **Accepted risk**: self-only, React-escaped. Stage 8 must treat it as untrusted text in AI prompts. |
+| security | LOW | `city` not tied to the city list in the DB | Consumers already handle `findCity()` → undefined. |

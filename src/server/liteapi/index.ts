@@ -2,7 +2,7 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { z } from "zod";
 import type { HotelDetails, HotelSummary, Review, RoomOffer } from "@/lib/hotels/types";
-import { isPastCheckIn, staySchema, type Stay } from "@/lib/booking/stay";
+import { isPastCheckIn, isTooFarAhead, staySchema, type Stay } from "@/lib/booking/stay";
 import { findCity } from "@/lib/cities";
 import { liteApiKey } from "@/server/env";
 import { createLiteApiClient } from "./client";
@@ -36,7 +36,7 @@ function parseHotelId(hotelId: string, endpoint: string): string {
 /** Validates a stay and rejects a check-in before today (Kyiv). */
 function parseStay(input: Stay, endpoint: string): Stay {
   const parsed = staySchema.safeParse(input);
-  if (!parsed.success || isPastCheckIn(parsed.data.checkIn)) invalid(endpoint);
+  if (!parsed.success || isPastCheckIn(parsed.data.checkIn) || isTooFarAhead(parsed.data.checkIn)) invalid(endpoint);
   return parsed.data;
 }
 

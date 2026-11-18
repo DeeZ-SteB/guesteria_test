@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import Form from "next/form";
 import { Calendar, CalendarCheck, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Stepper } from "@/components/ui/stepper";
 import { cn } from "@/lib/cn";
 import { adultsLabel } from "@/lib/format";
-import { addDays, adjustCheckOut, MAX_GUESTS, MAX_NIGHTS, nightsBetween } from "@/lib/booking/stay";
+import { addDays, adjustCheckOut, isIsoDate, MAX_DAYS_AHEAD, MAX_GUESTS, MAX_NIGHTS, nightsBetween } from "@/lib/booking/stay";
 import { validateSearch, type FormValues, type SearchField } from "@/lib/search/params";
 import { CityCombobox } from "./city-combobox";
 
@@ -31,13 +31,14 @@ function DateField({
   label: string;
   name: string;
   value: string;
-  min: string;
+  min?: string;
   max?: string;
   error?: string;
   icon: typeof Calendar;
   onChange: (value: string) => void;
 }) {
-  const id = `search-${name}`;
+  // useId: the form can be mounted twice (mobile + desktop copies), ids must stay unique.
+  const id = `${useId()}-${name}`;
   return (
     <div className="min-w-0">
       <label
@@ -81,9 +82,9 @@ export function SearchForm({ initial, errors: serverErrors = {}, today, layout }
   const [errors, setErrors] = useState(serverErrors);
 
   function onCheckIn(value: string) {
-    const previous = nightsBetween(checkIn, checkOut);
+    const previous = isIsoDate(checkIn) && isIsoDate(checkOut) ? nightsBetween(checkIn, checkOut) : Number.NaN;
     setCheckIn(value);
-    if (value) setCheckOut(adjustCheckOut(value, checkOut, previous));
+    setCheckOut(adjustCheckOut(value, checkOut, previous));
     setErrors((e) => ({ ...e, checkIn: undefined, checkOut: undefined }));
   }
 
@@ -122,13 +123,13 @@ export function SearchForm({ initial, errors: serverErrors = {}, today, layout }
         onSelect={() => setErrors((e) => ({ ...e, city: undefined }))}
       />
       <div className={cn("grid grid-cols-2 gap-2", inline && "lg:contents")}>
-        <DateField label="Заїзд" name="checkin" value={checkIn} min={today} error={errors.checkIn} icon={Calendar} onChange={onCheckIn} />
+        <DateField label="Заїзд" name="checkin" value={checkIn} min={today} max={addDays(today, MAX_DAYS_AHEAD)} error={errors.checkIn} icon={Calendar} onChange={onCheckIn} />
         <DateField
           label="Виїзд"
           name="checkout"
           value={checkOut}
-          min={checkIn ? addDays(checkIn, 1) : addDays(today, 1)}
-          max={checkIn ? addDays(checkIn, MAX_NIGHTS) : undefined}
+          min={addDays(isIsoDate(checkIn) ? checkIn : today, 1) || undefined}
+          max={isIsoDate(checkIn) ? addDays(checkIn, MAX_NIGHTS) : undefined}
           error={errors.checkOut}
           icon={CalendarCheck}
           onChange={(v) => {
