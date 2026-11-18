@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
+/* Design tokens (SPEC §8). Raw values live on :root so dark mode can swap them. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  color-scheme: light dark;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --gs-primary: #0f766e;
+  --gs-primary-dark: #115e59;
+  --gs-primary-soft: #ccfbf1;
+  --gs-on-primary: #ffffff;
+  --gs-accent: #f59e0b;
+  --gs-success: #15803d;
+  --gs-danger: #b91c1c;
+  --gs-bg: #f8fafc;
+  --gs-surface: #ffffff;
+  --gs-ink: #0f172a;
+  --gs-muted: #64748b;
+  --gs-line: #e2e8f0;
+  --gs-overlay: rgb(15 23 42 / 0.5);
+
+  --gs-tabbar-height: 64px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --gs-primary: #2dd4bf;
+    --gs-primary-dark: #99f6e4;
+    --gs-primary-soft: #134e4a;
+    --gs-on-primary: #042f2e;
+    --gs-accent: #fbbf24;
+    --gs-success: #4ade80;
+    --gs-danger: #f87171;
+    --gs-bg: #0b1120;
+    --gs-surface: #111827;
+    --gs-ink: #f1f5f9;
+    --gs-muted: #94a3b8;
+    --gs-line: #1f2937;
+    --gs-overlay: rgb(0 0 0 / 0.65);
   }
 }
 
+@theme inline {
+  --color-primary: var(--gs-primary);
+  --color-primary-dark: var(--gs-primary-dark);
+  --color-primary-soft: var(--gs-primary-soft);
+  --color-on-primary: var(--gs-on-primary);
+  --color-accent: var(--gs-accent);
+  --color-success: var(--gs-success);
+  --color-danger: var(--gs-danger);
+  --color-bg: var(--gs-bg);
+  --color-surface: var(--gs-surface);
+  --color-ink: var(--gs-ink);
+  --color-muted: var(--gs-muted);
+  --color-line: var(--gs-line);
+  --color-overlay: var(--gs-overlay);
+
+  --radius-card: 16px;
+  --radius-button: 12px;
+
+  --text-title: 22px;
+  --text-title--line-height: 1.3;
+  --text-headline: 28px;
+  --text-headline--line-height: 1.2;
+  --text-display: 36px;
+  --text-display--line-height: 1.15;
+
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--gs-bg);
+  color: var(--gs-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gs-primary);
+  outline-offset: 2px;
+}
+
+/* Native <dialog> used by Sheet: lock page scroll while open. */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+dialog::backdrop {
+  background: var(--gs-overlay);
 }

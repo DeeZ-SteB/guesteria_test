@@ -1,8 +1,23 @@
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
+import { isProtectedPath, signInRedirectPath } from "@/lib/auth-routes";
 
 export async function proxy(request: NextRequest) {
-  return updateSession(request);
+  const { response, isSignedIn } = await updateSession(request);
+
+  // Optimistic gate only: protected pages still verify the session themselves.
+  if (!isSignedIn && isProtectedPath(request.nextUrl.pathname)) {
+    const target = new URL(
+      signInRedirectPath(request.nextUrl.pathname + request.nextUrl.search),
+      request.url,
+    );
+    const redirect = NextResponse.redirect(target);
+    // Keep any cookie changes made while refreshing (e.g. clearing an expired session).
+    response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+    return redirect;
+  }
+
+  return response;
 }
 
 export const config = {
