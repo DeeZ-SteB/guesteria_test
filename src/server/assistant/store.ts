@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import type { BetaContentBlockParam, BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import { createAdminClient } from "@/server/db/admin";
-import { uiBlockSchema, type PageContext, type UiBlock } from "@/features/assistant/protocol";
+import { uiBlockSchema, withActionStatus, type PageContext, type UiBlock } from "@/features/assistant/protocol";
 
 /**
  * Chat history and drafted actions. Written only here, with the secret key (clients have no write
@@ -88,7 +88,16 @@ export async function loadDisplayHistory(userId: string, threadId: string): Prom
     if (!text && blocks.length === 0) continue;
     out.push({ role: row.role as "user" | "assistant", text, blocks });
   }
-  return out;
+  const ids = out.flatMap((m) => m.blocks.flatMap((b) => (b.type === "confirm_action" ? [b.actionId] : [])));
+  if (ids.length === 0) return out;
+  const { data: actions } = await createAdminClient().from("assistant_actions").select("id, status, expires_at").eq("user_id", userId).in("id", ids);
+  const statuses = new Map(
+    (actions ?? []).map((a) => {
+      const status = a.status === "pending" && Date.parse(a.expires_at as string) < Date.now() ? "expired" : (a.status as "pending");
+      return [a.id as string, status] as const;
+    }),
+  );
+  return out.map((m) => ({ ...m, blocks: withActionStatus(m.blocks, statuses) }));
 }
 
 export type DraftInput =

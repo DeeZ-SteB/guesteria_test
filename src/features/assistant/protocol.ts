@@ -121,6 +121,8 @@ export const uiBlockSchema = z.discriminatedUnion("type", [
     title: z.string().max(120),
     summary: z.array(z.string().max(600)).max(6),
     expiresAt: z.string(),
+    /** Current status, filled in when a stored conversation is reopened. */
+    status: z.enum(["pending", "confirmed", "cancelled", "expired", "failed"]).optional(),
   }),
 ]);
 export type UiBlock = z.infer<typeof uiBlockSchema>;
@@ -143,6 +145,11 @@ export const streamEventSchema = z.discriminatedUnion("event", [
   z.object({ event: z.literal("done"), data: z.object({ stop: z.string().max(20) }) }),
 ]);
 export type StreamEvent = z.infer<typeof streamEventSchema>;
+
+/** Reopened conversations: confirm cards show the action's current status, not a live button. */
+export function withActionStatus(blocks: UiBlock[], statuses: Map<string, NonNullable<Extract<UiBlock, { type: "confirm_action" }>["status"]>>): UiBlock[] {
+  return blocks.map((b) => (b.type === "confirm_action" && statuses.has(b.actionId) ? { ...b, status: statuses.get(b.actionId) } : b));
+}
 
 /** Errors returned as JSON before the stream starts. */
 export type PreflightError = { error: "invalid" | "session" | "thread_full" | "too_long" | "rate_limited" | "daily_cap" | "forbidden"; retryAfter?: number };

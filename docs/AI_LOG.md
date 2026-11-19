@@ -233,3 +233,13 @@ Format:
 | security | LOW | Body read before the size check; context endpoint unlimited | Content-Length pre-check; `contextUser` limit. |
 | security | LOW | Injected text in an AI-drafted request | Card says the text was prepared by AI — check before confirming. |
 | security | LOW | Shared anonymous bucket off Vercel; RPC callable directly with own JWT; chat retention forever | Accepted / documented (SPEC §17). Retention job: stage 10 checklist. |
+
+### Stage 8 — live verification with the real model (after credits were added)
+- Plain answer, hotel search (cards), rates, checkout hand-off, check-in draft → confirm, guest request draft → confirm (appears live with «створено AI»), duplicate-request refusal — all worked against `claude-sonnet-5-5`.
+- Logs: no `max_tokens` truncation (largest step 292 output tokens, cap 1024 is fine); prompt cache works (from the 2nd step `cache_read` 3.3–5.6k tokens); cold first step 11–14 s, warm steps 1.3–4.6 s.
+- **Bugs found only live (unit tests passed with a mocked LiteAPI):**
+  1. `open_checkout` always failed: LiteAPI issues a **new offer id on every rates call** (verified with two identical requests), so a ref hashed from the offer id never matched. Ref now describes the rate (room, board, cancellation terms); checkout re-finds it in fresh rates. Regression test with changing offer ids.
+  2. False «Ціна змінилася» banner (21 162 → 21 163 ₴): the chat rounded the price hint, the hotel page doesn't. Same hint now. Test.
+  3. After confirming a check-in in the chat, the trip page's check-in card kept its old local state. Card is re-keyed by the stored values.
+  4. Reopened conversations showed live «Підтвердити» buttons on actions already confirmed. Cards now carry the action's current status.
+- My own misread: I first thought the model invented a previous arrival time of 14:00; the database actually had 14:00 (changed by hand in the browser earlier). The model was right.

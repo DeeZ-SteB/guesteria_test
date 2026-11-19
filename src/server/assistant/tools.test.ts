@@ -19,7 +19,7 @@ vi.mock("@/server/trip", () => ({ listGuestRequests: mocks.listGuestRequests, li
 vi.mock("./store", () => ({ createDraft: mocks.createDraft }));
 vi.mock("@/server/liteapi", () => ({ getRoomRates: mocks.getRoomRates, getHotel: mocks.getHotel, getReviews: mocks.getReviews, searchHotels: mocks.searchHotels }));
 
-import { rateRef, runTool, toolsFor } from "./tools";
+import { runTool, toolsFor } from "./tools";
 import { addDays, todayInKyiv } from "@/lib/booking/stay";
 
 const today = todayInKyiv();
@@ -88,10 +88,18 @@ describe("assistant tools", () => {
 
   it("rates expose short refs; checkout only for a live rate; offer tokens never reach the model", async () => {
     const out = await runTool("get_room_rates", { hotel_id: "lpbbb0c", ...stay, breakfast_only: null, free_cancellation_only: null }, ctx, "anon");
-    expect(out.text).toContain(rateRef(OFFER));
+    const ref = /rate_ref ([0-9a-f]{10})/.exec(out.text)?.[1] as string;
+    expect(ref).toBeTruthy();
     expect(out.text).not.toContain(OFFER);
     expect(out.block).toMatchObject({ type: "rate_cards" });
-    const ok = await runTool("open_checkout", { hotel_id: "lpbbb0c", ...stay, rate_ref: rateRef(OFFER), breakfast_only: null, free_cancellation_only: null }, ctx, "anon");
+    // LiteAPI issues a NEW offer id on every rates call (verified live): the ref must survive that.
+    const fresh = structuredClone(rates);
+    fresh[0].rates[0].offerId = "another_offer_token_" + "y".repeat(60);
+    mocks.getRoomRates.mockResolvedValue(fresh);
+    const ok = await runTool("open_checkout", { hotel_id: "lpbbb0c", ...stay, rate_ref: ref, breakfast_only: null, free_cancellation_only: null }, ctx, "anon");
+    expect((ok.block as { href: string }).href).toContain("another_offer_token_");
+    // Same price hint as the hotel page, so checkout does not show a false "price changed" banner.
+    expect((ok.block as { href: string }).href).toContain("price=5000");
     expect(ok.block).toMatchObject({ type: "checkout_card" });
     expect((ok.block as { href: string }).href).toMatch(/^\/checkout\?offerId=/);
     const forged = await runTool("open_checkout", { hotel_id: "lpbbb0c", ...stay, rate_ref: "0123456789", breakfast_only: null, free_cancellation_only: null }, ctx, "anon");

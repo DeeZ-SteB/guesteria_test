@@ -109,7 +109,9 @@ const FAIL_COPY: Record<string, string> = {
 /** The only way a drafted action is executed: the guest's own click. */
 function ConfirmCard({ block }: { block: Extract<UiBlock, { type: "confirm_action" }> }) {
   const router = useRouter();
-  const [state, setState] = useState<ConfirmState>(() => (Date.parse(block.expiresAt) < Date.now() ? "expired" : "pending"));
+  const [state, setState] = useState<ConfirmState>(() =>
+    block.status && block.status !== "pending" ? block.status : Date.parse(block.expiresAt) < Date.now() ? "expired" : "pending",
+  );
   const [message, setMessage] = useState<string | null>(null);
 
   const decide = async (decision: "confirm" | "cancel") => {

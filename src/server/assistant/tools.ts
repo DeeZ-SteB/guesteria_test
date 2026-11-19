@@ -57,8 +57,13 @@ const toStay = (i: { check_in: string; check_out: string; adults: number }): Sta
   return parsed.success ? parsed.data : null;
 };
 
-/** Short handle for an offer. The ~1.2k-char offer token never reaches the model, which cannot forge one. */
-export const rateRef = (offerId: string) => createHash("sha256").update(offerId).digest("hex").slice(0, 10);
+/**
+ * Short handle for a rate. LiteAPI issues a new offer id on every rates call (verified live), so the
+ * ref describes the rate itself (room, board, cancellation terms) and open_checkout re-finds it in
+ * fresh rates. The offer token never reaches the model.
+ */
+export const rateRef = (room: string, r: { boardCode: string | null; refundable: boolean; freeCancellationUntil: string | null }) =>
+  createHash("sha256").update(`${room}|${r.boardCode ?? ""}|${r.refundable}|${r.freeCancellationUntil ?? ""}`).digest("hex").slice(0, 10);
 
 const liteApiFail = (what: string) => fail(`${what} is temporarily unavailable. Tell the guest and suggest trying again later.`);
 
@@ -205,7 +210,7 @@ const roomRatesTool: Tool<RatesInput> = {
             refundable: rate.refundable,
             refundableUntil: rate.freeCancellationUntil,
             price: rate.price,
-            href: checkoutHref({ offerId: rate.offerId, hotelId: i.hotel_id, stay, price: Math.round(rate.price.amount) }),
+            href: checkoutHref({ offerId: rate.offerId, hotelId: i.hotel_id, stay, price: rate.price.amount }),
           },
         ];
       } catch {
@@ -214,7 +219,7 @@ const roomRatesTool: Tool<RatesInput> = {
     });
     const lines = rates.map(
       ({ room, rate }) =>
-        `- rate_ref ${rateRef(rate.offerId)}: ${untrustedValue(room)}; ${rate.boardLabel}; ${cancellationText(rate)}; total ${formatMoney(rate.price)}`,
+        `- rate_ref ${rateRef(room, rate)}: ${untrustedValue(room)}; ${rate.boardLabel}; ${cancellationText(rate)}; total ${formatMoney(rate.price)}`,
     );
     return {
       text: `Rates at ${untrustedValue(hotelName)} for ${stay.checkIn} → ${stay.checkOut}, ${stay.adults} adults (cards shown):\n${lines.join("\n")}`,
@@ -248,9 +253,9 @@ const openCheckoutTool: Tool<RatesInput & { rate_ref: string }> = {
     } catch {
       return liteApiFail("Checkout");
     }
-    // Live rates again: the rate must still exist; the model only ever knows its short ref.
+    // Live rates again: the same room/board/terms must still be offered; the price is the current one.
     for (const offer of offers) {
-      const rate = offer.rates.find((r) => rateRef(r.offerId) === i.rate_ref);
+      const rate = offer.rates.filter((r) => rateRef(offer.name, r) === i.rate_ref).sort((a, b) => a.price.amount - b.price.amount)[0];
       if (!rate) continue;
       const hotel = await getHotel(i.hotel_id).catch(() => null);
       return {
@@ -261,7 +266,7 @@ const openCheckoutTool: Tool<RatesInput & { rate_ref: string }> = {
           roomName: offer.name.slice(0, 200),
           board: rate.boardLabel.slice(0, 80),
           price: rate.price,
-          href: checkoutHref({ offerId: rate.offerId, hotelId: i.hotel_id, stay, price: Math.round(rate.price.amount) }),
+          href: checkoutHref({ offerId: rate.offerId, hotelId: i.hotel_id, stay, price: rate.price.amount }),
         },
       };
     }

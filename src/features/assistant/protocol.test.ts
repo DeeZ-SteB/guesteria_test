@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assistantRequestSchema, streamEventSchema, uiBlockSchema } from "./protocol";
+import { assistantRequestSchema, streamEventSchema, uiBlockSchema, withActionStatus, type UiBlock } from "./protocol";
 import { createSseParser, encodeSse } from "./sse";
 
 describe("assistant protocol", () => {
@@ -25,6 +25,15 @@ describe("assistant protocol", () => {
     expect(uiBlockSchema.safeParse(card("javascript:alert(1)")).success).toBe(false);
     expect(uiBlockSchema.safeParse(card("//evil.com/hotels/x")).success).toBe(false);
     expect(uiBlockSchema.safeParse(card("/hotels/lp1?x", "https://evil.com/a.jpg")).success).toBe(false);
+  });
+
+  it("reopened confirm cards carry the action's current status", () => {
+    const card: UiBlock = { type: "confirm_action", actionId: "22222222-2222-4222-8222-222222222222", kind: "check_in", title: "t", summary: [], expiresAt: "x" };
+    const other: UiBlock = { type: "hotel_cards", hotels: [] };
+    const out = withActionStatus([card, other], new Map([[card.actionId, "confirmed" as const]]));
+    expect(out[0]).toMatchObject({ status: "confirmed" });
+    expect(out[1]).toBe(other);
+    expect(uiBlockSchema.safeParse(out[0]).success).toBe(true);
   });
 
   it("round-trips events through split chunks, CRLF and comments", () => {

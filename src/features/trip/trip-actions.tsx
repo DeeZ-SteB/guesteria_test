@@ -85,7 +85,12 @@ export function TripActions(props: TripActionsProps) {
   const canAskEarly = props.availableTypes.includes("early_check_in") && !openTypes(live.requests).has("early_check_in");
   return (
     <>
-      <CheckinCard {...props} onEarlyRequest={canAskEarly ? () => setRequestType("early_check_in") : undefined} />
+      {/* Keyed by the stored values: a check-in confirmed in the AI chat (router.refresh) replaces stale local state. */}
+      <CheckinCard
+        key={`${props.checkin?.arrivalTime ?? ""}|${props.checkin?.notes ?? ""}`}
+        {...props}
+        onEarlyRequest={canAskEarly ? () => setRequestType("early_check_in") : undefined}
+      />
       <GuestRequests {...props} {...live} requestType={requestType} setRequestType={setRequestType} />
     </>
   );
