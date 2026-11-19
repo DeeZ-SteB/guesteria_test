@@ -1,4 +1,5 @@
 import { nightsBetween, todayInKyiv } from "./stay";
+import { pluralUk } from "@/lib/format";
 
 /** What the cabinet needs about a booking. Never carries client_reference or prebook ids. */
 export type TripRow = {
@@ -19,6 +20,8 @@ export type TripRow = {
   hasLiteApiId: boolean;
   /** Computed on the server with one clock (the action re-checks anyway). */
   cancellable: boolean;
+  /** Online check-in done; undefined when unknown (then no badge). */
+  checkedIn?: boolean;
 };
 
 export type TripGroups = { upcoming: TripRow[]; past: TripRow[]; cancelled: TripRow[] };
@@ -55,6 +58,19 @@ export function tripBadge(row: TripRow, today: string, nearestId: string | null)
   if (row.checkIn < today) return { kind: "ongoing" };
   if (row.id !== nearestId) return null;
   return { kind: "in_days", days: nightsBetween(today, row.checkIn) };
+}
+
+export function tripBadgeText(b: TripBadge): string {
+  switch (b.kind) {
+    case "in_days":
+      return b.days === 1 ? "Завтра" : `Через ${b.days} ${pluralUk(b.days, ["день", "дні", "днів"])}`;
+    case "today":
+      return "Заїзд сьогодні";
+    case "ongoing":
+      return "Ви зараз тут";
+    case "processing":
+      return "Перевірте статус";
+  }
 }
 
 export function nearestTripId(upcoming: TripRow[], today: string): string | null {

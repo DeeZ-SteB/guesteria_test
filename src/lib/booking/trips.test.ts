@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CANCEL_MARGIN_MS, cancelEligibility, groupTrips, nearestTripId, tripBadge, type TripRow } from "./trips";
+import { CANCEL_MARGIN_MS, cancelEligibility, groupTrips, nearestTripId, tripBadge, tripBadgeText, type TripRow } from "./trips";
 import { todayInKyiv } from "./stay";
 
 const row = (over: Partial<TripRow>): TripRow => ({
@@ -58,6 +58,12 @@ describe("tripBadge", () => {
     const nearest = nearestTripId([a, b], today);
     expect(tripBadge(a, today, nearest)).toEqual({ kind: "in_days", days: 1 });
     expect(tripBadge(b, today, nearest)).toBeNull();
+  });
+  it("labels badges in Ukrainian with plural forms", () => {
+    expect(tripBadgeText({ kind: "in_days", days: 1 })).toBe("Завтра");
+    expect(tripBadgeText({ kind: "in_days", days: 3 })).toBe("Через 3 дні");
+    expect(tripBadgeText({ kind: "in_days", days: 27 })).toBe("Через 27 днів");
+    expect(tripBadgeText({ kind: "today" })).toBe("Заїзд сьогодні");
   });
   it("marks today, ongoing and processing", () => {
     expect(tripBadge(row({ checkIn: today, checkOut: "2026-12-12" }), today, null)).toEqual({ kind: "today" });

@@ -9,7 +9,7 @@ insert into auth.users (id, email) values
 
 insert into public.bookings (id, user_id, liteapi_booking_id, hotel_id, hotel_name, check_in, check_out, adults, total_amount, currency, client_reference, prebook_id, room_name)
 values ('10000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a',
-        'LITE-A', 'h1', 'Hotel A', '2026-12-01', '2026-12-03', 2, 200, 'EUR', 'gs-aaaaaaaaaaaaaaaaaaaaaaaa', 'PRE1', 'Standard');
+        'LITE-A', 'h1', 'Hotel A', current_date + 10, current_date + 12, 2, 200, 'EUR', 'gs-aaaaaaaaaaaaaaaaaaaaaaaa', 'PRE1', 'Standard');
 
 insert into public.favorites (user_id, hotel_id, hotel_name)
 values ('00000000-0000-0000-0000-00000000000a', 'h1', 'Hotel A');

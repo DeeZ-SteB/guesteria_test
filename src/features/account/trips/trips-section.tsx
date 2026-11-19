@@ -1,40 +1,13 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { listOwnBookings, type OwnBooking } from "@/server/bookings";
-import { cancelEligibility, groupTrips, type TripRow } from "@/lib/booking/trips";
+import { groupTrips } from "@/lib/booking/trips";
+import { toTripRow } from "./to-trip-row";
+import { listCheckedInIds } from "@/server/trip";
 import { todayInKyiv } from "@/lib/booking/stay";
 import { ErrorState } from "@/components/ui/feedback";
 import { buttonClasses } from "@/components/ui/button";
 import { TripsView } from "./trips-view";
-
-/** Only display fields cross to the client: no client_reference, prebook or LiteAPI ids. */
-function toTripRow(b: OwnBooking, now: Date): TripRow {
-  const terms = {
-    status: b.status,
-    checkIn: b.check_in,
-    refundable: b.refundable,
-    refundableUntil: b.refundable_until,
-    hasLiteApiId: b.liteapi_booking_id !== null,
-  };
-  return {
-    id: b.id,
-    status: b.status,
-    hotelId: b.hotel_id,
-    hotelName: b.hotel_name,
-    hotelImage: b.hotel_image,
-    city: b.city,
-    checkIn: b.check_in,
-    checkOut: b.check_out,
-    adults: b.adults,
-    roomName: b.room_name,
-    totalAmount: Number(b.total_amount),
-    currency: b.currency,
-    refundable: b.refundable,
-    refundableUntil: b.refundable_until,
-    hasLiteApiId: terms.hasLiteApiId,
-    cancellable: cancelEligibility(terms, now).ok,
-  };
-}
 
 export async function TripsSection({ userId }: { userId: string }) {
   await connection();
@@ -56,5 +29,10 @@ export async function TripsSection({ userId }: { userId: string }) {
   }
   const now = new Date();
   const today = todayInKyiv(now);
-  return <TripsView groups={groupTrips(rows.map((r) => toTripRow(r, now)), today)} today={today} />;
+  const trips = rows.map((r) => toTripRow(r, now));
+  // «Чекін не пройдено» badge: only for confirmed stays that can still be checked in. Best effort.
+  const open = trips.filter((t) => t.status === "confirmed" && t.checkIn >= today).map((t) => t.id);
+  const checkedIn = await listCheckedInIds(userId, open).catch(() => null);
+  if (checkedIn) for (const t of trips) if (open.includes(t.id)) t.checkedIn = checkedIn.has(t.id);
+  return <TripsView groups={groupTrips(trips, today)} today={today} />;
 }

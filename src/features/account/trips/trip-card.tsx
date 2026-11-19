@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { HotelImage } from "@/components/ui/hotel-image";
-import { formatDateRange, nightsLabel, pluralUk } from "@/lib/format";
+import { formatDateRange, nightsLabel } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
 import { cancellationText } from "@/lib/cancellation";
 import { findCity } from "@/lib/cities";
 import { nightsBetween } from "@/lib/booking/stay";
-import { tripBadge, type TripBadge, type TripRow } from "@/lib/booking/trips";
+import { tripBadge, tripBadgeText, type TripRow } from "@/lib/booking/trips";
 import { cn } from "@/lib/cn";
 
 const STATUS = {
@@ -16,19 +16,6 @@ const STATUS = {
   pending: { label: "Обробляється", tone: "bg-accent/10 text-accent" },
   cancelled: { label: "Скасовано", tone: "bg-danger/10 text-danger" },
 } as const;
-
-function badgeText(b: TripBadge): string {
-  switch (b.kind) {
-    case "in_days":
-      return b.days === 1 ? "Завтра" : `Через ${b.days} ${pluralUk(b.days, ["день", "дні", "днів"])}`;
-    case "today":
-      return "Заїзд сьогодні";
-    case "ongoing":
-      return "Ви зараз тут";
-    case "processing":
-      return "Перевірте статус";
-  }
-}
 
 export function TripCard({ trip, today, nearestId, onCancel }: { trip: TripRow; today: string; nearestId: string | null; onCancel: () => void }) {
   const status = STATUS[trip.status];
@@ -48,8 +35,11 @@ export function TripCard({ trip, today, nearestId, onCancel }: { trip: TripRow; 
         <div className="min-w-0 flex-1 text-sm">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", status.tone)}>{status.label}</span>
+            {trip.checkedIn === false && (
+              <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">Чекін не пройдено</span>
+            )}
             {badge && badge.kind !== "processing" && (
-              <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary-dark">{badgeText(badge)}</span>
+              <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary-dark">{tripBadgeText(badge)}</span>
             )}
           </div>
           <h3 className="mt-1 truncate text-base font-semibold">{trip.hotelName}</h3>

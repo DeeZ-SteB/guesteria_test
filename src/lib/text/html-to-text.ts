@@ -9,7 +9,7 @@ const ENTITIES: Record<string, string> = {
 
 // Control, zero-width and bidi-override characters: invisible to people, but they can hide
 // or reorder text (and smuggle instructions into the AI prompt).
-const INVISIBLE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g;
+export const INVISIBLE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g;
 
 /** Decodes a numeric entity; anything outside valid Unicode becomes U+FFFD instead of throwing. */
 function fromCode(code: number): string {
@@ -40,4 +40,9 @@ export function htmlToParagraphs(html: string | null | undefined): string[] {
     .split(/\n+/)
     .map((line) => line.replace(/\s+/g, " ").trim())
     .filter(Boolean);
+}
+
+/** Guest-typed text: invisible/bidi/control characters removed (keeps newlines), trimmed. */
+export function cleanUserText(value: string): string {
+  return value.replace(new RegExp(INVISIBLE.source, "g"), "").replace(/\r\n?/g, "\n").trim();
 }

@@ -105,3 +105,10 @@ dialog::backdrop {
     display: none;
   }
 }
+
+/* The trip page has its own sticky "Ask AI" bar on phones: no floating button on top of it. */
+@media (max-width: 1023px) {
+  :root:has([data-ai-trip-cta]) [data-ai-fab] {
+    display: none;
+  }
+}

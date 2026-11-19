@@ -6,7 +6,10 @@ import { Sheet } from "@/components/ui/sheet";
 import { EmptyState } from "@/components/ui/feedback";
 
 /** What the assistant is being asked about. Stage 8 sends this to the server (validated there). */
-export type AssistantContext = { page: "hotel"; hotelId: string; hotelName: string } | { page: "other" };
+export type AssistantContext =
+  | { page: "hotel"; hotelId: string; hotelName: string }
+  | { page: "trip"; bookingId: string; hotelName: string }
+  | { page: "other" };
 
 const Ctx = createContext<{ open: (context?: AssistantContext) => void } | null>(null);
 
@@ -45,7 +48,9 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
           text={
             context?.page === "hotel"
               ? `Він відповідатиме на питання про «${context.hotelName}»: правила, зручності, відгуки гостей.`
-              : "Він підбиратиме готелі, відповідатиме про них і допомагатиме з чекіном і запитами до готелю."
+              : context?.page === "trip"
+                ? `Він знатиме про вашу поїздку в «${context.hotelName}»: пройде чекін, надішле запит готелю, підкаже дорогу.`
+                : "Він підбиратиме готелі, відповідатиме про них і допомагатиме з чекіном і запитами до готелю."
           }
           className="py-6"
         />
