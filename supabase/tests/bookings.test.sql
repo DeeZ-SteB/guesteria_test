@@ -1,6 +1,6 @@
 -- Bookings written by checkout: shape checks, uniqueness and read-only access (pgTAP).
 begin;
-select plan(12);
+select plan(15);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -43,6 +43,7 @@ select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000
 select is((select count(*) from public.bookings)::int, 2, 'A reads own bookings (confirmed + pending)');
 select throws_ok($$ update public.bookings set total_amount = 1 $$, '42501', null, 'A cannot change a booking (e.g. its price)');
 select throws_ok($$ delete from public.bookings $$, '42501', null, 'A cannot delete a booking');
+select throws_ok($$ update public.bookings set status = 'cancelled' $$, '42501', null, 'A cannot mark a booking cancelled (only the server, after LiteAPI)');
 
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
 select is((select count(*) from public.bookings)::int, 0, 'B cannot see A''s booking');
@@ -50,6 +51,13 @@ select is((select count(*) from public.bookings)::int, 0, 'B cannot see A''s boo
 reset role;
 set local role anon;
 select is((select count(*) from public.bookings)::int, 0, 'Anonymous visitors see nothing');
+
+-- Account deletion (stage 6): deleting the auth user removes their rows.
+reset role;
+insert into public.favorites (user_id, hotel_id, hotel_name) values ('00000000-0000-0000-0000-00000000000a', 'lpbbb0c', 'Grand Hotel');
+delete from auth.users where id = '00000000-0000-0000-0000-00000000000a';
+select is((select count(*) from public.bookings where user_id = '00000000-0000-0000-0000-00000000000a')::int, 0, 'Deleting a user cascades their bookings');
+select is((select count(*) from public.favorites where user_id = '00000000-0000-0000-0000-00000000000a')::int, 0, 'Deleting a user cascades their favorites');
 
 select * from finish();
 rollback;

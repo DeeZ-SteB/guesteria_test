@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { bookingSchema, prebookSchema } from "./schemas";
-import { toCheckoutQuote, toConfirmedBooking } from "./mappers";
+import { bookingSchema, cancelBookingSchema, prebookSchema } from "./schemas";
+import { toCancelOutcome, toCheckoutQuote, toConfirmedBooking } from "./mappers";
 import { checkoutErrorMessage, guestSchema, priceChange } from "@/lib/booking/checkout";
 import { payAtHotelText } from "@/lib/hotels/rates";
 import prebook from "./__fixtures__/prebook.json";
 import book from "./__fixtures__/book.json";
 import booking from "./__fixtures__/booking.json";
+import cancel from "./__fixtures__/cancel.json";
 
 const NOW = new Date("2026-11-18T12:00:00Z");
 const plain = (s: string | null) => s?.replace(/[  ]/g, " ");
@@ -126,5 +127,18 @@ describe("storedCancellation", () => {
     const pending = structuredClone(book.body);
     pending.data.status = "PENDING";
     expect(toConfirmedBooking(bookingSchema.parse(pending).data)).toMatchObject({ status: "PENDING", confirmed: false });
+  });
+});
+
+describe("toCancelOutcome (sandbox cancel)", () => {
+  it("keeps only whether a fee applied, never LiteAPI's refund amount (our net cost)", () => {
+    const outcome = toCancelOutcome(cancelBookingSchema.parse(cancel.body).data);
+    expect(outcome).toEqual({ status: "cancelled", charged: false });
+    expect(JSON.stringify(outcome)).not.toContain("23173");
+  });
+  it("flags charges by status or fee", () => {
+    const withCharges = { ...cancel.body.data, status: "CANCELLED_WITH_CHARGES" as const };
+    expect(toCancelOutcome(withCharges)).toEqual({ status: "cancelled_with_charges", charged: true });
+    expect(toCancelOutcome({ ...cancel.body.data, status: "CANCELLED" as const, cancellation_fee: 500 }).charged).toBe(true);
   });
 });

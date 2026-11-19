@@ -8,7 +8,7 @@ const eslintConfig = defineConfig([
   {
     // The secret-key client bypasses RLS: only the bookings data-access module may use it.
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/server/bookings.ts", "src/server/db/admin.ts"],
+    ignores: ["src/server/bookings.ts", "src/server/users.ts", "src/server/db/admin.ts"],
     rules: {
       "no-restricted-imports": [
         "error",

@@ -20,14 +20,14 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
-      {
-        // Personal, price-bearing pages: never cached by browsers or CDNs, never indexed.
-        source: "/checkout",
+      // Personal, price-bearing pages: never cached by browsers or CDNs, never indexed.
+      ...["/checkout", "/account", "/account/:path*"].map((source) => ({
+        source,
         headers: [
           { key: "Cache-Control", value: "private, no-store" },
           { key: "X-Robots-Tag", value: "noindex" },
         ],
-      },
+      })),
     ];
   },
   images: {

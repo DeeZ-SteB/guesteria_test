@@ -257,6 +257,7 @@ export const cancelBookingSchema = z.object({
 
 export type PrebookResponse = z.infer<typeof prebookSchema>;
 export type BookingResponse = z.infer<typeof bookingSchema>;
+export type CancelBookingResponse = z.infer<typeof cancelBookingSchema>;
 export type BookingData = z.infer<typeof bookingDataSchema>;
 export type HotelListResponse = z.infer<typeof hotelListSchema>;
 export type MinRatesResponse = z.infer<typeof minRatesSchema>;

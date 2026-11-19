@@ -147,3 +147,38 @@ export async function findSameStay(userId: string, hotelId: string, checkIn: str
     .maybeSingle();
   return data ? { id: data.id as string, status: data.status as BookingStatus } : null;
 }
+
+/** All of this user's bookings and attempts, newest stays last (RLS + explicit filter). */
+export async function listOwnBookings(userId: string): Promise<OwnBooking[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("bookings").select(OWN_COLUMNS).eq("user_id", userId).order("check_in").limit(200);
+  if (error) throw new Error(`bookings list failed (${error.code})`);
+  return (data ?? []) as OwnBooking[];
+}
+
+/** confirmed → cancelled for this user's row. Idempotent: anything else is "unchanged". */
+export async function markCancelled(userId: string, id: string): Promise<"updated" | "unchanged"> {
+  const { data, error } = await createAdminClient()
+    .from("bookings")
+    .update({ status: "cancelled" })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .eq("status", "confirmed")
+    .select("id");
+  if (error) throw new Error(`bookings cancel failed (${error.code})`);
+  return data && data.length > 0 ? "updated" : "unchanged";
+}
+
+/** Any confirmed or in-flight stay that has not ended yet (blocks account deletion). */
+export async function hasActiveTrips(userId: string, today: string): Promise<boolean> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("id")
+    .eq("user_id", userId)
+    .in("status", ["confirmed", "pending"])
+    .gte("check_out", today)
+    .limit(1);
+  if (error) throw new Error(`bookings check failed (${error.code})`);
+  return (data ?? []).length > 0;
+}

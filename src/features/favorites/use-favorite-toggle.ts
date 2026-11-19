@@ -7,7 +7,7 @@ import { useAuthModal } from "@/features/auth/auth-modal";
 import { setFavorite } from "./actions";
 
 /** What a heart needs to know about a hotel (search card or hotel page). */
-export type FavoriteTarget = { id: string; name: string; photo: string | null };
+export type FavoriteTarget = { id: string; name: string; photo: string | null; /** Overrides the page city (cabinet: each hotel keeps its own). */ cityId?: string | null };
 
 /**
  * Hearts: optimistic local state, rolled back if the save fails. Signed-out taps remember
@@ -44,7 +44,7 @@ export function useFavoriteToggle({
       const token = tracker.current.begin(hotel.id, previous);
       setOne(hotel.id, favorite);
       setMessage(null);
-      const result = await setFavorite({ hotelId: hotel.id, hotelName: hotel.name, hotelImage: hotel.photo, cityId, favorite });
+      const result = await setFavorite({ hotelId: hotel.id, hotelName: hotel.name, hotelImage: hotel.photo, cityId: hotel.cityId ?? cityId, favorite });
       if (result.ok) {
         tracker.current.done(token);
         return;

@@ -13,10 +13,10 @@ describe("security headers", () => {
     expect(map["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   });
 
-  it("never caches or indexes checkout", async () => {
+  it.each(["/checkout", "/account", "/account/:path*"])("never caches or indexes %s", async (source) => {
     const rules = (await nextConfig.headers?.()) ?? [];
-    const checkout = rules.find((r) => r.source === "/checkout");
-    const map = Object.fromEntries((checkout?.headers ?? []).map((h) => [h.key.toLowerCase(), h.value]));
+    const rule = rules.find((r) => r.source === source);
+    const map = Object.fromEntries((rule?.headers ?? []).map((h) => [h.key.toLowerCase(), h.value]));
     expect(map["cache-control"]).toBe("private, no-store");
     expect(map["x-robots-tag"]).toBe("noindex");
   });

@@ -8,6 +8,7 @@ import { htmlToParagraphs } from "@/lib/text/html-to-text";
 import { offerIdSchema } from "@/lib/booking/offer";
 import { LiteApiError } from "./errors";
 import type {
+  CancelBookingResponse,
   BookingData,
   HotelDetailsResponse,
   PrebookResponse,
@@ -276,4 +277,15 @@ export function toRoomOffers(rates: RatesResponse, rooms: Room[], now: Date = ne
   const offers = [...groups.values()];
   offers.forEach((o) => o.rates.sort((a, b) => a.price.amount - b.price.amount));
   return offers.sort((a, b) => a.rates[0].price.amount - b.rates[0].price.amount);
+}
+
+export type CancelOutcome = { status: "cancelled" | "cancelled_with_charges"; charged: boolean };
+
+/**
+ * What a cancel did. LiteAPI's refund_amount is OUR net cost, never shown to the guest; only
+ * whether a fee applied is kept (for logging and support).
+ */
+export function toCancelOutcome(d: CancelBookingResponse["data"]): CancelOutcome {
+  const withCharges = d.status.endsWith("WITH_CHARGES");
+  return { status: withCharges ? "cancelled_with_charges" : "cancelled", charged: withCharges || (d.cancellation_fee ?? 0) > 0 };
 }

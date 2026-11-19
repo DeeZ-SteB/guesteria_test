@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { initials } from "@/lib/initials";
 import { signInRedirectPath } from "@/lib/auth-routes";
@@ -55,16 +56,70 @@ export async function requireUser(returnTo: string): Promise<ShellUser> {
   return user;
 }
 
+export type VerifiedUser = { status: "ok"; user: ShellUser; isDemo: boolean; emailConfirmed: boolean } | { status: "session" };
+
 /**
- * For money-spending actions only: re-checks the session with the Auth server (a revoked JWT
- * still passes getClaims until it expires) and requires a confirmed email.
+ * For actions that spend money or change the account: re-checks the session with the Auth server
+ * (a revoked JWT still passes getClaims until it expires). `isDemo` comes from app_metadata,
+ * which only the secret key can write.
  */
-export async function verifiedBookingUser(): Promise<{ status: "ok"; user: ShellUser } | { status: "session" | "unverified" }> {
+export async function verifiedUser(): Promise<VerifiedUser> {
   const current = await getCurrentUser();
   if (!current) return { status: "session" };
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user || data.user.id !== current.id) return { status: "session" };
-  if (!data.user.email_confirmed_at) return { status: "unverified" };
-  return { status: "ok", user: current };
+  return {
+    status: "ok",
+    user: current,
+    isDemo: data.user.app_metadata?.demo === true,
+    emailConfirmed: Boolean(data.user.email_confirmed_at),
+  };
+}
+
+/** Booking additionally requires a confirmed email. */
+export async function verifiedBookingUser(): Promise<{ status: "ok"; user: ShellUser } | { status: "session" | "unverified" }> {
+  const v = await verifiedUser();
+  if (v.status !== "ok") return v;
+  if (!v.emailConfirmed) return { status: "unverified" };
+  return { status: "ok", user: v.user };
+}
+
+const profileMetaSchema = z.object({
+  first_name: z.string().max(50).catch(""),
+  last_name: z.string().max(50).catch(""),
+  phone: z.string().max(20).catch(""),
+  ai_language: z.enum(["auto", "uk", "en"]).catch("auto"),
+});
+
+export type AccountProfile = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  aiLanguage: "auto" | "uk" | "en";
+  email: string;
+  isDemo: boolean;
+};
+
+/**
+ * Profile for the cabinet form. user_metadata is writable by the user through the Supabase API,
+ * so it is parsed defensively and never used for authorization.
+ */
+export async function getAccountProfile(): Promise<AccountProfile | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  const meta = profileMetaSchema.parse(typeof claims?.user_metadata === "object" && claims.user_metadata ? claims.user_metadata : {});
+  const appMeta = claims?.app_metadata as Record<string, unknown> | undefined;
+  return {
+    firstName: meta.first_name,
+    lastName: meta.last_name,
+    phone: meta.phone,
+    aiLanguage: meta.ai_language,
+    email: user.email,
+    // UI hint only; every action re-checks via verifiedUser().
+    isDemo: appMeta?.demo === true,
+  };
 }

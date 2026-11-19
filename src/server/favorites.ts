@@ -18,3 +18,17 @@ export async function getFavoriteHotelIds(hotelIds: string[]): Promise<string[]>
   }
   return data.map((row) => row.hotel_id as string);
 }
+
+export type SavedHotel = { hotelId: string; hotelName: string; hotelImage: string | null; cityId: string | null };
+
+/** The signed-in user's saved hotels, newest first (RLS; the DB caps them at 500). Throws on failure. */
+export async function listOwnFavorites(): Promise<SavedHotel[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("favorites")
+    .select("hotel_id, hotel_name, hotel_image, city")
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (error) throw new Error(`favorites list failed (${error.code})`);
+  return data.map((r) => ({ hotelId: r.hotel_id as string, hotelName: r.hotel_name as string, hotelImage: (r.hotel_image as string | null) ?? null, cityId: (r.city as string | null) ?? null }));
+}

@@ -4,8 +4,9 @@ import { z } from "zod";
 import { serverSupabaseConfig } from "@/lib/supabase/config";
 
 /**
- * Supabase client with the secret key: bypasses RLS. Used only by src/server/bookings.ts to record
- * booking attempts and confirmed bookings (clients have no write rights on `bookings`).
+ * Supabase client with the secret key: bypasses RLS. Used only by src/server/bookings.ts (to record
+ * booking attempts, confirmations and cancellations; clients cannot write `bookings`) and
+ * src/server/users.ts (account deletion).
  * The key is read here and nowhere else; ESLint restricts importing this module.
  */
 export function createAdminClient() {

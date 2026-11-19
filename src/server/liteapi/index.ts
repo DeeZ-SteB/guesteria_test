@@ -9,7 +9,8 @@ import { findCity } from "@/lib/cities";
 import { liteApiKey } from "@/server/env";
 import { createLiteApiClient } from "./client";
 import { LiteApiError, reviveLiteApiError } from "./errors";
-import { toCheckoutQuote, toConfirmedBooking, toHotelDetails, toReviews } from "./mappers";
+import { toCancelOutcome, toCheckoutQuote, toConfirmedBooking, toHotelDetails, toReviews, type CancelOutcome } from "./mappers";
+export type { CancelOutcome } from "./mappers";
 import { offerIdSchema } from "@/lib/booking/offer";
 import type { CheckoutQuote, ConfirmedBooking, Guest } from "@/lib/booking/checkout";
 import * as service from "./service";
@@ -169,7 +170,20 @@ export async function findBookingsByReference(clientReference: string): Promise<
   return result.data.map(toConfirmedBooking);
 }
 
-/** Stage 6 calls this only after checking the booking belongs to the user. */
-export async function cancelLiteApiBooking(liteapiBookingId: string) {
-  return (await client().cancelBooking(liteapiBookingId)).data;
+/**
+ * Cancels a booking at LiteAPI. CALLERS MUST first check ownership with getOwnBooking
+ * (SPEC §11.3): LiteAPI ids are not secret enough to be trusted on their own.
+ * Re-cancelling an already cancelled booking answers CANCELLED again (verified in sandbox).
+ */
+export async function cancelBookingAtLiteApi(liteapiBookingId: string): Promise<CancelOutcome> {
+  return toCancelOutcome((await client().cancelBooking(liteapiBookingId)).data);
+}
+
+/** Current status at LiteAPI, used to reconcile a cancel whose outcome is unknown. Same ownership rule. */
+export async function getLiteApiBookingStatus(liteapiBookingId: string): Promise<"confirmed" | "cancelled" | "other"> {
+  const { data } = await client().getBooking(liteapiBookingId, { timeoutMs: 15_000 });
+  const status = data.status?.toUpperCase() ?? "";
+  if (status.startsWith("CANCEL")) return "cancelled";
+  if (status === "CONFIRMED") return "confirmed";
+  return "other";
 }

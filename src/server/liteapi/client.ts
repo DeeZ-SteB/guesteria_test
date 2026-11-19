@@ -182,10 +182,10 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
     },
 
     /** Verified in sandbox. */
-    getBooking: async (bookingId: string) =>
+    getBooking: async (bookingId: string, opts: { timeoutMs?: number } = {}) =>
       request(BOOK_HOST, `/bookings/${pathId(bookingId, "GET /bookings/{id}")}`, {
-        query: { timeout: 25 },
-        timeoutMs: TIMEOUT.bookingRead,
+        query: { timeout: Math.max(1, Math.floor((opts.timeoutMs ?? TIMEOUT.bookingRead) / 1000) - 3) },
+        timeoutMs: opts.timeoutMs ?? TIMEOUT.bookingRead,
         schema: bookingSchema,
       }),
 
