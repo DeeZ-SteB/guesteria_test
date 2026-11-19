@@ -298,3 +298,4 @@ Format:
 | security | LOW | Full reviewer names on the public home page | First name + initial (`shortName`). Test. |
 | security | LOW | Stale "Never cached" comment; future per-user args would leak into a shared cache | Comment fixed; rule written next to the caches. |
 | security | LOW | Client-varied keys could churn the shared cache | Accepted: inputs validated, routes already rate-limited. |
+- **Found only in production:** after deploying, a repeated search was no faster (4.5 s): on Vercel `use cache` lives in each serverless instance's memory, so requests mostly land on a cold instance. Switched the LiteAPI and home caches to `use cache: remote` (shared by all instances; locally the same in-memory cache). Production, full page: search 5.1 s cold → 0.44 s warm; hotel page 1.8 s → 0.25 s; home 0.26 s.
