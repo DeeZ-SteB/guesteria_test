@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   deleteUserAccount: vi.fn(),
   refresh: vi.fn(),
   supabase: {
+    rpc: vi.fn(),
     auth: {
       updateUser: vi.fn(),
       refreshSession: vi.fn(),
@@ -59,7 +60,8 @@ beforeEach(() => {
   mocks.getOwnBooking.mockResolvedValue(booking());
   mocks.markCancelled.mockResolvedValue("updated");
   mocks.cancelBookingAtLiteApi.mockResolvedValue({ status: "cancelled", charged: false });
-  mocks.hasActiveTrips.mockResolvedValue(false);
+  mocks.hasActiveTrips.mockResolvedValue(null);
+  mocks.supabase.rpc.mockImplementation(async (fn: string) => ({ data: fn === "recent_password_failures" ? 0 : null, error: null }));
   mocks.supabase.auth.updateUser.mockResolvedValue({ error: null });
   mocks.supabase.auth.refreshSession.mockResolvedValue({ error: null });
   mocks.supabase.auth.signInWithPassword.mockResolvedValue({ data: { user: { id: UID } }, error: null });
@@ -78,6 +80,12 @@ describe("cancelTrip", () => {
     mocks.getOwnBooking.mockResolvedValue(null);
     expect(await cancelTrip({ bookingId: BID })).toEqual({ ok: false, reason: "not_found" });
     expect(mocks.getOwnBooking).toHaveBeenCalledWith(UID, BID);
+    expect(mocks.cancelBookingAtLiteApi).not.toHaveBeenCalled();
+  });
+
+  it("a database error is retryable, not 'not found'", async () => {
+    mocks.getOwnBooking.mockRejectedValue(new Error("db"));
+    expect(await cancelTrip({ bookingId: BID })).toEqual({ ok: false, reason: "retry" });
     expect(mocks.cancelBookingAtLiteApi).not.toHaveBeenCalled();
   });
 
@@ -105,10 +113,10 @@ describe("cancelTrip", () => {
     expect(mocks.refresh).toHaveBeenCalled();
   });
 
-  it("with charges still marks cancelled (logged, no amounts)", async () => {
+  it("with charges marks cancelled but tells the guest (never 'full refund')", async () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     mocks.cancelBookingAtLiteApi.mockResolvedValue({ status: "cancelled_with_charges", charged: true });
-    expect(await cancelTrip({ bookingId: BID })).toEqual({ ok: true, state: "cancelled" });
+    expect(await cancelTrip({ bookingId: BID })).toEqual({ ok: true, state: "cancelled_with_charges" });
     expect(mocks.markCancelled).toHaveBeenCalled();
     expect(log).toHaveBeenCalled();
     log.mockRestore();
@@ -174,10 +182,22 @@ describe("updateProfile", () => {
 
 describe("changePassword", () => {
   const input = { currentPassword: "old-pass1", newPassword: "new-pass1", confirm: "new-pass1" };
-  it("refuses a wrong current password", async () => {
+  it("refuses a wrong current password and counts the failure", async () => {
     mocks.supabase.auth.signInWithPassword.mockResolvedValue({ data: { user: null }, error: { code: "invalid_credentials" } });
     expect((await changePassword({}, fd(input))).fieldErrors?.currentPassword).toBe("Невірний поточний пароль");
+    expect(mocks.supabase.rpc).toHaveBeenCalledWith("record_password_failure");
     expect(mocks.supabase.auth.updateUser).not.toHaveBeenCalled();
+  });
+  it("stops checking passwords after 5 failures in 15 minutes", async () => {
+    mocks.supabase.rpc.mockImplementation(async (fn: string) => ({ data: fn === "recent_password_failures" ? 5 : null, error: null }));
+    expect((await changePassword({}, fd(input))).error).toMatch(/Забагато спроб/);
+    expect((await deleteAccount({}, fd({ currentPassword: "x", confirm: "ВИДАЛИТИ" }))).error).toMatch(/Забагато спроб/);
+    expect(mocks.supabase.auth.signInWithPassword).not.toHaveBeenCalled();
+  });
+  it("fails closed when the attempt counter is unavailable", async () => {
+    mocks.supabase.rpc.mockResolvedValue({ data: null, error: { code: "x" } });
+    expect((await changePassword({}, fd(input))).error).toBeTruthy();
+    expect(mocks.supabase.auth.signInWithPassword).not.toHaveBeenCalled();
   });
   it("changes the password and signs out other sessions", async () => {
     expect((await changePassword({}, fd(input))).notice).toMatch(/Пароль змінено/);
@@ -190,8 +210,13 @@ describe("changePassword", () => {
 describe("deleteAccount", () => {
   const input = { currentPassword: "pass-1234", confirm: "ВИДАЛИТИ" };
   it("is blocked while there are active trips", async () => {
-    mocks.hasActiveTrips.mockResolvedValue(true);
+    mocks.hasActiveTrips.mockResolvedValue("confirmed");
     expect((await deleteAccount({}, fd(input))).error).toMatch(/майбутні поїздки/);
+    expect(mocks.deleteUserAccount).not.toHaveBeenCalled();
+  });
+  it("an unresolved attempt points to its status page instead of a dead end", async () => {
+    mocks.hasActiveTrips.mockResolvedValue("pending");
+    expect((await deleteAccount({}, fd(input))).error).toMatch(/обробляється/);
     expect(mocks.deleteUserAccount).not.toHaveBeenCalled();
   });
   it("needs the right password", async () => {

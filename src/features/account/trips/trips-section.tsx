@@ -1,14 +1,21 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { listOwnBookings, type OwnBooking } from "@/server/bookings";
-import { groupTrips, type TripRow } from "@/lib/booking/trips";
+import { cancelEligibility, groupTrips, type TripRow } from "@/lib/booking/trips";
 import { todayInKyiv } from "@/lib/booking/stay";
 import { ErrorState } from "@/components/ui/feedback";
 import { buttonClasses } from "@/components/ui/button";
 import { TripsView } from "./trips-view";
 
 /** Only display fields cross to the client: no client_reference, prebook or LiteAPI ids. */
-function toTripRow(b: OwnBooking): TripRow {
+function toTripRow(b: OwnBooking, now: Date): TripRow {
+  const terms = {
+    status: b.status,
+    checkIn: b.check_in,
+    refundable: b.refundable,
+    refundableUntil: b.refundable_until,
+    hasLiteApiId: b.liteapi_booking_id !== null,
+  };
   return {
     id: b.id,
     status: b.status,
@@ -24,7 +31,8 @@ function toTripRow(b: OwnBooking): TripRow {
     currency: b.currency,
     refundable: b.refundable,
     refundableUntil: b.refundable_until,
-    hasLiteApiId: b.liteapi_booking_id !== null,
+    hasLiteApiId: terms.hasLiteApiId,
+    cancellable: cancelEligibility(terms, now).ok,
   };
 }
 
@@ -46,6 +54,7 @@ export async function TripsSection({ userId }: { userId: string }) {
       />
     );
   }
-  const today = todayInKyiv();
-  return <TripsView groups={groupTrips(rows.map(toTripRow), today)} today={today} />;
+  const now = new Date();
+  const today = todayInKyiv(now);
+  return <TripsView groups={groupTrips(rows.map((r) => toTripRow(r, now)), today)} today={today} />;
 }

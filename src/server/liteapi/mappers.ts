@@ -279,6 +279,14 @@ export function toRoomOffers(rates: RatesResponse, rooms: Room[], now: Date = ne
   return offers.sort((a, b) => a.rates[0].price.amount - b.rates[0].price.amount);
 }
 
+/** LiteAPI booking status → what reconciliation needs. */
+export function toBookingState(status: string | null | undefined): "confirmed" | "cancelled" | "other" {
+  const s = (status ?? "").toUpperCase();
+  if (s.startsWith("CANCEL")) return "cancelled";
+  if (s === "CONFIRMED") return "confirmed";
+  return "other";
+}
+
 export type CancelOutcome = { status: "cancelled" | "cancelled_with_charges"; charged: boolean };
 
 /**

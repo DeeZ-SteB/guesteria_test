@@ -85,12 +85,17 @@ export async function verifiedBookingUser(): Promise<{ status: "ok"; user: Shell
   return { status: "ok", user: v.user };
 }
 
-const profileMetaSchema = z.object({
+export const profileMetaSchema = z.object({
   first_name: z.string().max(50).catch(""),
   last_name: z.string().max(50).catch(""),
   phone: z.string().max(20).catch(""),
   ai_language: z.enum(["auto", "uk", "en"]).catch("auto"),
 });
+
+/** user_metadata is user-writable: anything malformed becomes an empty default. */
+export function parseProfileMeta(raw: unknown) {
+  return profileMetaSchema.parse(typeof raw === "object" && raw !== null && !Array.isArray(raw) ? raw : {});
+}
 
 export type AccountProfile = {
   firstName: string;
@@ -111,7 +116,7 @@ export async function getAccountProfile(): Promise<AccountProfile | null> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
-  const meta = profileMetaSchema.parse(typeof claims?.user_metadata === "object" && claims.user_metadata ? claims.user_metadata : {});
+  const meta = parseProfileMeta(claims?.user_metadata);
   const appMeta = claims?.app_metadata as Record<string, unknown> | undefined;
   return {
     firstName: meta.first_name,

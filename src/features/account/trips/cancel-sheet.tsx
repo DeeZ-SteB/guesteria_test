@@ -17,6 +17,8 @@ function resultText(r: Extract<CancelTripResult, { ok: false }>["reason"]): stri
       return "Не вдалося перевірити результат. Оновіть сторінку за хвилину — повторне скасування безпечне.";
     case "save_failed":
       return "Бронювання скасовано в готелі, статус тут оновиться після повторної спроби.";
+    case "retry":
+      return "Не вдалося завантажити бронювання. Спробуйте ще раз.";
     case "session":
       return "Сесія завершилась. Увійдіть знову.";
     case "not_found":
@@ -42,6 +44,11 @@ export function CancelSheet({ trip, onClose }: { trip: TripRow | null; onClose: 
     setMessage(null);
     startTransition(async () => {
       const result = await cancelTrip({ bookingId: trip.id });
+      if (result.ok && result.state === "cancelled_with_charges") {
+        // Never let a charged cancellation look like the promised full refund.
+        setMessage("Бронювання скасовано, але готель утримав плату. Зверніться до підтримки — ми розберемося.");
+        return;
+      }
       if (result.ok) {
         onClose(); // the page refreshes; the trip moves to «Скасовані»
         return;

@@ -184,7 +184,8 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
     /** Verified in sandbox. */
     getBooking: async (bookingId: string, opts: { timeoutMs?: number } = {}) =>
       request(BOOK_HOST, `/bookings/${pathId(bookingId, "GET /bookings/{id}")}`, {
-        query: { timeout: Math.max(1, Math.floor((opts.timeoutMs ?? TIMEOUT.bookingRead) / 1000) - 3) },
+        // LiteAPI gives up 5 s before we abort, so we get its answer rather than our own timeout.
+        query: { timeout: Math.max(1, Math.floor((opts.timeoutMs ?? TIMEOUT.bookingRead) / 1000) - 5) },
         timeoutMs: opts.timeoutMs ?? TIMEOUT.bookingRead,
         schema: bookingSchema,
       }),

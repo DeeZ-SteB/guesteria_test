@@ -15,8 +15,8 @@ import { cancelTripSchema, deleteAccountSchema, passwordSchema, profileSchema } 
 // ---------------------------------------------------------------- cancellation
 
 export type CancelTripResult =
-  | { ok: true; state: "cancelled" | "already_cancelled" }
-  | { ok: false; reason: "invalid" | "session" | "not_found" | CancelBlock | "liteapi_failed" | "unknown_outcome" | "save_failed" };
+  | { ok: true; state: "cancelled" | "already_cancelled" | "cancelled_with_charges" }
+  | { ok: false; reason: "invalid" | "session" | "not_found" | "retry" | CancelBlock | "liteapi_failed" | "unknown_outcome" | "save_failed" };
 
 /**
  * Free cancellation of the user's own booking. Ownership is checked against our table before
@@ -30,7 +30,12 @@ export async function cancelTrip(input: { bookingId: string }): Promise<CancelTr
   if (auth.status !== "ok") return { ok: false, reason: "session" };
   const userId = auth.user.id;
 
-  const booking = await getOwnBooking(userId, parsed.data.bookingId);
+  let booking: Awaited<ReturnType<typeof getOwnBooking>>;
+  try {
+    booking = await getOwnBooking(userId, parsed.data.bookingId);
+  } catch {
+    return { ok: false, reason: "retry" };
+  }
   if (!booking) return { ok: false, reason: "not_found" }; // also for other users' ids
   if (booking.status === "cancelled") return { ok: true, state: "already_cancelled" };
 
@@ -48,10 +53,12 @@ export async function cancelTrip(input: { bookingId: string }): Promise<CancelTr
   const liteapiId = booking.liteapi_booking_id as string;
 
   let cancelled = false;
+  let charged = false;
   try {
     const outcome = await cancelBookingAtLiteApi(liteapiId);
-    // Should not happen inside the free window; no amounts in logs.
-    if (outcome.charged) console.error(`[cancel] booking ${booking.id} cancelled with charges`);
+    // Should not happen inside the free window (clock skew, hotel-side deadline). No amounts in logs.
+    charged = outcome.charged;
+    if (charged) console.error(`[cancel] booking ${booking.id} cancelled with charges`);
     cancelled = true;
   } catch {
     // Timeout, double submit, LiteAPI hiccup: ask LiteAPI what is true now.
@@ -74,7 +81,7 @@ export async function cancelTrip(input: { bookingId: string }): Promise<CancelTr
     }
   }
   refresh();
-  return { ok: true, state: "cancelled" };
+  return { ok: true, state: charged ? "cancelled_with_charges" : "cancelled" };
 }
 
 // ---------------------------------------------------------------- profile
@@ -113,11 +120,28 @@ export async function updateProfile(_prev: AccountFormState, formData: FormData)
   return { notice: "Збережено", values: { ...values, phone: parsed.data.phone } };
 }
 
-/** Proves the person at the keyboard knows the password (also refreshes the session for secure_password_change). */
-async function checkPassword(email: string, userId: string, password: string): Promise<boolean> {
+const MAX_PASSWORD_FAILURES = 5; // per 15 minutes, counted in the database per user
+
+/**
+ * Proves the person at the keyboard knows the password (also refreshes the session for
+ * secure_password_change). Failures are counted per user; after the limit we stop asking Supabase
+ * at all, so a hijacked session cannot guess and cannot exhaust the shared per-IP sign-in limit.
+ * Fails closed if the counter is unavailable.
+ */
+async function checkPassword(email: string, userId: string, password: string): Promise<"ok" | "wrong" | "locked"> {
   const supabase = await createClient();
+  const recent = await supabase.rpc("recent_password_failures");
+  if (recent.error || typeof recent.data !== "number" || recent.data >= MAX_PASSWORD_FAILURES) return "locked";
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  return !error && data.user?.id === userId;
+  if (!error && data.user?.id === userId) return "ok";
+  await supabase.rpc("record_password_failure");
+  return "wrong";
+}
+
+function passwordProblem(result: "wrong" | "locked"): AccountFormState {
+  return result === "locked"
+    ? { error: "Забагато спроб. Спробуйте за 15 хвилин." }
+    : { fieldErrors: { currentPassword: "Невірний поточний пароль" } };
 }
 
 export async function changePassword(_prev: AccountFormState, formData: FormData): Promise<AccountFormState> {
@@ -131,9 +155,8 @@ export async function changePassword(_prev: AccountFormState, formData: FormData
   const auth = await verifiedUser();
   if (auth.status !== "ok") return { error: "Сесія завершилась. Увійдіть знову." };
   if (auth.isDemo) return { error: DEMO_LOCKED };
-  if (!(await checkPassword(auth.user.email, auth.user.id, parsed.data.currentPassword))) {
-    return { fieldErrors: { currentPassword: "Невірний поточний пароль" } };
-  }
+  const password = await checkPassword(auth.user.email, auth.user.id, parsed.data.currentPassword);
+  if (password !== "ok") return passwordProblem(password);
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password: parsed.data.newPassword });
@@ -150,18 +173,21 @@ export async function deleteAccount(_prev: AccountFormState, formData: FormData)
   const auth = await verifiedUser();
   if (auth.status !== "ok") return { error: "Сесія завершилась. Увійдіть знову." };
   if (auth.isDemo) return { error: DEMO_LOCKED };
-  if (!(await checkPassword(auth.user.email, auth.user.id, parsed.data.currentPassword))) {
-    return { fieldErrors: { currentPassword: "Невірний поточний пароль" } };
-  }
+  const password = await checkPassword(auth.user.email, auth.user.id, parsed.data.currentPassword);
+  if (password !== "ok") return passwordProblem(password);
 
   // Deleting would cascade the booking row while the hotel booking stays live and ownerless.
-  let active: boolean;
+  let active: Awaited<ReturnType<typeof hasActiveTrips>>;
   try {
     active = await hasActiveTrips(auth.user.id, todayInKyiv());
   } catch {
     return { error: "Не вдалося перевірити поїздки. Спробуйте ще раз." };
   }
-  if (active) return { error: "Спочатку скасуйте або завершіть майбутні поїздки — інакше бронювання залишиться в готелі без власника." };
+  if (active === "pending") {
+    // Opening it resolves the attempt (confirmed, or released once LiteAPI shows nothing).
+    return { error: "Одне з бронювань ще обробляється. Відкрийте його в «Поїздках», щоб оновити статус, і спробуйте знову." };
+  }
+  if (active === "confirmed") return { error: "Спочатку скасуйте або завершіть майбутні поїздки — інакше бронювання залишиться в готелі без власника." };
 
   try {
     await deleteUserAccount(auth.user.id);

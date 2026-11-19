@@ -164,3 +164,26 @@ Format:
 | security | LOW | Admin-client lint guard bypassable (dynamic import, `.ts`, reading the key elsewhere) | Patterns + `no-restricted-syntax`; the key is read only inside `admin.ts`. Verified with a probe file. |
 | security | LOW | `cancelLiteApiBooking(rawId)` exported without ownership check | Stage 6: replaced by an ownership-checked function. |
 - Re-verified live after the redesign: double click → 1 row (`confirmed`, refundable) and 1 LiteAPI booking; deadline = the one shown at checkout.
+
+## 2026-11-19 — Stage 6: personal cabinet (`feat/account`)
+- `planner` → `docs/plans/06-account.md`. Before coding I probed the sandbox: re-cancelling an already cancelled booking answers `200 CANCELLED` again (idempotent), an unknown id → `404 / 4008`. The plan's "already-cancelled response is undocumented" became a verified fact.
+- Overrode the planner: no `?deleted=1` toast (redirect home is enough); `refund_amount` dropped entirely (planner said "don't show" — I also don't return it from the mapper).
+- Caught by me in the browser: trip cards overflowed the 375 px viewport (grid items with `truncate` text need `grid-cols-1` = `minmax(0,1fr)`).
+- **My own mistake, caught only by the dev server:** exporting a constant from a `"use server"` file breaks every action in it. Lint, typecheck and 292 unit tests all passed — `npm run build` is now part of my check before any commit.
+- Findings: code-reviewer 7 (2 MEDIUM, 5 LOW), security-auditor 7 (1 MEDIUM, 6 LOW).
+
+| Agent | Sev | Finding | Resolution |
+|---|---|---|---|
+| security | MED | Current-password check had no limit: a hijacked session could guess it, and failed attempts exhaust Supabase's per-IP sign-in limit shared by all users | `password_failures` table (no client access) + `security definer` RPCs; 5 failures / 15 min per user, fails closed. pgTAP + unit tests; verified through the real API. |
+| both | MED/LOW | `CANCELLED_WITH_CHARGES` reported as a free cancellation | Distinct `cancelled_with_charges` result; the sheet tells the guest to contact support. Test. |
+| code | MED | A long-lived `pending` attempt blocked account deletion with no way out | Pending gets its own message pointing to its status page (opening it resolves or releases the attempt). Test. |
+| security | LOW | Account deletion erased booking records (money trail) | Migration: `bookings.user_id … on delete set null`. pgTAP. This also defuses the check-then-delete race below: a booking confirmed mid-deletion stays recorded. |
+| both | LOW | Race between `hasActiveTrips` and delete | Accepted (narrow window, user acting against themselves); with `set null` no record is lost. |
+| code | LOW | DB error in `getOwnBooking` looked like 404 / "not found" | Throws; the page shows the error boundary, `cancelTrip` returns retryable `retry`. Test. |
+| code | LOW | `cancelEligibility(new Date())` during client render → hydration mismatch near the deadline | `cancellable` computed on the server with one clock. |
+| code | LOW | `getBooking` default query timeout margin shrank 5 s → 3 s | Margin back to 5 s. |
+| code | LOW | No tests for status mapping / metadata parsing | Pure `toBookingState` and `parseProfileMeta` with tests. |
+| security | LOW | Shared demo account: visitors can cancel each other's demo bookings | Accepted: sandbox only, the demo banner says the account is shared; cancellation is the showcase flow. |
+| security | LOW | Phone in `user_metadata` travels in the JWT | Accepted: the user's own data in their own token; SPEC lists phone in the profile. Revisit if a `profiles` table appears. |
+| security | LOW | No rate limit on `cancelTrip` | Stage 8 (with prebook/book limits). Duplicate cancels are harmless (idempotent at LiteAPI). |
+- Verified live: double-click cancel → 1 LiteAPI call result `CANCELLED`, DB `cancelled`; favorites remove/undo; profile save updates the header at once; wrong / right current password; deletion of a test account; foreign trip id → 404; password-failure RPCs deny direct table access and anon calls.

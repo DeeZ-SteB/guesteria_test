@@ -17,6 +17,8 @@ export type TripRow = {
   refundable: boolean;
   refundableUntil: string | null;
   hasLiteApiId: boolean;
+  /** Computed on the server with one clock (the action re-checks anyway). */
+  cancellable: boolean;
 };
 
 export type TripGroups = { upcoming: TripRow[]; past: TripRow[]; cancelled: TripRow[] };
@@ -65,7 +67,7 @@ export const CANCEL_MARGIN_MS = 10 * 60 * 1000;
 export type CancelBlock = "not_confirmed" | "no_liteapi_id" | "non_refundable" | "deadline_passed" | "stay_started";
 export type CancelEligibility = { ok: true } | { ok: false; reason: CancelBlock };
 
-type Cancellable = Pick<TripRow, "status" | "checkIn" | "refundable" | "refundableUntil" | "hasLiteApiId">;
+export type Cancellable = Pick<TripRow, "status" | "checkIn" | "refundable" | "refundableUntil" | "hasLiteApiId">;
 
 /** Only free cancellation is self-service; anything that may cost money goes to support. */
 export function cancelEligibility(row: Cancellable, now: Date): CancelEligibility {

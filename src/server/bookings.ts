@@ -124,11 +124,12 @@ export async function releaseAttempt(id: string): Promise<void> {
   await createAdminClient().from("bookings").delete().eq("id", id).eq("status", "pending");
 }
 
-/** A booking of the signed-in user (RLS + explicit filter), or null. */
+/** A booking of the signed-in user (RLS + explicit filter), or null. Throws on database errors. */
 export async function getOwnBooking(userId: string, id: string): Promise<OwnBooking | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.from("bookings").select(OWN_COLUMNS).eq("id", id).eq("user_id", userId).maybeSingle();
-  if (error) return null;
+  // A database error is not "not found": callers show a retryable error instead of a 404.
+  if (error) throw new Error(`bookings read failed (${error.code})`);
   return (data as OwnBooking | null) ?? null;
 }
 
@@ -169,16 +170,18 @@ export async function markCancelled(userId: string, id: string): Promise<"update
   return data && data.length > 0 ? "updated" : "unchanged";
 }
 
-/** Any confirmed or in-flight stay that has not ended yet (blocks account deletion). */
-export async function hasActiveTrips(userId: string, today: string): Promise<boolean> {
+/** A confirmed or in-flight stay that has not ended yet (blocks account deletion); confirmed wins. */
+export async function hasActiveTrips(userId: string, today: string): Promise<"confirmed" | "pending" | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("bookings")
-    .select("id")
+    .select("id, status")
     .eq("user_id", userId)
     .in("status", ["confirmed", "pending"])
     .gte("check_out", today)
-    .limit(1);
+    .limit(50);
   if (error) throw new Error(`bookings check failed (${error.code})`);
-  return (data ?? []).length > 0;
+  const rows = (data ?? []) as { status: string }[];
+  if (rows.some((r) => r.status === "confirmed")) return "confirmed";
+  return rows.length > 0 ? "pending" : null;
 }

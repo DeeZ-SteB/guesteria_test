@@ -18,6 +18,7 @@ const row = (over: Partial<TripRow>): TripRow => ({
   refundable: true,
   refundableUntil: "2026-12-18T10:00:00.000Z",
   hasLiteApiId: true,
+  cancellable: true,
   ...over,
 });
 

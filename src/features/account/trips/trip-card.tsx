@@ -8,7 +8,7 @@ import { formatMoney } from "@/lib/money";
 import { cancellationText } from "@/lib/cancellation";
 import { findCity } from "@/lib/cities";
 import { nightsBetween } from "@/lib/booking/stay";
-import { cancelEligibility, tripBadge, type TripBadge, type TripRow } from "@/lib/booking/trips";
+import { tripBadge, type TripBadge, type TripRow } from "@/lib/booking/trips";
 import { cn } from "@/lib/cn";
 
 const STATUS = {
@@ -36,7 +36,7 @@ export function TripCard({ trip, today, nearestId, onCancel }: { trip: TripRow; 
   const city = trip.city ? findCity(trip.city)?.nameUk : null;
   // Pending attempts are resolved on the confirmation page; the trip page needs a confirmed booking.
   const href = trip.status === "pending" ? `/checkout?booking=${trip.id}` : `/account/trips/${trip.id}`;
-  const canCancel = trip.status === "confirmed" && trip.checkOut >= today && cancelEligibility(trip, new Date()).ok;
+  const canCancel = trip.cancellable;
   const upcoming = trip.status === "confirmed" && trip.checkOut >= today;
 
   return (

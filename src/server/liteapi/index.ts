@@ -9,7 +9,7 @@ import { findCity } from "@/lib/cities";
 import { liteApiKey } from "@/server/env";
 import { createLiteApiClient } from "./client";
 import { LiteApiError, reviveLiteApiError } from "./errors";
-import { toCancelOutcome, toCheckoutQuote, toConfirmedBooking, toHotelDetails, toReviews, type CancelOutcome } from "./mappers";
+import { toBookingState, toCancelOutcome, toCheckoutQuote, toConfirmedBooking, toHotelDetails, toReviews, type CancelOutcome } from "./mappers";
 export type { CancelOutcome } from "./mappers";
 import { offerIdSchema } from "@/lib/booking/offer";
 import type { CheckoutQuote, ConfirmedBooking, Guest } from "@/lib/booking/checkout";
@@ -182,8 +182,5 @@ export async function cancelBookingAtLiteApi(liteapiBookingId: string): Promise<
 /** Current status at LiteAPI, used to reconcile a cancel whose outcome is unknown. Same ownership rule. */
 export async function getLiteApiBookingStatus(liteapiBookingId: string): Promise<"confirmed" | "cancelled" | "other"> {
   const { data } = await client().getBooking(liteapiBookingId, { timeoutMs: 15_000 });
-  const status = data.status?.toUpperCase() ?? "";
-  if (status.startsWith("CANCEL")) return "cancelled";
-  if (status === "CONFIRMED") return "confirmed";
-  return "other";
+  return toBookingState(data.status);
 }

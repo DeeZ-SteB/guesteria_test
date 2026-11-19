@@ -56,7 +56,7 @@ select is((select count(*) from public.bookings)::int, 0, 'Anonymous visitors se
 reset role;
 insert into public.favorites (user_id, hotel_id, hotel_name) values ('00000000-0000-0000-0000-00000000000a', 'lpbbb0c', 'Grand Hotel');
 delete from auth.users where id = '00000000-0000-0000-0000-00000000000a';
-select is((select count(*) from public.bookings where user_id = '00000000-0000-0000-0000-00000000000a')::int, 0, 'Deleting a user cascades their bookings');
+select is((select count(*) from public.bookings where liteapi_booking_id = 'wHbOotXkt' and user_id is null)::int, 1, 'Deleting a user keeps their booking records, without an owner');
 select is((select count(*) from public.favorites where user_id = '00000000-0000-0000-0000-00000000000a')::int, 0, 'Deleting a user cascades their favorites');
 
 select * from finish();

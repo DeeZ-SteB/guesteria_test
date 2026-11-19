@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bookingSchema, cancelBookingSchema, prebookSchema } from "./schemas";
-import { toCancelOutcome, toCheckoutQuote, toConfirmedBooking } from "./mappers";
+import { toBookingState, toCancelOutcome, toCheckoutQuote, toConfirmedBooking } from "./mappers";
 import { checkoutErrorMessage, guestSchema, priceChange } from "@/lib/booking/checkout";
 import { payAtHotelText } from "@/lib/hotels/rates";
 import prebook from "./__fixtures__/prebook.json";
@@ -140,5 +140,21 @@ describe("toCancelOutcome (sandbox cancel)", () => {
     const withCharges = { ...cancel.body.data, status: "CANCELLED_WITH_CHARGES" as const };
     expect(toCancelOutcome(withCharges)).toEqual({ status: "cancelled_with_charges", charged: true });
     expect(toCancelOutcome({ ...cancel.body.data, status: "CANCELLED" as const, cancellation_fee: 500 }).charged).toBe(true);
+  });
+});
+
+describe("toBookingState (cancel reconciliation)", () => {
+  it.each([
+    ["CANCELLED", "cancelled"],
+    ["CANCELED", "cancelled"],
+    ["CANCELLED_WITH_CHARGES", "cancelled"],
+    ["confirmed", "confirmed"],
+    ["CONFIRMED", "confirmed"],
+    ["PENDING", "other"],
+    ["", "other"],
+    [null, "other"],
+    [undefined, "other"],
+  ])("%s → %s", (status, expected) => {
+    expect(toBookingState(status)).toBe(expected);
   });
 });
