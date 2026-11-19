@@ -562,3 +562,6 @@ supabase/migrations, supabase/tests
 1. CSP — статичний заголовок без nonce (nonce вимагає динамічного рендерингу всіх сторінок і несумісний з PPR): `script-src 'self' 'unsafe-inline'`, `connect-src` лише self + наш Supabase (https/wss), `object-src 'none'`, `frame-src 'none'`, `frame-ancestors 'none'`, `base-uri`/`form-action 'self'`. Zod у браузері — без JIT (`instrumentation-client.ts`), щоб не потребувати `eval`.
 2. E2E: два рівні — мок LiteAPI (CI, безкоштовно) і живий sandbox (локально, вручну). AI в E2E не викликається. Тимчасовий користувач на кожен запуск.
 3. Доступність: axe без serious/critical (світла й темна теми); нові токени кольору тексту на світлих тлах (`accent-ink`, `success-ink`, `on-danger`); назви елементів містять видимий текст (WCAG 2.5.3); `prefers-reduced-motion`.
+
+### Етап 10 (здача), 2026-11-19
+1. Зберігання даних: розмови з асистентом без активності 90 днів, вирішені чернетки дій старші за 30 днів і старі лічильники лімітів видаляються щоночі (`prune_old_data`, pg_cron 03:15 UTC).

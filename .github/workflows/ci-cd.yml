@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.2.0
       - name: Start Postgres and apply migrations
         run: supabase db start
       - name: Lint SQL
@@ -164,7 +164,7 @@ jobs:
       - uses: supabase/setup-cli@v1
         if: env.SUPABASE_ACCESS_TOKEN != ''
         with:
-          version: latest
+          version: 3.2.0
       - name: Apply migrations to Supabase Cloud
         if: env.SUPABASE_ACCESS_TOKEN != ''
         run: |
