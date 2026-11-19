@@ -48,6 +48,10 @@ function parseStay(input: Stay, endpoint: string): Stay {
 
 // ---------- cached static data (no prices, no user data) ----------
 //
+// All LiteAPI caches are 'use cache: remote': on Vercel each serverless instance has its own memory,
+// so a plain 'use cache' rarely hits; the remote handler is shared by all instances (locally it is
+// the same in-memory cache).
+//
 // Cached functions never throw LiteAPI errors across the cache boundary (React serialises errors
 // there, and in production may keep only a digest). They return a plain result instead; the
 // lifetime depends on the outcome: days for data, minutes for "not found / invalid" (so random
@@ -61,7 +65,7 @@ function failure(error: unknown): Cached<never> {
 }
 
 async function cachedCityHotels(countryCode: string, cityName: string): Promise<Cached<HotelListResponse>> {
-  "use cache";
+  "use cache: remote";
   cacheTag(`city:${countryCode}:${cityName}`);
   try {
     const value = await client().getHotels({ countryCode, cityName, limit: 50 });
@@ -74,7 +78,7 @@ async function cachedCityHotels(countryCode: string, cityName: string): Promise<
 }
 
 async function cachedHotel(id: string): Promise<Cached<HotelDetails>> {
-  "use cache";
+  "use cache: remote";
   cacheTag(`hotel:${id}`);
   try {
     const value = toHotelDetails(await client().getHotel(id));
@@ -89,7 +93,7 @@ async function cachedHotel(id: string): Promise<Cached<HotelDetails>> {
 }
 
 async function cachedReviews(id: string): Promise<Cached<Review[]>> {
-  "use cache";
+  "use cache: remote";
   cacheTag(`hotel:${id}:reviews`);
   try {
     const value = toReviews(await client().getReviews(id, 20));
@@ -146,7 +150,7 @@ async function loadSearch(cityId: string, checkIn: string, checkOut: string, adu
 }
 
 async function cachedSearch(cityId: string, checkIn: string, checkOut: string, adults: number): Promise<Cached<HotelSummary[]>> {
-  "use cache";
+  "use cache: remote";
   const result = await loadSearch(cityId, checkIn, checkOut, adults);
   cacheLife(priceLife(result, SEARCH_PRICES));
   return result;
@@ -163,7 +167,7 @@ async function loadRoomRates(hotelId: string, checkIn: string, checkOut: string,
 }
 
 async function cachedRoomRates(hotelId: string, checkIn: string, checkOut: string, adults: number): Promise<Cached<RoomOffer[]>> {
-  "use cache";
+  "use cache: remote";
   cacheTag(`rates:${hotelId}`);
   const result = await loadRoomRates(hotelId, checkIn, checkOut, adults);
   cacheLife(priceLife(result, ROOM_RATES));
