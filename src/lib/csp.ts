@@ -17,11 +17,13 @@ export function buildCsp({ dev, supabaseUrl }: { dev: boolean; supabaseUrl?: str
   const policy: Array<[string, string[]]> = [
     ["default-src", ["'self'"]],
     ["script-src", ["'self'", "'unsafe-inline'", ...(dev ? ["'unsafe-eval'"] : [])]],
+    // Inline <script> blocks are needed (RSC payload); inline event-handler attributes never are.
+    ["script-src-attr", ["'none'"]],
     ["style-src", ["'self'", "'unsafe-inline'"]], // next/image `fill` and React style props
-    ["img-src", ["'self'", "data:", "blob:"]], // hotel photos come through /_next/image
+    ["img-src", ["'self'", "data:"]], // hotel photos come through /_next/image
     ["font-src", ["'self'"]], // next/font is self-hosted
     ["connect-src", connect],
-    ["worker-src", ["'self'", "blob:"]],
+    ["worker-src", ["'self'"]],
     ["manifest-src", ["'self'"]],
     ["frame-src", ["'none'"]], // maps are links, not embeds
     ["object-src", ["'none'"]],
@@ -30,7 +32,9 @@ export function buildCsp({ dev, supabaseUrl }: { dev: boolean; supabaseUrl?: str
     ["frame-ancestors", ["'none'"]],
   ];
   const parts = policy.map(([name, values]) => `${name} ${values.join(" ")}`);
-  // Only when Supabase itself is https: upgrading would break the local http stack.
+  // Only when Supabase itself is https: upgrading would break the local http stack. (Serving the app
+  // over plain http against an https Supabase — e.g. the Docker image locally against Cloud — is not
+  // supported: Safari would upgrade same-origin requests. The Vercel toolbar is intentionally blocked.)
   if (supabase?.protocol === "https:") parts.push("upgrade-insecure-requests");
   return parts.join("; ");
 }

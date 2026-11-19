@@ -18,7 +18,8 @@ process.env.CHECKOUT_SECRET ??= randomBytes(32).toString("hex");
  * The Anthropic API is never reachable: its base URL is a counting sink and the daily caps are 0.
  */
 const appEnv: Record<string, string> = {
-  ANTHROPIC_BASE_URL: `http://127.0.0.1:${MOCK_PORT}/anthropic`,
+  E2E_MOCKS: "1",
+  E2E_ANTHROPIC_SINK: `http://127.0.0.1:${MOCK_PORT}/anthropic`,
   ANTHROPIC_API_KEY: "e2e-dummy-key-not-real-000",
   ASSISTANT_DAILY_CAP: "0",
   ASSISTANT_ANON_DAILY_CAP: "0",

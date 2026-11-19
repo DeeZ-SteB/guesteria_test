@@ -243,3 +243,28 @@ Format:
   3. After confirming a check-in in the chat, the trip page's check-in card kept its old local state. Card is re-keyed by the stored values.
   4. Reopened conversations showed live «Підтвердити» buttons on actions already confirmed. Cards now carry the action's current status.
 - My own misread: I first thought the model invented a previous arrival time of 14:00; the database actually had 14:00 (changed by hand in the browser earlier). The model was right.
+
+## 2026-11-19 — Stage 9: quality (`feat/quality`)
+- `planner` → `docs/plans/09-quality.md`. Kept: static CSP without nonces (Next docs: nonces force dynamic rendering, incompatible with PPR shells), two E2E tiers (mock LiteAPI on recorded sandbox responses in CI; live sandbox opt-in), the model never called in E2E (counting sink, asserted 0).
+- **Found by the new tests, not by unit tests or reviewers:**
+  1. Production CSP blocked `eval`: Zod 4 probes `new Function` when a schema is defined. Fixed with jitless Zod in `src/instrumentation-client.ts` (runs before app code) — my first attempt (config in a client component) ran too late; traced via the violation's source file/line.
+  2. axe: AA contrast failures on tinted chips/banners (light) and danger/gallery badges (dark) → new text tokens `accent-ink`, `success-ink`, `on-danger`; WCAG 2.5.3 "label in name" for the logo, AI button, account menu and a gallery tile; stale «Скоро» copy.
+- **My mistakes:** a stray `next start` left on 8781 since stage 5 made the first E2E run test an old build (`reuseExistingServer`) — now never reused. Several selectors guessed wrong (`Обрати` is a button; «Деталі» is both a heading and a label).
+- Live tier run twice: sandbox bookings `mRnd92clO` and `gqiGVKtSm` booked and cancelled through the app (LiteAPI: CANCELLED).
+- I declined to read part of the LiteAPI key to check its prefix (blocked by policy, rightly); the live tier instead asks LiteAPI itself whether the key is a sandbox key.
+- Findings: code-reviewer 11 (1 MEDIUM, 10 LOW; "approve"), security-auditor 9 (2 MEDIUM, 7 LOW).
+
+| Agent | Sev | Finding | Resolution |
+|---|---|---|---|
+| security | MED | `'unsafe-inline'` also allowed inline event handlers | `script-src-attr 'none'` (E2E: no violations). Test. |
+| security | MED | `e2e:live` would book with whatever key is in `.env` (a production key would spend money) | Global setup refuses unless LiteAPI answers `sandbox: true` for the key. |
+| code | MED | Focus-ring check passed for any element with a permanent shadow | Compares focused vs blurred look and requires `:focus-visible`. |
+| security | LOW | Mock seam guarded only on Vercel; `localhost` allowed | Needs explicit `E2E_MOCKS=1`; `127.0.0.1` only. Tests. |
+| security | LOW | The Anthropic SDK silently honours `ANTHROPIC_BASE_URL` | Base URL passed explicitly from a validated helper (official API, or loopback E2E sink with opt-in). Tests. |
+| security | LOW | Unused `blob:` in img-src / worker-src; no HSTS for the Docker image | Removed; HSTS in production builds. |
+| both | LOW | Cleanup gaps (first page of users only, user leaked on seed failure, errors ignored, `[::1]`) | Paged sweep, cleanup on failure, errors surfaced, fixed host match. |
+| code | LOW | FAB "hidden" check passed if the button didn't exist | Asserts it exists, then hidden. |
+| code | LOW | Mock prebook always returned room 0 | Uses the chosen room's price and name. |
+| code | LOW | Local shared rate-limit counters could trip repeated runs | Global E2E setup resets the shared daily counters (local DB only). |
+| code | LOW | CI could write empty Supabase variables | `${VAR:?}` guards; CLI pinned to 3.2.0. |
+| code | LOW | `next start` vs standalone server; `upgrade-insecure-requests` with an http app; Vercel toolbar blocked; non-empty `bookings-by-reference` shape unrecorded | Documented / accepted (comments in `csp.ts`, this log). |

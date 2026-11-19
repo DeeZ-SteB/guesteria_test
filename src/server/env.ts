@@ -61,13 +61,28 @@ const LITEAPI_BOOK_HOST = "https://book.liteapi.travel/v3.0";
 export function liteApiHosts(): { data: string; book: string } {
   const raw = process.env.LITEAPI_MOCK_ORIGIN;
   if (!raw) return { data: LITEAPI_DATA_HOST, book: LITEAPI_BOOK_HOST };
-  if (process.env.VERCEL) throw new LiteApiConfigError();
+  // A second, explicit opt-in: a stray variable in a production .env must not switch hosts.
+  if (process.env.VERCEL || process.env.E2E_MOCKS !== "1") throw new LiteApiConfigError();
   let url: URL;
   try {
     url = new URL(raw);
   } catch {
     throw new LiteApiConfigError();
   }
-  if (url.protocol !== "http:" || !["127.0.0.1", "localhost"].includes(url.hostname) || url.username || url.password) throw new LiteApiConfigError();
+  if (url.protocol !== "http:" || url.hostname !== "127.0.0.1" || url.username || url.password) throw new LiteApiConfigError();
   return { data: `${url.origin}/data/v3.0`, book: `${url.origin}/book/v3.0` };
+}
+
+/**
+ * Anthropic API base URL: the official API, or a loopback sink for E2E under the same rules as
+ * liteApiHosts (explicit opt-in, never on Vercel). Passed explicitly so the SDK's own
+ * ANTHROPIC_BASE_URL variable can never redirect the key elsewhere.
+ */
+export function anthropicBaseUrl(): string {
+  const raw = process.env.E2E_ANTHROPIC_SINK;
+  if (!raw) return "https://api.anthropic.com";
+  if (process.env.VERCEL || process.env.E2E_MOCKS !== "1") throw new Error("E2E_ANTHROPIC_SINK is only for local E2E");
+  const url = new URL(raw);
+  if (url.protocol !== "http:" || url.hostname !== "127.0.0.1" || url.username || url.password) throw new Error("E2E_ANTHROPIC_SINK must be loopback http");
+  return `${url.origin}${url.pathname.replace(/\/$/, "")}`;
 }

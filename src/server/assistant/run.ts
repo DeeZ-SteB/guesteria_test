@@ -7,7 +7,7 @@ import type {
   BetaMessageStreamParams,
   BetaToolResultBlockParam,
 } from "@anthropic-ai/sdk/resources/beta/messages/messages";
-import { anthropicKey } from "@/server/env";
+import { anthropicBaseUrl, anthropicKey } from "@/server/env";
 import type {
   DoneReason,
   StreamEvent,
@@ -46,6 +46,8 @@ let client: Anthropic | null = null;
 export const sdkStreamer: StepStreamer = (params, signal) => {
   client ??= new Anthropic({
     apiKey: anthropicKey(),
+    // Explicit, validated base URL: the SDK's ANTHROPIC_BASE_URL env var can never redirect the key.
+    baseURL: anthropicBaseUrl(),
     maxRetries: 1,
     timeout: 60_000,
   });

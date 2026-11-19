@@ -34,7 +34,8 @@ describe("Content-Security-Policy", () => {
 
   it("always locks down plugins, framing, base and form targets; no wildcards", () => {
     const csp = buildCsp({ dev: false, supabaseUrl: "https://abc.supabase.co" });
-    for (const must of ["object-src 'none'", "frame-ancestors 'none'", "frame-src 'none'", "base-uri 'self'", "form-action 'self'", "default-src 'self'"]) {
+    expect(csp).not.toContain("blob:");
+    for (const must of ["script-src-attr 'none'", "object-src 'none'", "frame-ancestors 'none'", "frame-src 'none'", "base-uri 'self'", "form-action 'self'", "default-src 'self'"]) {
       expect(csp).toContain(must);
     }
     expect(csp).not.toMatch(/[\r\n]/);

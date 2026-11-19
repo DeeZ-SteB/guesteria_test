@@ -30,14 +30,21 @@ test("focus is visible on interactive elements", async ({ page }) => {
   await expect(page.getByRole("button", { name: /меню акаунта/i })).toBeVisible();
   for (let i = 0; i < 6; i++) {
     await page.keyboard.press("Tab");
-    const { ring, html } = await page.evaluate(() => {
+    // The focused look must differ from the unfocused one (a permanent shadow is not a focus ring).
+    const { changed, html } = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement | null;
-      if (!el || el === document.body) return { ring: "none", html: "body" };
-      const s = getComputedStyle(el);
-      const ring = s.outlineStyle !== "none" && s.outlineWidth !== "0px" ? "outline" : s.boxShadow !== "none" ? "shadow" : "none";
-      return { ring, html: el.outerHTML.slice(0, 120) };
+      if (!el || el === document.body) return { changed: false, html: "body" };
+      const look = () => {
+        const s = getComputedStyle(el);
+        return `${s.outlineStyle} ${s.outlineWidth} ${s.outlineColor} | ${s.boxShadow}`;
+      };
+      const focused = look();
+      el.blur();
+      const blurred = look();
+      el.focus({ preventScroll: true });
+      return { changed: focused !== blurred && el.matches(":focus-visible"), html: el.outerHTML.slice(0, 120) };
     });
-    expect(ring, `focus ring on tab stop ${i + 1}: ${html}`).not.toBe("none");
+    expect(changed, `visible focus on tab stop ${i + 1}: ${html}`).toBe(true);
   }
 });
 

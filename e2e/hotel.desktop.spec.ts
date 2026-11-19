@@ -9,6 +9,8 @@ test("hotel page on a desktop: gallery, rooms, inline AI block, no floating butt
   await expect(page.getByRole("button", { name: "Обрати", exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: /Запитати AI про цей готель|Запитати AI/ }).first()).toBeVisible();
   // The inline AI block replaces the floating button on desktop hotel pages.
-  await expect(page.getByRole("button", { name: "Запитати Guesteria AI" })).toBeHidden();
+  const fab = page.locator("[data-ai-fab]");
+  await expect(fab).toHaveCount(1); // it exists…
+  await expect(fab).toBeHidden(); // …but is hidden on desktop hotel pages
   expect(await overflowing(page)).toEqual([]);
 });

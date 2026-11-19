@@ -128,6 +128,13 @@ const server = createServer(async (req, res) => {
     const prebookId = `PB${++seq}`;
     prebooks.set(prebookId, stay);
     const data = adapt(load("prebook").data, { shift: days(FIXTURE.checkIn, stay.checkIn), hotelId: stay.hotelId });
+    // The chosen room's price and name (rates fixture), not always the first room's.
+    const chosen = load("rates").data[0].roomTypes[stay.room ?? 0] ?? load("rates").data[0].roomTypes[0];
+    data.price = chosen.offerRetailRate.amount;
+    data.suggestedSellingPrice = chosen.suggestedSellingPrice.amount;
+    data.roomTypes[0].rates[0].name = chosen.rates[0].name;
+    data.roomTypes[0].rates[0].retailRate.total[0].amount = chosen.offerRetailRate.amount;
+    data.roomTypes[0].rates[0].retailRate.suggestedSellingPrice[0].amount = chosen.suggestedSellingPrice.amount;
     return json(res, 200, { data: { ...data, prebookId, offerId: body.offerId, checkin: stay.checkIn, checkout: stay.checkOut }, sandbox: true });
   }
   if (path === "/book/v3.0/rates/book" && req.method === "POST") {

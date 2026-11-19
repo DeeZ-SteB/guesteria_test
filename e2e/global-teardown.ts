@@ -7,15 +7,22 @@ export default async function globalTeardown() {
   if (existsSync(E2E_STATE)) {
     const state = JSON.parse(readFileSync(E2E_STATE, "utf8")) as RunState;
     // Booking rows survive account deletion (user_id → null), so delete them explicitly.
-    await db.from("bookings").delete().eq("user_id", state.userId);
-    await db.auth.admin.deleteUser(state.userId);
+    const b = await db.from("bookings").delete().eq("user_id", state.userId);
+    const u = await db.auth.admin.deleteUser(state.userId);
+    if (b.error || u.error) throw new Error(`E2E cleanup failed: ${b.error?.message ?? u.error?.message}`);
   }
   // Sweep users left by crashed runs (older than a day).
-  const { data } = await db.auth.admin.listUsers({ perPage: 200 });
-  for (const u of data?.users ?? []) {
+  const users = [];
+  for (let page = 1; page <= 20; page++) {
+    const { data } = await db.auth.admin.listUsers({ page, perPage: 200 });
+    users.push(...(data?.users ?? []));
+    if ((data?.users.length ?? 0) < 200) break;
+  }
+  for (const u of users) {
     if (u.app_metadata?.e2e === true && Date.parse(u.created_at) < Date.now() - 86_400_000) {
-      await db.from("bookings").delete().eq("user_id", u.id);
-      await db.auth.admin.deleteUser(u.id);
+      const b = await db.from("bookings").delete().eq("user_id", u.id);
+      const d = await db.auth.admin.deleteUser(u.id);
+      if (b.error || d.error) console.warn(`[e2e] stale user cleanup failed: ${b.error?.message ?? d.error?.message}`);
     }
   }
   if (process.env.E2E_LIVE !== "1") {

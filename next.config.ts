@@ -22,6 +22,8 @@ const nextConfig: NextConfig = {
           // Offer tokens live in /checkout URLs: other sites only ever see our origin.
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          // HTTPS only for a year (Vercel adds this on its domains; the Docker image needs it too).
+          ...(process.env.NODE_ENV === "production" ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }] : []),
         ],
       },
       // Personal, price-bearing pages: never cached by browsers or CDNs, never indexed.

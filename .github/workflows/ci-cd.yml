@@ -83,13 +83,14 @@ jobs:
       - run: npm ci
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.2.0
       - name: Start Supabase (auth, REST, Realtime, Postgres)
         run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,storage-api
       - name: Export local Supabase keys
         run: |
           supabase status -o env > /tmp/sb.env
           source /tmp/sb.env
+          : "${API_URL:?}" "${PUBLISHABLE_KEY:?}" "${SECRET_KEY:?}"
           echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
           echo "SUPABASE_SECRET_KEY=$SECRET_KEY" >> "$GITHUB_ENV"

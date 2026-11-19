@@ -6,7 +6,7 @@ export function adminClient() {
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) throw new Error("E2E needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY (local stack)");
   const host = new URL(url).hostname;
-  if (!["localhost", "127.0.0.1", "::1"].includes(host)) throw new Error(`E2E refuses to write to a non-local Supabase (${host})`);
+  if (!["localhost", "127.0.0.1", "[::1]"].includes(host)) throw new Error(`E2E refuses to write to a non-local Supabase (${host})`);
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
