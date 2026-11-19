@@ -268,3 +268,12 @@ Format:
 | code | LOW | Local shared rate-limit counters could trip repeated runs | Global E2E setup resets the shared daily counters (local DB only). |
 | code | LOW | CI could write empty Supabase variables | `${VAR:?}` guards; CLI pinned to 3.2.0. |
 | code | LOW | `next start` vs standalone server; `upgrade-insecure-requests` with an http app; Vercel toolbar blocked; non-empty `bookings-by-reference` shape unrecorded | Documented / accepted (comments in `csp.ts`, this log). |
+
+## 2026-11-19 — Stage 10: delivery
+- Created via CLI with the user's consent: Supabase organization + project `guesteria-stay` (Free, eu-central-1), Vercel project in the chosen team. DB password and production secrets (new `CHECKOUT_SECRET`, demo password) were generated in the shell and never printed; production `.env` values live only in Vercel and the gitignored local `.env`.
+- All 11 migrations applied cleanly to the fresh cloud database (the first from-scratch apply — confirms the edited stage-7 hardening migration). Auth config pushed with production overrides (site URL, redirects, email confirmations; kept 1 auth email/min instead of the local 1 s).
+- **Gotchas:** `db push` without `--linked` silently did nothing; `projects api-keys` needs `--reveal` for a usable secret key; a CLI-created Vercel project needed `framework: nextjs`; added `.vercelignore` so local `.env` files are never uploaded.
+- **Production checks:** health ok, full CSP + HSTS headers, demo login, hotel page, sandbox booking `jsT-lGLKH` (kept in the demo account for reviewers), trip page Realtime connected, assistant answers.
+- **Found only in production with the real model:** the assistant narrated before tool calls and named `verified_context`. Narration is now cleared from the screen when a tool runs, and the prompt forbids naming internals. Test added; redeployed; verified.
+- **My misdiagnosis:** Realtime looked stuck in production; I reproduced it on a local production build and added debug logs — it worked in a fresh browser: my browser tab was in the background (throttled). Debug code removed; nothing shipped.
+- Not done: CI auto-deploy secrets (VERCEL_TOKEN etc.) are not set in GitHub (GitHub CLI not logged in); CI status not visible from here (private repo).
