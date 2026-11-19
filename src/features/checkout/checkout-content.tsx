@@ -78,12 +78,12 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
   ]);
   if (!allowed.allowed) return <CheckoutError kind="rate_limited" backHref={back} />;
   const quote = await quoteFor(params.offerId);
-  if ("error" in quote) return <CheckoutError kind={quote.error} backHref={back} />;
+  if ("error" in quote) return <CheckoutError kind={quote.error} backHref={back} hotelId={params.hotelId} />;
 
   // The URL is only a pointer: prebook must describe the same hotel and stay.
   const s = params.stay;
   if (quote.hotelId !== params.hotelId || quote.checkIn !== s.checkIn || quote.checkOut !== s.checkOut || quote.adults !== s.adults) {
-    return <CheckoutError kind="mismatch" backHref={back} />;
+    return <CheckoutError kind="mismatch" backHref={back} hotelId={params.hotelId} />;
   }
 
   const [hotel, sameStay] = await Promise.all([
@@ -112,7 +112,7 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
     rf: quote.refundable,
     until: quote.freeCancellationUntil,
   });
-  if (!token) return <CheckoutError kind="offer_stale" backHref={back} />;
+  if (!token) return <CheckoutError kind="offer_stale" backHref={back} hotelId={params.hotelId} />;
 
   const nights = nightsBetween(quote.checkIn, quote.checkOut);
   const change = priceChange(quote, params.shownPrice);
