@@ -51,12 +51,16 @@ export async function loadThread(userId: string, threadId: string): Promise<Thre
 export async function appendTurn(userId: string, threadId: string, rows: Array<{ message: BetaMessageParam; ui: UiBlock[] }>): Promise<void> {
   if (rows.length === 0) return;
   const db = createAdminClient();
-  const { data: last } = await db.from("assistant_messages").select("seq").eq("thread_id", threadId).order("seq", { ascending: false }).limit(1).maybeSingle();
-  let seq = ((last?.seq as number | undefined) ?? 0) + 1;
-  const { error } = await db.from("assistant_messages").insert(
-    rows.map((r) => ({ thread_id: threadId, user_id: userId, seq: seq++, role: r.message.role, content: r.message.content, ui: r.ui })),
-  );
-  if (error) throw new Error(`thread append failed (${error.code})`);
+  // Two overlapping requests on one thread (Stop + resend) may pick the same seq: retry once.
+  for (let attempt = 0; ; attempt++) {
+    const { data: last } = await db.from("assistant_messages").select("seq").eq("thread_id", threadId).order("seq", { ascending: false }).limit(1).maybeSingle();
+    let seq = ((last?.seq as number | undefined) ?? 0) + 1;
+    const { error } = await db.from("assistant_messages").insert(
+      rows.map((r) => ({ thread_id: threadId, user_id: userId, seq: seq++, role: r.message.role, content: r.message.content, ui: r.ui })),
+    );
+    if (!error) break;
+    if (error.code !== "23505" || attempt >= 2) throw new Error(`thread append failed (${error.code})`);
+  }
   const { data: t } = await db.from("assistant_threads").select("turn_count").eq("id", threadId).eq("user_id", userId).single();
   await db
     .from("assistant_threads")
@@ -94,7 +98,8 @@ export type DraftInput =
 /** A pending action the guest must confirm. Older pending drafts of the same kind are cancelled. */
 export async function createDraft(userId: string, bookingId: string, threadId: string | null, draft: DraftInput): Promise<{ id: string; expiresAt: string }> {
   const db = createAdminClient();
-  const stale = db.from("assistant_actions").update({ status: "cancelled", decided_at: new Date().toISOString() }).eq("user_id", userId).eq("booking_id", bookingId).eq("type", draft.type).eq("status", "pending");
+  // Superseded by a newer draft (not the guest's decision; hidden from "actions since last turn").
+  const stale = db.from("assistant_actions").update({ status: "cancelled", result: { reason: "superseded" }, decided_at: new Date().toISOString() }).eq("user_id", userId).eq("booking_id", bookingId).eq("type", draft.type).eq("status", "pending");
   await (draft.type === "guest_request" ? stale.eq("payload->>type", draft.payload.type) : stale);
   const expiresAt = new Date(Date.now() + DRAFT_TTL_MS).toISOString();
   const { data, error } = await db
@@ -114,6 +119,7 @@ export async function actionsDecidedSince(userId: string, threadId: string, sinc
     .eq("user_id", userId)
     .eq("thread_id", threadId)
     .gte("decided_at", since)
+    .or("result->>reason.is.null,result->>reason.neq.superseded")
     .limit(10);
   return (data ?? []).map((a) => `${a.type}${a.type === "guest_request" ? ` (${(a.payload as { type?: string }).type})` : ""}: ${a.status}`);
 }

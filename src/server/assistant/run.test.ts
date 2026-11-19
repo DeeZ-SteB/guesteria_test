@@ -79,7 +79,8 @@ describe("assistant loop", () => {
     const results = r.appended[1].message;
     expect(results.role).toBe("user");
     expect((results.content as Block[]).map((b) => b.type)).toEqual(["tool_result", "tool_result"]);
-    expect(r.appended[2].ui).toHaveLength(2);
+    // Cards are stored with the tool round, so a later failure cannot lose them.
+    expect(r.appended[0].ui).toHaveLength(2);
     expect(events.filter((e) => e.event === "block")).toHaveLength(2);
     // The second call carries the whole conversation so far.
     expect(calls[1].messages).toHaveLength(3);
@@ -138,6 +139,27 @@ describe("assistant loop", () => {
     const r = await run(streamer, { signal: controller.signal }).result;
     expect(r.stop).toBe("aborted");
     expect(r.appended).toHaveLength(0);
+  });
+
+  it("past the deadline: a visible retryable error, no model call", async () => {
+    const { streamer, calls } = scripted([msg([text("x")], "end_turn")]);
+    const { result, events } = run(streamer, { deadline: Date.now() - 1 });
+    expect((await result).stop).toBe("timeout");
+    expect(calls).toHaveLength(0);
+    expect(events[0]).toMatchObject({ event: "error", data: { code: "timeout", retryable: true } });
+  });
+
+  it("a permanent API error (4xx) is not offered as retryable", async () => {
+    const Anthropic = (await import("@anthropic-ai/sdk")).default;
+    const streamer: StepStreamer = () => {
+      throw new Anthropic.BadRequestError(400, { error: { message: "bad" } }, "bad", new Headers());
+    };
+    const first = run(streamer);
+    expect((await first.result).stop).toBe("error");
+    expect(first.events[0]).toMatchObject({ event: "error", data: { code: "unavailable", retryable: false } });
+    const later = run(streamer, { messages: [user, { role: "assistant", content: [{ type: "text", text: "a" }] }, user] });
+    await later.result;
+    expect(later.events[0]).toMatchObject({ event: "error", data: { code: "conversation", retryable: false } });
   });
 
   it("API failures end with a retryable error, not an exception", async () => {

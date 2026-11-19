@@ -206,3 +206,30 @@ Format:
 | code | LOW | Early-arrival hint opened a request that was already pending | Hook lifted up; hint only when no open early request. Verified in browser. |
 | code | LOW | No tests for Kyiv-day boundaries, cross-user update, moving a check-in | pgTAP with Kyiv-date fixtures. |
 | security | LOW | Realtime DELETE events are not RLS-filtered (ids only); deleted rows stayed in the UI | UI removes deleted rows (test). Leak of random ids accepted; Broadcast with private channels if requests ever get deleted routinely. |
+
+## 2026-11-19 — Stage 8: AI assistant (`feat/assistant`)
+- Loaded the `claude-api` skill before writing any Anthropic code; checked every SDK param against `@anthropic-ai/sdk` 1.10.0 typings. Model `claude-sonnet-5-5` because SPEC §6.3 (user-approved) names it — the skill's own default would have been Opus 5.5. Deliberately **not** using `eager_input_streaming`: tool inputs are tiny and `strict: true` server validation is worth more here.
+- `planner` → `docs/plans/08-assistant.md`. Key decisions from it that I kept: confirm via a security-definer SQL function (not an admin-client module — that would put the booking rules back into TypeScript only); append-only replay because Sonnet 5.5 binds thinking blocks to the conversation; page context in the user turn (the fallback model may not accept mid-conversation system messages); short `rate_ref` instead of offer tokens.
+- **Could not verify against the real model:** the Anthropic account behind `ANTHROPIC_API_KEY` returns 400 "credit balance is too low" even for a minimal request. Everything else verified with a scripted streamer (tests) and live: UI at 375/1280, proactive hint, confirm endpoint (double click → once; foreign origin 403; no session 401).
+- Debugged: Vitest reported an error thrown by a `vi.fn` mock as a test failure even though the code caught it — switched that outage test to a plain function.
+- Findings: code-reviewer 10 (6 MEDIUM, 4 LOW), security-auditor 15 (2 HIGH, 3 MEDIUM, 10 LOW).
+
+| Agent | Sev | Finding | Resolution |
+|---|---|---|---|
+| security | HIGH | Global counters (`bookAll`, `prebookAll`) kept increasing for requests already refused by the user's own limit → one account could block booking for everyone | `rate_limit_hit` no longer counts refused hits (migration + pgTAP); `hitAll` checks in order and stops at the first refusal (test). |
+| security | MED | Anonymous traffic over its cap still filled the global AI budget | Narrowest cap first; refused hits not counted. |
+| security | MED | No per-user daily model cap (one account ≈ the whole day) | `aiUserDay` 150 calls/day. Token-based budget and trimming old tool results: not done (would break append-only replay) — noted. |
+| security | MED | Hotel names with newlines could forge lines in `<verified_context>` | `untrustedValue` collapses all whitespace. Tests (incl. context). |
+| code | MED | Deadline checked only between rounds; timeout had no visible error | Per-call `AbortSignal.timeout`, deadline 85 s (tool margin within 120 s), `timeout` error event. Tests. |
+| code+security | MED/LOW | Ping on a cancelled stream could throw in a timer; no try/finally | Ping guarded, `cancel()` stops it, `start()` in try/finally. Test for errors after the stream starts. |
+| code | MED | Cards from a tool round were lost if a later step failed | Cards stored with the round that produced them. Test. |
+| code | MED | A late thread restore overwrote a conversation in progress | Reducer ignores it. Test. |
+| code | MED | Missing route / confirm / context tests | Added (preflight codes, stream, persistence, confirm mapping, hints). |
+| code | LOW | Retry sent the failed question twice | History built from messages before the failed exchange. |
+| code | LOW | All API errors retryable | 4xx → not retryable ("new conversation" only when there is history; otherwise "unavailable" — e.g. our billing error). Tests. |
+| code+security | LOW | `appendTurn` seq race | Retry on unique violation. Full SQL-side atomicity: deferred. |
+| code | LOW | Auto-cancelled drafts reported to the model as the guest's decision | Marked `superseded`, filtered out (verified against PostgREST). |
+| security | LOW | IPv6 /64 grouping wrong for compressed addresses; secret missing → 500 | Proper expansion; fallback key. Tests. |
+| security | LOW | Body read before the size check; context endpoint unlimited | Content-Length pre-check; `contextUser` limit. |
+| security | LOW | Injected text in an AI-drafted request | Card says the text was prepared by AI — check before confirming. |
+| security | LOW | Shared anonymous bucket off Vercel; RPC callable directly with own JWT; chat retention forever | Accepted / documented (SPEC §17). Retention job: stage 10 checklist. |

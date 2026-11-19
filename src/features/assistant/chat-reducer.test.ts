@@ -42,6 +42,11 @@ describe("chat reducer", () => {
     expect(s.error).toBeNull();
   });
 
+  it("a late thread restore does not overwrite a conversation in progress", () => {
+    const s = send(initialChat);
+    expect(chatReducer(s, { type: "loaded", threadId: "x", messages: [] })).toBe(s);
+  });
+
   it("history for anonymous requests is text only and capped", () => {
     let s = initialChat;
     for (let i = 0; i < 15; i++) {

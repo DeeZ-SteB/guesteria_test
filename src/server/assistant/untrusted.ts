@@ -16,9 +16,12 @@ export function wrapUntrusted(tag: UntrustedTag, text: string, max = 3000): stri
   return `<${tag}>${escape(clean)}</${tag}>`;
 }
 
-/** A short untrusted value inside our own structured text (e.g. a hotel name). */
+/**
+ * A short untrusted value inside our own line-based structured text (e.g. a hotel name). All
+ * whitespace collapses to single spaces, so a value can never start a new "key: value" line.
+ */
 export function untrustedValue(text: string | null | undefined, max = 200): string {
-  return escape(cleanUserText(text ?? "").slice(0, max));
+  return escape(cleanUserText(text ?? "").replace(/\s+/g, " ").slice(0, max));
 }
 
 /** User messages may not impersonate our tags (e.g. typing "</verified_context>"). */

@@ -79,8 +79,8 @@ export function useAssistantChat() {
     }
   }, []);
 
-  const run = useCallback(async (text: string, context: PageContext) => {
-    const body = JSON.stringify({ message: text, context, threadId: stateRef.current.threadId, history: historyForRequest(stateRef.current.messages) });
+  const run = useCallback(async (text: string, context: PageContext, previous: ChatMessage[]) => {
+    const body = JSON.stringify({ message: text, context, threadId: stateRef.current.threadId, history: historyForRequest(previous) });
     dispatch({ type: "send", text, userId: newUuid(), assistantId: newUuid() });
     const ac = new AbortController();
     controller.current = ac;
@@ -118,7 +118,7 @@ export function useAssistantChat() {
     (text: string, context: PageContext) => {
       const trimmed = text.trim().slice(0, MESSAGE_MAX);
       if (!trimmed || stateRef.current.phase !== "idle") return;
-      void run(trimmed, context);
+      void run(trimmed, context, stateRef.current.messages);
     },
     [run],
   );
@@ -127,10 +127,12 @@ export function useAssistantChat() {
 
   const retry = useCallback(
     (context: PageContext) => {
-      const lastUser = stateRef.current.messages.findLast((m) => m.role === "user");
-      if (!lastUser || stateRef.current.phase !== "idle") return;
+      const messages = stateRef.current.messages;
+      const index = messages.findLastIndex((m) => m.role === "user");
+      if (index === -1 || stateRef.current.phase !== "idle") return;
       dispatch({ type: "retrying" });
-      void run(lastUser.text, context);
+      // The failed exchange is not part of the history sent again.
+      void run(messages[index].text, context, messages.slice(0, index));
     },
     [run],
   );

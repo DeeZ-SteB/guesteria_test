@@ -75,6 +75,8 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return { ...state, error: null, messages: lastUser === -1 ? state.messages : state.messages.slice(0, lastUser) };
     }
     case "loaded":
+      // A restore that arrives after the guest already started talking is ignored.
+      if (state.messages.length > 0 || state.phase !== "idle") return state;
       return { ...initialChat, threadId: action.threadId, messages: action.messages };
     case "reset":
       return initialChat;

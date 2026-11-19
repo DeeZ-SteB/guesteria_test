@@ -139,6 +139,7 @@ function ConfirmCard({ block }: { block: Extract<UiBlock, { type: "confirm_actio
         <CalendarCheck className="size-4 text-primary" aria-hidden />
         {block.title}
       </p>
+      {block.kind === "guest_request" && <p className="mt-1 text-xs text-muted">Текст підготував AI — перевірте перед підтвердженням.</p>}
       <ul className="mt-1 space-y-0.5 text-muted">
         {block.summary.map((s, i) => (
           <li key={i} className="break-words">

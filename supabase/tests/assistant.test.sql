@@ -1,6 +1,6 @@
 -- AI assistant: threads, drafts confirmed by the user, rate limits (pgTAP).
 begin;
-select plan(30);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -78,6 +78,9 @@ reset role;
 set local role service_role;
 select ok((select (public.rate_limit_hit('t:k', 2, 3600)->>'allowed')::boolean and (public.rate_limit_hit('t:k', 2, 3600)->>'allowed')::boolean), 'Within the limit');
 select ok(not (public.rate_limit_hit('t:k', 2, 3600)->>'allowed')::boolean, 'Over the limit');
+select ok(not (public.rate_limit_hit('t:k', 2, 3600)->>'allowed')::boolean, 'Still over the limit');
+reset role;
+select is((select count from public.rate_limits where key = 't:k'), 2, 'Refused hits are not counted (one user cannot inflate a shared counter)');
 
 select * from finish();
 rollback;

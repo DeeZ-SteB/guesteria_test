@@ -36,6 +36,20 @@ describe("rate limits", () => {
     expect(await hitAll([["bookUserHour", "u"], ["bookAll", "all"]])).toEqual({ allowed: false, retryAfter: 5 });
   });
 
+  it("stops at the first refusal: a user over their own limit never touches the shared counter", async () => {
+    mocks.rpc.mockResolvedValue({ data: { allowed: false, retry_after: 9 }, error: null });
+    await hitAll([["bookUserHour", "u"], ["bookUserDay", "u"], ["bookAll", "all"]]);
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    expect(mocks.rpc.mock.calls[0][1].p_key).toBe("bookUserHour:u");
+  });
+
+  it("groups IPv6 by the first 64 bits, also for compressed addresses", () => {
+    const k = (ip: string) => ipKey(new Headers({ "x-forwarded-for": ip }), { vercel: true });
+    expect(k("2001:db8::abcd:1")).toBe(k("2001:db8:0:0:ffff::2"));
+    expect(k("2001:db8::1")).not.toBe(k("2001:db9::1"));
+    expect(k("::ffff:203.0.113.7")).toMatch(/^[0-9a-f]{32}$/);
+  });
+
   it("trusts x-forwarded-for only on Vercel and never keeps the raw IP", () => {
     const h = new Headers({ "x-forwarded-for": "203.0.113.7, 10.0.0.1" });
     expect(ipKey(h, { vercel: false })).toBe("local");
