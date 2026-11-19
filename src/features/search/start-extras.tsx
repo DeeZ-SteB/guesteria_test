@@ -8,6 +8,7 @@ import { findCity } from "@/lib/cities";
 import { adultsLabel, formatDateRange } from "@/lib/format";
 import { readRecent } from "@/lib/search/recent";
 import { searchHref } from "@/lib/search/params";
+import { useAssistant } from "@/components/shell/assistant-fab";
 
 /** Reads localStorage, so it renders only in the browser (wrap in <Suspense>). */
 export function RecentSearches({ today }: { today: string }) {
@@ -36,17 +37,23 @@ export function RecentSearches({ today }: { today: string }) {
   );
 }
 
+/** Opens Guesteria AI (with the page's context, like the floating button). */
 export function AiBanner() {
+  const { open } = useAssistant();
   return (
-    <div className="flex items-center gap-3 rounded-card bg-primary-soft p-3">
+    <button
+      type="button"
+      onClick={() => open()}
+      className="group flex w-full items-center gap-3 rounded-card bg-primary-soft p-3 text-left hover:ring-1 hover:ring-primary"
+    >
       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-on-primary">
         <Sparkles className="size-5" aria-hidden />
       </span>
-      <div className="flex-1 text-sm">
-        <p className="font-semibold text-primary-dark">Не знаєте, що обрати?</p>
-        <p className="text-xs text-primary-dark">Опишіть ідеальний готель — Guesteria AI підбере</p>
-      </div>
-      <ChevronRight className="size-5 text-primary" aria-hidden />
-    </div>
+      <span className="flex-1 text-sm">
+        <span className="block font-semibold text-primary-dark">Не знаєте, що обрати?</span>
+        <span className="block text-xs text-primary-dark">Опишіть ідеальний готель — Guesteria AI підбере</span>
+      </span>
+      <ChevronRight className="size-5 text-primary transition-transform group-hover:translate-x-0.5" aria-hidden />
+    </button>
   );
 }
