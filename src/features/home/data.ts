@@ -14,7 +14,7 @@ export const HOME_CITY_IDS = ["lviv", "kyiv", "warsaw", "prague", "paris", "rome
  * seconds only and the page falls back to plain tiles.
  */
 export async function getHomeShowcase(): Promise<HomeShowcase> {
-  "use cache";
+  "use cache: remote";
   cacheTag("home");
   // LiteAPI rate-limits bursts (4290): at most two requests at a time.
   const lists = await mapLimited(HOME_CITY_IDS, 2, (id) => getCityHotelCards(id).catch((): HotelCard[] | null => null));
