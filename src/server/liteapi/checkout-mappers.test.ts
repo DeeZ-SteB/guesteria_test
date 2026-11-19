@@ -37,7 +37,7 @@ describe("toCheckoutQuote (sandbox prebook)", () => {
     expect(plain(payAtHotelText(quote.payAtHotel))).toBe("+ 524 ₴ туристичний збір — сплачується в готелі");
   });
 
-  it("refuses multi-rate prebooks instead of guessing", () => {
+  it("refuses multi-rate prebooks instead of guessing (an offer problem, not retried)", () => {
     const two = structuredClone(prebook.body);
     two.data.roomTypes[0].rates.push(two.data.roomTypes[0].rates[0]);
     expect(() => toCheckoutQuote(prebookSchema.parse(two), NOW)).toThrow();
@@ -59,6 +59,7 @@ describe("toConfirmedBooking (sandbox book / get)", () => {
       hotelId: "lpbbb0c",
       checkIn: "2026-12-09",
       confirmed: true,
+      refundable: true,
       refundableUntil: "2026-12-09T23:59:59.000Z",
     });
   });
@@ -102,12 +103,28 @@ describe("checkout domain", () => {
 
 // Found by me in the sandbox E2E run: book reported a later free-cancellation deadline (16 Dec
 // 23:59) than the prebook rate the guest saw (13 Dec), and we stored the later, more generous one.
-describe("refundableUntil", () => {
+// Review fix: a booking LiteAPI reports as non-refundable must never be stored as refundable.
+describe("storedCancellation", () => {
   it("keeps the earliest deadline the guest was promised", async () => {
-    const { refundableUntil } = await import("@/lib/booking/checkout");
-    expect(refundableUntil({ refundable: true, freeCancellationUntil: "2026-12-13T10:00:00.000Z" }, "2026-12-16T23:59:59.000Z")).toBe("2026-12-13T10:00:00.000Z");
-    expect(refundableUntil({ refundable: true, freeCancellationUntil: null }, "2026-12-16T23:59:59.000Z")).toBe("2026-12-16T23:59:59.000Z");
-    expect(refundableUntil({ refundable: true, freeCancellationUntil: "2026-12-13T10:00:00.000Z" }, null)).toBe("2026-12-13T10:00:00.000Z");
-    expect(refundableUntil({ refundable: false, freeCancellationUntil: null }, "2026-12-16T23:59:59.000Z")).toBeNull();
+    const { storedCancellation } = await import("@/lib/booking/checkout");
+    const q = (until: string | null, refundable = true) => ({ refundable, freeCancellationUntil: until });
+    const b = (until: string | null, refundable: boolean | null = true) => ({ refundable, refundableUntil: until });
+    expect(storedCancellation(q("2026-12-13T10:00:00.000Z"), b("2026-12-16T23:59:59.000Z"))).toEqual({ refundable: true, until: "2026-12-13T10:00:00.000Z" });
+    expect(storedCancellation(q(null), b("2026-12-16T23:59:59.000Z"))).toEqual({ refundable: true, until: "2026-12-16T23:59:59.000Z" });
+    expect(storedCancellation(q(null), b(null, null))).toEqual({ refundable: true, until: null });
+    expect(storedCancellation(q(null, false), b("2026-12-16T23:59:59.000Z"))).toEqual({ refundable: false, until: null });
+    expect(storedCancellation(q("2026-12-13T10:00:00.000Z"), b(null, false))).toEqual({ refundable: false, until: null });
+  });
+
+  it("reads a non-refundable booking as refundable: false", () => {
+    const nrfn = structuredClone(book.body);
+    nrfn.data.cancellationPolicies.refundableTag = "NRFN";
+    expect(toConfirmedBooking(bookingSchema.parse(nrfn).data)).toMatchObject({ refundable: false, refundableUntil: null });
+  });
+
+  it("keeps an unconfirmed status visible", () => {
+    const pending = structuredClone(book.body);
+    pending.data.status = "PENDING";
+    expect(toConfirmedBooking(bookingSchema.parse(pending).data)).toMatchObject({ status: "PENDING", confirmed: false });
   });
 });

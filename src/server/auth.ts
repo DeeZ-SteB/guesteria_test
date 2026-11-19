@@ -54,3 +54,17 @@ export async function requireUser(returnTo: string): Promise<ShellUser> {
   if (!user) redirect(signInRedirectPath(safeReturnTo(returnTo)));
   return user;
 }
+
+/**
+ * For money-spending actions only: re-checks the session with the Auth server (a revoked JWT
+ * still passes getClaims until it expires) and requires a confirmed email.
+ */
+export async function verifiedBookingUser(): Promise<{ status: "ok"; user: ShellUser } | { status: "session" | "unverified" }> {
+  const current = await getCurrentUser();
+  if (!current) return { status: "session" };
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user || data.user.id !== current.id) return { status: "session" };
+  if (!data.user.email_confirmed_at) return { status: "unverified" };
+  return { status: "ok", user: current };
+}

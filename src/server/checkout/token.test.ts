@@ -28,11 +28,11 @@ const NOW = 1_800_000_000_000;
 describe("checkout token", () => {
   it("round-trips a signed payload", () => {
     const result = verifyCheckoutToken(signCheckoutToken(payload, NOW), NOW + 1000);
-    expect(result).toMatchObject({ ok: true, payload: { ...payload, v: 1 } });
+    expect(result).toMatchObject({ ok: true, expired: false, payload: { ...payload, v: 1 } });
   });
 
   it("rejects any change to the signed body (e.g. a cheaper price)", () => {
-    const token = signCheckoutToken(payload, NOW);
+    const token = signCheckoutToken(payload, NOW)!;
     const [, mac] = token.split(".");
     const forged = Buffer.from(JSON.stringify({ v: 1, ...payload, amt: 1, exp: NOW + TOKEN_TTL_MS })).toString("base64url");
     expect(verifyCheckoutToken(`${forged}.${mac}`, NOW)).toEqual({ ok: false, reason: "invalid" });
@@ -47,9 +47,17 @@ describe("checkout token", () => {
     process.env.CHECKOUT_SECRET = "test-secret-0123456789abcdef0123456789abcdef";
   });
 
-  it("expires after 30 minutes", () => {
+  it("expires after 30 minutes, but can still resolve an existing attempt when allowed", () => {
     const token = signCheckoutToken(payload, NOW);
     expect(verifyCheckoutToken(token, NOW + TOKEN_TTL_MS + 1)).toEqual({ ok: false, reason: "expired" });
+    expect(verifyCheckoutToken(token, NOW + TOKEN_TTL_MS + 1, { allowExpired: true })).toMatchObject({ ok: true, expired: true });
+  });
+
+  // Review fix: values the verifier rejects used to be signed anyway → every submit failed.
+  it("refuses to sign a payload it would not accept back", () => {
+    expect(signCheckoutToken({ ...payload, pid: "bad id/with slash" }, NOW)).toBeNull();
+    expect(signCheckoutToken({ ...payload, name: "" }, NOW)).toBeNull();
+    expect(signCheckoutToken({ ...payload, ad: 9 }, NOW)).toBeNull();
   });
 });
 

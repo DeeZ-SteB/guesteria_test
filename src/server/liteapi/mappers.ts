@@ -177,13 +177,16 @@ function toRateOption(
   };
 }
 
+
+
 /**
  * Quote for the checkout page, from prebook only. We sell one room per booking, so anything
  * else is treated as an upstream surprise rather than guessed at.
  */
 export function toCheckoutQuote({ data: p }: PrebookResponse, now: Date = new Date()): CheckoutQuote {
   const rates = p.roomTypes.flatMap((t) => t.rates);
-  if (rates.length !== 1) throw new LiteApiError("upstream", "POST /rates/prebook");
+  // Deterministic shape we don't sell (multi-room): an "offer" problem, not worth retrying.
+  if (rates.length !== 1) throw new LiteApiError("invalid_request", "POST /rates/prebook");
   const rate = rates[0];
   const net = rate.retailRate.total[0] ?? { amount: p.price, currency: p.currency };
   const suggested = p.suggestedSellingPrice != null ? { amount: p.suggestedSellingPrice, currency: p.currency } : rate.retailRate.suggestedSellingPrice[0];
@@ -198,7 +201,7 @@ export function toCheckoutQuote({ data: p }: PrebookResponse, now: Date = new Da
     boardCode: rate.boardType ?? null,
     boardLabel: boardLabel(rate.boardType, rate.boardName),
     ...cancellationOf(rate, now),
-    price: publicPrice({ amount: Math.max(net.amount, p.price), currency: net.currency }, suggested),
+    price: publicPrice({ amount: net.currency === p.currency ? Math.max(net.amount, p.price) : net.amount, currency: net.currency }, suggested),
     payAtHotel: payAtHotelOf(rate),
     changes: {
       price: (p.priceDifferencePercent ?? 0) !== 0,
@@ -210,19 +213,27 @@ export function toCheckoutQuote({ data: p }: PrebookResponse, now: Date = new Da
 
 /** Normalises a book / get-booking response. Room and board come from the prebook, not from here. */
 export function toConfirmedBooking(b: BookingData): ConfirmedBooking {
-  const deadlines: Array<string | null> = [];
   const policy = b.cancellationPolicies;
-  if (policy?.refundableTag === "RFN") {
+  const status = b.status.toUpperCase();
+  let refundable: boolean | null = null;
+  let refundableUntil: string | null = null;
+  if (policy?.refundableTag === "NRFN") refundable = false;
+  else if (policy?.refundableTag === "RFN") {
+    const deadlines: Array<string | null> = [];
     for (const info of policy.cancelPolicyInfos ?? []) {
-      if (info && info.amount > 0) deadlines.push(parseCancelTime(info.cancelTime, info.timezone));
       if (info === null) deadlines.push(null);
+      else if (info.amount > 0) deadlines.push(parseCancelTime(info.cancelTime, info.timezone));
+    }
+    if (b.lastFreeCancellationDate) {
+      const t = Date.parse(b.lastFreeCancellationDate);
+      deadlines.push(Number.isNaN(t) ? null : new Date(t).toISOString());
+    }
+    // Unreadable entries → unknown (null), never an invented deadline.
+    if (!deadlines.some((d) => d === null)) {
+      refundable = true;
+      refundableUntil = (deadlines as string[]).sort()[0] ?? null;
     }
   }
-  if (b.lastFreeCancellationDate) {
-    const t = Date.parse(b.lastFreeCancellationDate);
-    deadlines.push(Number.isNaN(t) ? null : new Date(t).toISOString());
-  }
-  const unknown = policy?.refundableTag !== "RFN" || deadlines.length === 0 || deadlines.some((d) => d === null);
   return {
     liteapiBookingId: b.bookingId,
     clientReference: b.clientReference ?? null,
@@ -230,8 +241,10 @@ export function toConfirmedBooking(b: BookingData): ConfirmedBooking {
     hotelId: b.hotelId ?? b.hotel?.hotelId ?? null,
     checkIn: b.checkin,
     checkOut: b.checkout,
-    confirmed: b.status.toUpperCase() === "CONFIRMED",
-    refundableUntil: unknown ? null : (deadlines as string[]).sort()[0],
+    status,
+    confirmed: status === "CONFIRMED",
+    refundable,
+    refundableUntil,
   };
 }
 

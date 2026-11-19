@@ -19,12 +19,15 @@ export function GuestForm({
 }) {
   const [state, action, pending] = useActionState(confirmBooking, initialState);
   const values = state.values ?? initial;
-  const label = state.error === "pending" ? "Перевірити ще раз" : `Підтвердити бронювання · ${total}`;
+  // Retries must reuse the token of the attempt, even if the page re-rendered with a new quote.
+  const activeToken = state.token ?? token;
+  const label =
+    state.error === "pending" ? "Перевірити ще раз" : state.error === "unsaved" ? "Зберегти бронювання" : `Підтвердити бронювання · ${total}`;
 
   return (
     <form id="checkout-form" action={action} noValidate className="space-y-3 rounded-card border border-line bg-surface p-4 md:p-5">
       <h2 className="text-base font-bold">Дані гостя</h2>
-      <input type="hidden" name="token" value={token} />
+      <input type="hidden" name="token" value={activeToken} />
       {state.error && (
         <p role="alert" className="rounded-button bg-danger/10 px-3 py-2 text-sm text-danger">
           {checkoutErrorMessage(state.error)}

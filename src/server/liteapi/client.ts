@@ -17,7 +17,8 @@ export const DATA_HOST = "https://api.liteapi.travel/v3.0";
 export const BOOK_HOST = "https://book.liteapi.travel/v3.0";
 
 // Book must leave room for a reference lookup inside the page's 120 s maxDuration.
-const TIMEOUT = { data: 10_000, rates: 20_000, prebook: 120_000, book: 95_000, lookup: 20_000, bookingRead: 30_000 } as const;
+// Budget inside the page's 120 s: auth + DB (~2 s) + book 80 s + lookup 15 s (no retry) + DB.
+const TIMEOUT = { data: 10_000, rates: 20_000, prebook: 120_000, book: 80_000, lookup: 15_000, bookingRead: 30_000 } as const;
 const CLIENT_REFERENCE = /^gs-[0-9a-f]{24}$/;
 
 export type Occupancy = { adults: number };
@@ -164,7 +165,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
     }) =>
       request(BOOK_HOST, "/rates/book", {
         method: "POST",
-        query: { timeout: 90 },
+        query: { timeout: 75 },
         body: { ...input, payment: { method: "ACC_CREDIT_CARD" } },
         timeoutMs: TIMEOUT.book,
         schema: bookingSchema,
@@ -174,10 +175,9 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
     listBookingsByReference: async (clientReference: string) => {
       if (!CLIENT_REFERENCE.test(clientReference)) throw new LiteApiError("invalid_request", "GET /bookings");
       return request(BOOK_HOST, "/bookings", {
-        query: { clientReference, timeout: 15 },
+        query: { clientReference, timeout: 12 },
         timeoutMs: TIMEOUT.lookup,
         schema: bookingListSchema,
-        retryNetwork: true,
       });
     },
 

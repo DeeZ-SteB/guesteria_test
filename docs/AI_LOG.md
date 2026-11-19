@@ -133,3 +133,34 @@ Format:
 | security | LOW | Offer token in history/logs | **Accepted** (not secret; prebook validates). Stage 5: don't log full checkout URLs. |
 | security | LOW | Assistant context (`hotelName`) is client-supplied | Stage 8 rule: send only `hotelId`, load facts server-side, delimit supplier text. |
 | security | LOW | /checkout must not trust URL data | Stage 5 checklist recorded: session check, Zod, prebook is the only source of hotel/stay/price, server `clientReference`, no `book` retry, per-user limit. |
+
+## 2026-11-19 — Stage 5: checkout (`feat/checkout`)
+- Before planning I ran the whole booking cycle live in the sandbox (prebook → book `ACC_CREDIT_CARD` → get → duplicate reference → cancel → lookup by reference) and saved the responses as fixtures. Facts the plan relied on: prebook 1.4 s / book 4.7 s, **duplicate `clientReference` → 4005**, `GET /bookings?clientReference=` works (empty → `data: []`), sandbox book quirks (swapped board fields, later cancellation deadline than prebook).
+- `planner` → `docs/plans/05-checkout.md`: prebook during render behind `navigation()` (never on prefetch), HMAC-signed checkout token, `clientReference = HMAC(user|prebook)`, no net price in the DB, success state on the same page.
+- Caught by me in the sandbox E2E run: the stored free-cancellation deadline (from book, 17 Dec) was later than the one shown at checkout (prebook, 13 Dec) → now the earliest is kept. Also a bad date display in my own summary code.
+- Findings: code-reviewer 17 (3 HIGH, 9 MEDIUM, 5 LOW), security-auditor 7 (2 MEDIUM, 5 LOW). Both independently pointed at the same root cause: an in-flight/failed attempt was invisible, so a reload could book twice.
+
+| Agent | Sev | Finding | Resolution |
+|---|---|---|---|
+| code | HIGH | Expired token after "pending/unsaved" → "reload" → new prebook → second booking | **Redesigned:** the attempt is recorded as `pending` **before** book (unique `client_reference` = lock). An expired token may still *resolve* an existing attempt, never start one. Tests. |
+| code | HIGH | 4005 with an empty lookup said "pick another rate" (booking existed) | Pending + error log; lookup failure ≠ "not found". Tests. |
+| code | HIGH | Booked but not `CONFIRMED` (or mismatch) → "failed" forever | Not confirmed → pending (LiteAPI id remembered); mismatch → `support` state. Tests. |
+| security | LOW | Check-then-act race: two simultaneous submits both call book | Same redesign: only the request that inserted the pending row books; the other resolves by lookup. Test. |
+| code | MED | 2001/4002 on a retry → "rate gone" without checking an earlier book | Lookup first; only a definite "nothing booked" frees the attempt. 4000 → own `guest_rejected` copy. Tests. |
+| code | MED | Re-render swaps the hidden token → retry books a new prebook | Action returns its token; the form keeps using it. Test. |
+| code | MED | Pending attempts invisible to the same-stay banner / reloads | Banner includes pending; `/checkout?booking=` resolves pending attempts by lookup on open. |
+| code | MED | Time budget could exceed `maxDuration` | book 80 s, lookup 15 s, no lookup retry. |
+| code | MED | NRFN booking stored as refundable (null meant both "unknown" and "non-refundable") | Explicit `refundable` column + `storedCancellation` (never more generous than either side). Tests + pgTAP. |
+| code | MED | Token signed values the verifier rejects → every submit failed | Same schema at sign time; unsignable → friendly error. Tests. |
+| code | MED | Cyrillic guest names might be rejected by LiteAPI | **Rejected with evidence:** sandbox booking with «Олена Коваль-Сидоренкоʼ» → CONFIRMED (then cancelled). |
+| code | MED | Success page ignored status | Confirmed / pending (with «Оновити статус») / cancelled / gone states. |
+| code | LOW | Refundable-without-deadline shown as «Без повернення» | Fixed by the explicit `refundable` flag. |
+| code | LOW | `matches()` didn't check hotel/reference strictly | Hotel must match; reference checked when present. Price comparison skipped (public price comes from the signed quote). |
+| code | LOW | Currency not checked in `max(net, price)`; multi-rate prebook retried forever | Currency guard; multi-rate → `offer_stale`. |
+| code | LOW | "Unsaved" button label suggested a new booking | «Зберегти бронювання». |
+| security | MED | Unlimited prebook/book per account (spending) | **Deferred to stage 8**: per-user and global caps on prebook/book, alerts. |
+| security | MED | Open sign-up without email confirmation can book | Booking now requires a confirmed email (`email_confirmed_at`, checked via Auth server). **Cloud: enable confirmations** (deploy checklist). |
+| security | LOW | `getClaims` accepts a revoked JWT until expiry | Booking re-checks with `auth.getUser()`. |
+| security | LOW | Admin-client lint guard bypassable (dynamic import, `.ts`, reading the key elsewhere) | Patterns + `no-restricted-syntax`; the key is read only inside `admin.ts`. Verified with a probe file. |
+| security | LOW | `cancelLiteApiBooking(rawId)` exported without ownership check | Stage 6: replaced by an ownership-checked function. |
+- Re-verified live after the redesign: double click → 1 row (`confirmed`, refundable) and 1 LiteAPI booking; deadline = the one shown at checkout.

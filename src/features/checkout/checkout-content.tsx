@@ -23,6 +23,7 @@ import { Stars } from "@/components/ui/rating";
 import { CheckoutError, type CheckoutPageError } from "./checkout-error";
 import { GuestForm } from "./guest-form";
 import { SuccessView } from "./success-view";
+import { resolveForView } from "./resolve";
 
 type Raw = Record<string, string | string[] | undefined>;
 
@@ -55,7 +56,10 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
     const user = await requireUser(`/checkout?booking=${bookingId}`);
     const booking = await getOwnBooking(user.id, bookingId);
     if (!booking) notFound();
-    return <SuccessView booking={booking} />;
+    const state = await resolveForView(booking);
+    // Re-read after a resolution so the page shows what is stored now.
+    const current = state === "confirmed" && booking.status !== "confirmed" ? ((await getOwnBooking(user.id, bookingId)) ?? booking) : booking;
+    return <SuccessView booking={current} state={state} />;
   }
 
   const today = todayInKyiv();
@@ -79,8 +83,8 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
     getHotel(quote.hotelId).catch((): HotelDetails | null => null),
     findSameStay(user.id, quote.hotelId, quote.checkIn, quote.checkOut).catch(() => null),
   ]);
-  const hotelName = hotel?.name ?? "Готель";
-  const image = hotel?.images.find((i) => isAllowedImageUrl(i.url))?.url ?? null;
+  const hotelName = hotel?.name || "Готель";
+  const image = hotel?.images.find((i) => isAllowedImageUrl(i.url) && i.url.length <= 500)?.url ?? null;
   const city = findCity(params.cityId ?? "") ?? findCityByLiteApiName(hotel?.city);
 
   const token = signCheckoutToken({
@@ -101,6 +105,7 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
     rf: quote.refundable,
     until: quote.freeCancellationUntil,
   });
+  if (!token) return <CheckoutError kind="offer_stale" backHref={back} />;
 
   const nights = nightsBetween(quote.checkIn, quote.checkOut);
   const change = priceChange(quote, params.shownPrice);
@@ -167,8 +172,10 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
             <p className="flex gap-2 rounded-button border border-accent/40 bg-accent/10 p-3 text-sm" role="status">
               <CalendarCheck className="size-5 shrink-0 text-accent" aria-hidden />
               <span>
-                У вас уже є бронювання в цьому готелі на ці дати.{" "}
-                <Link href={`/checkout?booking=${sameStay}`} className="font-medium text-primary underline">
+                {sameStay.status === "pending"
+                  ? "У вас є незавершене бронювання в цьому готелі на ці дати — перевірте його, перш ніж бронювати знову."
+                  : "У вас уже є бронювання в цьому готелі на ці дати."}{" "}
+                <Link href={`/checkout?booking=${sameStay.id}`} className="font-medium text-primary underline">
                   Переглянути
                 </Link>
               </span>

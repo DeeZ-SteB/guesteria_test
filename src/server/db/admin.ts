@@ -1,15 +1,17 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { serverSupabaseConfig } from "@/lib/supabase/config";
-import { supabaseSecretKey } from "@/server/env";
 
 /**
- * Supabase client with the secret key: bypasses RLS. Used for exactly one thing — writing a
- * booking after LiteAPI confirmed it (clients have no insert rights on `bookings`).
- * ESLint restricts importing this module to src/server/bookings.ts.
+ * Supabase client with the secret key: bypasses RLS. Used only by src/server/bookings.ts to record
+ * booking attempts and confirmed bookings (clients have no write rights on `bookings`).
+ * The key is read here and nowhere else; ESLint restricts importing this module.
  */
 export function createAdminClient() {
-  return createClient(serverSupabaseConfig().url, supabaseSecretKey(), {
+  const key = z.string().min(20).safeParse(process.env.SUPABASE_SECRET_KEY);
+  if (!key.success) throw new Error("SUPABASE_SECRET_KEY is not configured");
+  return createClient(serverSupabaseConfig().url, key.data, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

@@ -210,7 +210,7 @@ describe("booking host schemas and errors (sandbox fixtures)", () => {
     const fetch = fakeFetch({ status: 200, body: empty.body });
     const client = createLiteApiClient({ apiKey: "k", fetch });
     await client.listBookingsByReference("gs-0123456789abcdef01234567");
-    expect(fetch.mock.calls[0][0]).toBe(`${BOOK_HOST}/bookings?clientReference=gs-0123456789abcdef01234567&timeout=15`);
+    expect(fetch.mock.calls[0][0]).toBe(`${BOOK_HOST}/bookings?clientReference=gs-0123456789abcdef01234567&timeout=12`);
     expect((await caught(client.listBookingsByReference("x&status=all"))).kind).toBe("invalid_request");
     expect(fetch).toHaveBeenCalledTimes(1);
   });

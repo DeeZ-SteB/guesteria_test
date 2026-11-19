@@ -36,14 +36,27 @@ export type CheckoutPayload = z.infer<typeof payloadSchema>;
 const b64 = (s: string) => Buffer.from(s).toString("base64url");
 const sign = (data: string) => createHmac("sha256", checkoutSecret()).update(data).digest("base64url");
 
-export function signCheckoutToken(payload: Omit<CheckoutPayload, "v" | "exp">, now = Date.now()): string {
-  const body = b64(JSON.stringify({ v: 1, ...payload, exp: now + TOKEN_TTL_MS }));
+/**
+ * Signs a quote. Validates with the same schema as verification, so a value the verifier would
+ * reject (e.g. an odd prebook id) fails here — at page render — not on every submit.
+ * Returns null when the quote can't be signed.
+ */
+export function signCheckoutToken(payload: Omit<CheckoutPayload, "v" | "exp">, now = Date.now()): string | null {
+  const parsed = payloadSchema.safeParse({ v: 1, ...payload, exp: now + TOKEN_TTL_MS });
+  if (!parsed.success) return null;
+  const body = b64(JSON.stringify(parsed.data));
   return `${body}.${sign(body)}`;
 }
 
-export type VerifyResult = { ok: true; payload: CheckoutPayload } | { ok: false; reason: "invalid" | "expired" };
+export type VerifyResult =
+  | { ok: true; payload: CheckoutPayload; expired: boolean }
+  | { ok: false; reason: "invalid" | "expired" };
 
-export function verifyCheckoutToken(token: unknown, now = Date.now()): VerifyResult {
+/**
+ * `allowExpired`: an expired but authentic token may still *resolve* an existing attempt
+ * (the caller must never start a new booking with it).
+ */
+export function verifyCheckoutToken(token: unknown, now = Date.now(), opts: { allowExpired?: boolean } = {}): VerifyResult {
   if (typeof token !== "string" || token.length > 4000) return { ok: false, reason: "invalid" };
   const [body, mac, extra] = token.split(".");
   if (!body || !mac || extra !== undefined) return { ok: false, reason: "invalid" };
@@ -59,8 +72,9 @@ export function verifyCheckoutToken(token: unknown, now = Date.now()): VerifyRes
   }
   const parsed = payloadSchema.safeParse(json);
   if (!parsed.success) return { ok: false, reason: "invalid" };
-  if (parsed.data.exp < now) return { ok: false, reason: "expired" };
-  return { ok: true, payload: parsed.data };
+  const expired = parsed.data.exp < now;
+  if (expired && !opts.allowExpired) return { ok: false, reason: "expired" };
+  return { ok: true, payload: parsed.data, expired };
 }
 
 /**

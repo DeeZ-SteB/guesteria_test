@@ -29,8 +29,12 @@ export type ConfirmedBooking = {
   hotelId: string | null;
   checkIn: string;
   checkOut: string;
+  /** Status as LiteAPI reports it, upper-cased (CONFIRMED, PENDING, ON_REQUEST…). */
+  status: string;
   confirmed: boolean;
-  /** Earliest free-cancellation deadline LiteAPI reports for the booking, or null if unknown. */
+  /** true / false as LiteAPI reports it; null when the policy can't be read. */
+  refundable: boolean | null;
+  /** Earliest free-cancellation deadline LiteAPI reports, or null if none/unknown. */
   refundableUntil: string | null;
 };
 
@@ -59,19 +63,25 @@ export type Guest = z.infer<typeof guestSchema>;
 
 export type CheckoutErrorKind =
   | "session"
+  | "unverified"
   | "invalid"
   | "expired"
   | "rate_gone"
+  | "guest_rejected"
   | "pending"
+  | "support"
   | "failed"
   | "unsaved";
 
 const MESSAGES: Record<CheckoutErrorKind, string> = {
   session: "Сесія завершилась. Увійдіть знову, щоб завершити бронювання.",
+  unverified: "Підтвердьте email (лист уже у вашій пошті), щоб бронювати.",
   invalid: "Не вдалося перевірити дані бронювання. Оновіть сторінку.",
   expired: "Час на оформлення минув. Оновіть сторінку, щоб перевірити ціну знову.",
   rate_gone: "Цей тариф уже недоступний. Поверніться до готелю й оберіть інший.",
-  pending: "Бронювання ще обробляється. Натисніть «Перевірити ще раз» за кілька секунд.",
+  guest_rejected: "Сервіс бронювання не прийняв дані гостя. Перевірте імʼя, прізвище та email.",
+  pending: "Бронювання ще обробляється. Натисніть «Перевірити ще раз» за кілька секунд — повторного бронювання не буде.",
+  support: "Бронювання створено, але його дані відрізняються від обраних. Ми перевіримо його вручну — не бронюйте повторно.",
   failed: "Не вдалося забронювати. Спробуйте ще раз або оберіть інший тариф.",
   unsaved: "Бронювання підтверджено, але ми не змогли його зберегти. Натисніть ще раз — повторного бронювання не буде.",
 };
@@ -91,14 +101,14 @@ export function priceChange(quote: Pick<CheckoutQuote, "price" | "changes">, sho
 }
 
 /**
- * Free-cancellation deadline to store: never later than what the guest saw at checkout.
- * Non-refundable at checkout stays non-refundable, whatever the booking response says.
+ * Cancellation terms to store: never more generous than what the guest saw at checkout or what
+ * the booking says. Non-refundable on either side stays non-refundable.
  */
-export function refundableUntil(
+export function storedCancellation(
   quote: { refundable: boolean; freeCancellationUntil: string | null },
-  booked: string | null,
-): string | null {
-  if (!quote.refundable) return null;
-  const candidates = [quote.freeCancellationUntil, booked].filter((d): d is string => !!d);
-  return candidates.length ? candidates.sort()[0] : null;
+  booked: { refundable: boolean | null; refundableUntil: string | null },
+): { refundable: boolean; until: string | null } {
+  if (!quote.refundable || booked.refundable === false) return { refundable: false, until: null };
+  const candidates = [quote.freeCancellationUntil, booked.refundableUntil].filter((d): d is string => !!d);
+  return { refundable: true, until: candidates.length ? candidates.sort()[0] : null };
 }

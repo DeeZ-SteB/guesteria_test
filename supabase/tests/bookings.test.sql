@@ -1,6 +1,6 @@
 -- Bookings written by checkout: shape checks, uniqueness and read-only access (pgTAP).
 begin;
-select plan(9);
+select plan(12);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -14,6 +14,18 @@ values ('20000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000
   'Double/Twin', 'RO', 'https://static.cupid.travel/hotels/1.jpg', 'lviv', '2026-12-06 10:00:00+00');
 
 select has_column('public', 'bookings', 'client_reference', 'bookings.client_reference exists');
+select has_column('public', 'bookings', 'refundable', 'bookings.refundable exists');
+
+-- A pending attempt (recorded before LiteAPI book) needs no LiteAPI id yet...
+select lives_ok(
+  $$ insert into public.bookings (user_id, hotel_id, hotel_name, check_in, check_out, adults, total_amount, currency, client_reference, prebook_id, room_name, status)
+     values ('00000000-0000-0000-0000-00000000000a', 'lpbbb0c', 'X', '2026-12-20', '2026-12-22', 2, 1, 'UAH', 'gs-cccccccccccccccccccccccc', 'P9', 'R', 'pending') $$,
+  'A pending attempt can be recorded without a LiteAPI id');
+-- ...but a confirmed booking must have one.
+select throws_ok(
+  $$ insert into public.bookings (user_id, hotel_id, hotel_name, check_in, check_out, adults, total_amount, currency, client_reference, prebook_id, room_name, status)
+     values ('00000000-0000-0000-0000-00000000000a', 'lpbbb0c', 'X', '2026-12-20', '2026-12-22', 2, 1, 'UAH', 'gs-dddddddddddddddddddddddd', 'P8', 'R', 'confirmed') $$,
+  '23514', null, 'A confirmed booking must have a LiteAPI id');
 select col_is_unique('public', 'bookings', 'client_reference', 'client_reference is unique (idempotency)');
 
 select throws_ok(
@@ -28,7 +40,7 @@ select throws_ok(
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
-select is((select count(*) from public.bookings)::int, 1, 'A reads own booking');
+select is((select count(*) from public.bookings)::int, 2, 'A reads own bookings (confirmed + pending)');
 select throws_ok($$ update public.bookings set total_amount = 1 $$, '42501', null, 'A cannot change a booking (e.g. its price)');
 select throws_ok($$ delete from public.bookings $$, '42501', null, 'A cannot delete a booking');
 

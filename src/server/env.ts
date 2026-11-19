@@ -33,10 +33,3 @@ export function checkoutSecret(): string {
   if (!parsed.success) throw new Error("CHECKOUT_SECRET is not configured");
   return parsed.data;
 }
-
-/** Supabase secret (service) key. Only src/server/db/admin.ts may use it. */
-export function supabaseSecretKey(): string {
-  const parsed = z.string().min(20).safeParse(process.env.SUPABASE_SECRET_KEY);
-  if (!parsed.success) throw new Error("SUPABASE_SECRET_KEY is not configured");
-  return parsed.data;
-}
