@@ -159,7 +159,7 @@ export async function HotelPage({ params, searchParams }: Props) {
                   <ul className="space-y-1.5">
                     {hotel.pros.map((p) => (
                       <li key={p} className="flex gap-2">
-                        <ThumbsUp className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+                        <ThumbsUp className="mt-0.5 size-4 shrink-0 text-success-ink" aria-hidden />
                         {p}
                       </li>
                     ))}
@@ -223,7 +223,7 @@ export async function HotelPage({ params, searchParams }: Props) {
             )}
             <div data-ai-inline className="rounded-card bg-primary-soft p-4 text-sm">
               <p className="font-semibold text-primary-dark">Питання про готель?</p>
-              <p className="mt-1 text-xs text-primary-dark/80">Guesteria AI знає правила, зручності й відгуки гостей.</p>
+              <p className="mt-1 text-xs text-primary-dark">Guesteria AI знає правила, зручності й відгуки гостей.</p>
               <div className="mt-3">
                 <AskAiButton hotelId={hotel.id} hotelName={hotel.name} compact />
               </div>

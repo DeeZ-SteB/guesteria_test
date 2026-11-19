@@ -50,3 +50,24 @@ export function assistantCaps(): { daily: number; anonDaily: number } {
     anonDaily: capSchema(600).parse(process.env.ASSISTANT_ANON_DAILY_CAP ?? 600),
   };
 }
+
+const LITEAPI_DATA_HOST = "https://api.liteapi.travel/v3.0";
+const LITEAPI_BOOK_HOST = "https://book.liteapi.travel/v3.0";
+
+/**
+ * LiteAPI hosts. E2E tests may point them at a local mock (LITEAPI_MOCK_ORIGIN): loopback http only
+ * and never on Vercel, so the API key can never be sent to another host through configuration.
+ */
+export function liteApiHosts(): { data: string; book: string } {
+  const raw = process.env.LITEAPI_MOCK_ORIGIN;
+  if (!raw) return { data: LITEAPI_DATA_HOST, book: LITEAPI_BOOK_HOST };
+  if (process.env.VERCEL) throw new LiteApiConfigError();
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new LiteApiConfigError();
+  }
+  if (url.protocol !== "http:" || !["127.0.0.1", "localhost"].includes(url.hostname) || url.username || url.password) throw new LiteApiConfigError();
+  return { data: `${url.origin}/data/v3.0`, book: `${url.origin}/book/v3.0` };
+}

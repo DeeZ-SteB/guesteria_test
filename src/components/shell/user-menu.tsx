@@ -17,7 +17,7 @@ export async function UserMenu() {
       label={`Меню акаунта: ${name}`}
       trigger={
         <>
-          <Avatar initials={user.initials} />
+          <Avatar initials={user.initials} decorative={false} />
           <ChevronDown className="size-4 text-muted" aria-hidden />
         </>
       }

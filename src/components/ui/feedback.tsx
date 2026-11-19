@@ -5,14 +5,15 @@ export function Skeleton({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-button bg-line", className)} aria-hidden />;
 }
 
-export function Avatar({ initials, className }: { initials: string; className?: string }) {
+/** Decorative by default; pass decorative={false} when the initials are the visible label of a control. */
+export function Avatar({ initials, className, decorative = true }: { initials: string; className?: string; decorative?: boolean }) {
   return (
     <span
       className={cn(
         "grid size-9 shrink-0 place-items-center rounded-full bg-primary-soft text-xs font-bold text-primary-dark",
         className,
       )}
-      aria-hidden
+      aria-hidden={decorative || undefined}
     >
       {initials}
     </span>

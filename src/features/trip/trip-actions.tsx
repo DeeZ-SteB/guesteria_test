@@ -59,8 +59,8 @@ const REQUEST_ERRORS: Record<Exclude<CreateRequestResult, { ok: true }>["reason"
 };
 
 const STATUS_TONE = {
-  sent: "bg-accent/10 text-accent",
-  confirmed: "bg-success/10 text-success",
+  sent: "bg-accent/10 text-accent-ink",
+  confirmed: "bg-success/10 text-success-ink",
   declined: "bg-danger/10 text-danger",
 } as const;
 
@@ -116,12 +116,12 @@ function CheckinCard({
 
   const done = checkin !== null;
   const badge = done ? (
-    <span className="flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
+    <span className="flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-semibold text-success-ink">
       <CheckCircle2 className="size-3.5" aria-hidden />
       Чекін пройдено
     </span>
   ) : (
-    <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">Не пройдено</span>
+    <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent-ink">Не пройдено</span>
   );
 
   if (checkinError) {

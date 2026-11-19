@@ -49,7 +49,16 @@ type RequestOptions<T extends z.ZodType> = {
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
-export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiKey: string; fetch?: FetchLike }) {
+export function createLiteApiClient({
+  apiKey,
+  fetch = globalThis.fetch,
+  hosts = { data: DATA_HOST, book: BOOK_HOST },
+}: {
+  apiKey: string;
+  fetch?: FetchLike;
+  /** Overridable only for local E2E (see liteApiHosts in server/env.ts). */
+  hosts?: { data: string; book: string };
+}) {
   async function request<T extends z.ZodType>(host: string, path: string, opts: RequestOptions<T>): Promise<z.infer<T>> {
     const url = new URL(host + path);
     for (const [key, value] of Object.entries(opts.query ?? {})) {
@@ -107,7 +116,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
 
   return {
     getHotels: (q: { countryCode: string; cityName: string; limit?: number }) =>
-      request(DATA_HOST, "/data/hotels", {
+      request(hosts.data, "/data/hotels", {
         query: { countryCode: q.countryCode, cityName: q.cityName, limit: q.limit ?? 50 },
         timeoutMs: TIMEOUT.data,
         schema: hotelListSchema,
@@ -115,7 +124,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
       }),
 
     getHotel: (hotelId: string) =>
-      request(DATA_HOST, "/data/hotel", {
+      request(hosts.data, "/data/hotel", {
         query: { hotelId },
         timeoutMs: TIMEOUT.data,
         schema: hotelDetailsSchema,
@@ -123,7 +132,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
       }),
 
     getReviews: (hotelId: string, limit = 20) =>
-      request(DATA_HOST, "/data/reviews", {
+      request(hosts.data, "/data/reviews", {
         query: { hotelId, limit },
         timeoutMs: TIMEOUT.data,
         schema: reviewsSchema,
@@ -131,7 +140,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
       }),
 
     getMinRates: (q: RatesQuery) =>
-      request(DATA_HOST, "/hotels/min-rates", {
+      request(hosts.data, "/hotels/min-rates", {
         method: "POST",
         body: { ...q, ...rateDefaults },
         timeoutMs: TIMEOUT.rates,
@@ -139,7 +148,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
       }),
 
     getRates: (q: RatesQuery) =>
-      request(DATA_HOST, "/hotels/rates", {
+      request(hosts.data, "/hotels/rates", {
         method: "POST",
         body: { ...q, ...rateDefaults, roomMapping: true },
         timeoutMs: TIMEOUT.rates,
@@ -148,7 +157,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
 
     /** Verified in sandbox (stage 5). */
     prebook: (offerId: string) =>
-      request(BOOK_HOST, "/rates/prebook", {
+      request(hosts.book, "/rates/prebook", {
         method: "POST",
         query: { timeout: 110 },
         body: { offerId, usePaymentSdk: false },
@@ -163,7 +172,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
       holder: { firstName: string; lastName: string; email: string };
       guests: Array<{ occupancyNumber: number; firstName: string; lastName: string; email: string }>;
     }) =>
-      request(BOOK_HOST, "/rates/book", {
+      request(hosts.book, "/rates/book", {
         method: "POST",
         query: { timeout: 75 },
         body: { ...input, payment: { method: "ACC_CREDIT_CARD" } },
@@ -174,7 +183,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
     /** Resolves a book that timed out or hit 4005. Verified in sandbox (empty → `data: []`). */
     listBookingsByReference: async (clientReference: string) => {
       if (!CLIENT_REFERENCE.test(clientReference)) throw new LiteApiError("invalid_request", "GET /bookings");
-      return request(BOOK_HOST, "/bookings", {
+      return request(hosts.book, "/bookings", {
         query: { clientReference, timeout: 12 },
         timeoutMs: TIMEOUT.lookup,
         schema: bookingListSchema,
@@ -183,7 +192,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
 
     /** Verified in sandbox. */
     getBooking: async (bookingId: string, opts: { timeoutMs?: number } = {}) =>
-      request(BOOK_HOST, `/bookings/${pathId(bookingId, "GET /bookings/{id}")}`, {
+      request(hosts.book, `/bookings/${pathId(bookingId, "GET /bookings/{id}")}`, {
         // LiteAPI gives up 5 s before we abort, so we get its answer rather than our own timeout.
         query: { timeout: Math.max(1, Math.floor((opts.timeoutMs ?? TIMEOUT.bookingRead) / 1000) - 5) },
         timeoutMs: opts.timeoutMs ?? TIMEOUT.bookingRead,
@@ -192,7 +201,7 @@ export function createLiteApiClient({ apiKey, fetch = globalThis.fetch }: { apiK
 
     /** Verified in sandbox. */
     cancelBooking: async (bookingId: string) =>
-      request(BOOK_HOST, `/bookings/${pathId(bookingId, "PUT /bookings/{id}")}`, {
+      request(hosts.book, `/bookings/${pathId(bookingId, "PUT /bookings/{id}")}`, {
         method: "PUT",
         query: { timeout: 25 },
         timeoutMs: TIMEOUT.bookingRead,

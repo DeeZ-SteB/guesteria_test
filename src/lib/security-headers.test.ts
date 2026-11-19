@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import nextConfig from "../../next.config";
+import { buildCsp } from "./csp";
 
 // Found by the security-auditor agent (stage 4): no security headers were configured.
 describe("security headers", () => {
@@ -9,6 +10,7 @@ describe("security headers", () => {
     const map = Object.fromEntries((all?.headers ?? []).map((h) => [h.key.toLowerCase(), h.value]));
     expect(map["x-frame-options"]).toBe("DENY");
     expect(map["content-security-policy"]).toContain("frame-ancestors 'none'");
+    expect(map["content-security-policy"]).toBe(buildCsp({ dev: process.env.NODE_ENV === "development", supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL }));
     expect(map["x-content-type-options"]).toBe("nosniff");
     expect(map["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   });

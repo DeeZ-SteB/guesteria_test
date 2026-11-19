@@ -159,7 +159,7 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
   return (
     <div className="mx-auto max-w-[1000px] px-4 py-4 md:px-8 md:py-8">
       <ol className="mb-6 hidden items-center gap-3 text-sm md:flex" aria-label="Кроки бронювання">
-        <li className="flex items-center gap-2 font-medium text-success">
+        <li className="flex items-center gap-2 font-medium text-success-ink">
           <span className="grid size-6 place-items-center rounded-full bg-success text-xs text-white">✓</span>Вибір номера
         </li>
         <li aria-hidden className="h-px flex-1 bg-line" />
@@ -177,7 +177,7 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
         <div className="space-y-4">
           {sameStay && (
             <p className="flex gap-2 rounded-button border border-accent/40 bg-accent/10 p-3 text-sm" role="status">
-              <CalendarCheck className="size-5 shrink-0 text-accent" aria-hidden />
+              <CalendarCheck className="size-5 shrink-0 text-accent-ink" aria-hidden />
               <span>
                 {sameStay.status === "pending"
                   ? "У вас є незавершене бронювання в цьому готелі на ці дати — перевірте його, перш ніж бронювати знову."
@@ -190,7 +190,7 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
           )}
           {change && (
             <p className="flex gap-2 rounded-button border border-accent/40 bg-accent/10 p-3 text-sm" role="status">
-              <Info className="size-5 shrink-0 text-accent" aria-hidden />
+              <Info className="size-5 shrink-0 text-accent-ink" aria-hidden />
               <span>
                 Ціна змінилася: було <s>{formatMoney({ amount: change.from, currency: quote.price.currency })}</s>, стало{" "}
                 <b>{formatMoney(quote.price)}</b>.
@@ -199,7 +199,7 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
           )}
           {(quote.changes.cancellation || quote.changes.board) && (
             <p className="flex gap-2 rounded-button border border-accent/40 bg-accent/10 p-3 text-sm" role="status">
-              <AlertTriangle className="size-5 shrink-0 text-accent" aria-hidden />
+              <AlertTriangle className="size-5 shrink-0 text-accent-ink" aria-hidden />
               {[quote.changes.cancellation && "Умови скасування змінилися", quote.changes.board && "Харчування змінилося"].filter(Boolean).join(". ")}.
               Перевірте деталі нижче.
             </p>
@@ -211,7 +211,7 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
             <h2 id="terms-title" className="mb-2 text-base font-bold">
               Умови
             </h2>
-            <p className={`flex items-center gap-1.5 font-medium ${free ? "text-success" : "text-danger"}`}>
+            <p className={`flex items-center gap-1.5 font-medium ${free ? "text-success-ink" : "text-danger"}`}>
               <ShieldCheck className="size-4" aria-hidden />
               {cancellation}
             </p>

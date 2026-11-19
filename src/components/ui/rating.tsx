@@ -31,7 +31,7 @@ export function Stars({ count, className }: { count: number | null; className?: 
   if (!count) return null;
   const n = Math.round(count);
   return (
-    <span className={cn("inline-flex text-accent", className)} role="img" aria-label={`${n} ${pluralUk(n, ["зірка", "зірки", "зірок"])}`}>
+    <span className={cn("inline-flex text-accent-ink", className)} role="img" aria-label={`${n} ${pluralUk(n, ["зірка", "зірки", "зірок"])}`}>
       {Array.from({ length: n }, (_, i) => (
         <Star key={i} className="size-3.5 fill-current" aria-hidden />
       ))}

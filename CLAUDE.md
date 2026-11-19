@@ -17,6 +17,8 @@ Test assignment for Guesteria. Data source: LiteAPI (Nuitee). AI: Claude API.
 | 8700 | Next.js dev on host (`npm run dev`) |
 | 8701 | Next.js dev in Docker (`npm run docker:dev`) |
 | 8780 | Production image (`npm run docker:up`) |
+| 8781 | E2E app (`next start` on a fresh build, started by Playwright) |
+| 8782 | E2E mock LiteAPI + Anthropic sink |
 | 8721 | Supabase API |
 | 8722 | Postgres |
 | 8723 | Supabase Studio |
@@ -36,7 +38,8 @@ Never use ports outside this block.
 ## Commands
 - `npm run lint` / `npm run typecheck` / `npm test` — must all pass before finishing
 - `npx supabase test db` — RLS tests
-- `npm run db:reset` — reapply migrations + seed
+- `npm run db:reset` — reapply migrations + seed (wipes local data; to apply new migrations use `npx supabase migration up`)
+- `npm run e2e` — Playwright: mock LiteAPI, no AI, local Supabase; `npm run e2e:live` — real LiteAPI sandbox (1 booking per run, cancelled)
 
 ## Workflow
 Features go through `/feature <name>` (see `.claude/commands/feature.md`): plan → implement → tests → independent review → PR.

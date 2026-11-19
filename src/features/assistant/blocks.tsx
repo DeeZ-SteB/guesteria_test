@@ -61,14 +61,14 @@ export function ChatBlock({ block, onNavigate }: { block: UiBlock; onNavigate?: 
       return (
         <div className="mt-2 rounded-card border border-primary/40 bg-primary-soft p-3 text-sm">
           <p className="font-semibold text-primary-dark">{block.hotelName}</p>
-          <p className="text-primary-dark/80">
+          <p className="text-primary-dark">
             {block.roomName} · {block.board}
           </p>
           <p className="mt-1 font-bold text-primary-dark">{formatMoney(block.price)}</p>
           <Link href={block.href} onClick={onNavigate} className={buttonClasses({ fullWidth: true, className: "mt-2" })}>
             Перейти до оформлення
           </Link>
-          <p className="mt-1 text-xs text-primary-dark/70">Бронювання підтвердите на сторінці оформлення.</p>
+          <p className="mt-1 text-xs text-primary-dark">Бронювання підтвердите на сторінці оформлення.</p>
         </div>
       );
     case "trip_cards":
@@ -151,7 +151,7 @@ function ConfirmCard({ block }: { block: Extract<UiBlock, { type: "confirm_actio
       </ul>
       <p aria-live="polite" className="mt-2 text-xs">
         {state === "confirmed" && (
-          <span className="flex items-center gap-1 font-semibold text-success">
+          <span className="flex items-center gap-1 font-semibold text-success-ink">
             <Check className="size-3.5" aria-hidden /> Підтверджено
           </span>
         )}

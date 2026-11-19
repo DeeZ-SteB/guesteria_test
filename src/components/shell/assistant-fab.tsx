@@ -60,7 +60,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
       <button
         type="button"
         onClick={() => open()}
-        aria-label="Відкрити Guesteria AI"
+        aria-label="Запитати Guesteria AI"
         data-ai-fab
         className="fixed right-4 z-40 grid size-14 place-items-center rounded-full bg-primary text-on-primary shadow-lg transition-transform hover:scale-105 bottom-[calc(var(--gs-tabbar-height)+var(--gs-cta-height,0px)+env(safe-area-inset-bottom)+16px)] md:bottom-[calc(var(--gs-cta-height,0px)+24px)] md:right-6 md:flex md:size-auto md:gap-2 md:px-5 md:py-3 md:font-semibold"
       >

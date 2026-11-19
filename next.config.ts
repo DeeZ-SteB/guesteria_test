@@ -1,19 +1,23 @@
 import type { NextConfig } from "next";
 import { IMAGE_HOST } from "./src/lib/hotels/images";
+import { buildCsp } from "./src/lib/csp";
 
 const nextConfig: NextConfig = {
   // Minimal self-contained server for the Docker image (see Dockerfile).
   output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
-  // Baseline security headers (a full CSP comes in stage 9).
+  // Security headers for every route; the CSP rationale is in src/lib/csp.ts.
   async headers() {
     return [
       {
         source: "/:path*",
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
-          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          {
+            key: "Content-Security-Policy",
+            value: buildCsp({ dev: process.env.NODE_ENV === "development", supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL }),
+          },
           { key: "X-Content-Type-Options", value: "nosniff" },
           // Offer tokens live in /checkout URLs: other sites only ever see our origin.
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

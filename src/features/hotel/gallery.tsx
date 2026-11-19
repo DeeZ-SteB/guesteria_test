@@ -57,7 +57,7 @@ export function Gallery({ images, hotelName, backHref }: { images: HotelImage[];
             </li>
           ))}
           {total > MOBILE_SLIDES && (
-            <li className="relative grid h-full w-full shrink-0 snap-center place-items-center bg-ink text-white">
+            <li className="relative grid h-full w-full shrink-0 snap-center place-items-center bg-black text-white">
               <button type="button" onClick={() => setViewer(MOBILE_SLIDES)} className="flex min-h-11 flex-col items-center gap-2 font-semibold">
                 <Images className="size-8" aria-hidden />
                 Усі {total} фото
@@ -68,7 +68,7 @@ export function Gallery({ images, hotelName, backHref }: { images: HotelImage[];
         <Link href={backHref} aria-label="Назад до результатів" className="absolute left-3 top-3 grid size-11 place-items-center rounded-full bg-surface/95 shadow">
           <ChevronLeft className="size-5" />
         </Link>
-        <span className="absolute bottom-3 right-3 rounded-full bg-ink/70 px-2.5 py-1 text-xs text-white" aria-hidden>
+        <span className="absolute bottom-3 right-3 rounded-full bg-black/70 px-2.5 py-1 text-xs text-white" aria-hidden>
           {position} / {total}
         </span>
       </div>
@@ -81,7 +81,8 @@ export function Gallery({ images, hotelName, backHref }: { images: HotelImage[];
             type="button"
             onClick={() => setViewer(i)}
             className={`relative overflow-hidden bg-line ${i === 0 ? "col-span-2 row-span-2" : ""}`}
-            aria-label={`Відкрити фото ${i + 1} з ${total}`}
+            // The 5th tile shows "+N фото": its name must contain that visible text.
+            aria-label={i === 4 && total > 5 ? `+${total - 5} фото — відкрити галерею` : `Відкрити фото ${i + 1} з ${total}`}
           >
             <Image
               src={img.url}
@@ -96,7 +97,7 @@ export function Gallery({ images, hotelName, backHref }: { images: HotelImage[];
               className="object-cover transition-transform hover:scale-105"
             />
             {i === 4 && total > 5 && (
-              <span className="absolute inset-0 grid place-items-center bg-ink/50 font-semibold text-white">+{total - 5} фото</span>
+              <span className="absolute inset-0 grid place-items-center bg-black/50 font-semibold text-white">+{total - 5} фото</span>
             )}
           </button>
         ))}

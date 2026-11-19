@@ -136,7 +136,7 @@ function RateRow({ rate, nights, cheapest, onChoose }: { rate: RateOption; night
           <Coffee className="size-4 text-muted" aria-hidden />
           {rate.boardLabel}
         </p>
-        <p className={cn("text-xs font-medium", free ? "text-success" : "text-danger")}>
+        <p className={cn("text-xs font-medium", free ? "text-success-ink" : "text-danger")}>
           {free ? "✓ " : ""}
           {cancellation}
         </p>

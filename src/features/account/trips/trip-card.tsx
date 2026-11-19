@@ -12,8 +12,8 @@ import { tripBadge, tripBadgeText, type TripRow } from "@/lib/booking/trips";
 import { cn } from "@/lib/cn";
 
 const STATUS = {
-  confirmed: { label: "Підтверджено", tone: "bg-success/10 text-success" },
-  pending: { label: "Обробляється", tone: "bg-accent/10 text-accent" },
+  confirmed: { label: "Підтверджено", tone: "bg-success/10 text-success-ink" },
+  pending: { label: "Обробляється", tone: "bg-accent/10 text-accent-ink" },
   cancelled: { label: "Скасовано", tone: "bg-danger/10 text-danger" },
 } as const;
 
@@ -36,7 +36,7 @@ export function TripCard({ trip, today, nearestId, onCancel }: { trip: TripRow; 
           <div className="flex flex-wrap items-center gap-1.5">
             <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", status.tone)}>{status.label}</span>
             {trip.checkedIn === false && (
-              <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">Чекін не пройдено</span>
+              <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent-ink">Чекін не пройдено</span>
             )}
             {badge && badge.kind !== "processing" && (
               <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary-dark">{tripBadgeText(badge)}</span>

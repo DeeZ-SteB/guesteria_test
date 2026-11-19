@@ -63,7 +63,7 @@ export function CancelSheet({ trip, onClose }: { trip: TripRow | null; onClose: 
     <Sheet open={trip !== null} onClose={close} title="Скасувати бронювання?" description={trip ? `${trip.hotelName} · ${formatDateRange(trip.checkIn, trip.checkOut)}` : undefined}>
       {trip && (
         <div className="space-y-3 text-sm">
-          <p className="font-medium text-success">{cancellationText({ refundable: trip.refundable, freeCancellationUntil: trip.refundableUntil })}</p>
+          <p className="font-medium text-success-ink">{cancellationText({ refundable: trip.refundable, freeCancellationUntil: trip.refundableUntil })}</p>
           <p>
             Повернення: <b>{formatMoney({ amount: trip.totalAmount, currency: trip.currency })}</b> (повна сума).
           </p>
@@ -72,7 +72,7 @@ export function CancelSheet({ trip, onClose }: { trip: TripRow | null; onClose: 
             {message ?? ""}
           </p>
           <div className="flex flex-col gap-2 pt-2">
-            <Button variant="danger" size="lg" fullWidth loading={pending} onClick={confirm} className="border-danger bg-danger text-white hover:bg-danger/90 hover:text-white">
+            <Button variant="danger" size="lg" fullWidth loading={pending} onClick={confirm} className="border-danger bg-danger text-on-danger hover:bg-danger/90 hover:text-on-danger">
               Скасувати бронювання
             </Button>
             <Button variant="ghost" size="lg" fullWidth onClick={close} disabled={pending}>

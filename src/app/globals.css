@@ -9,6 +9,10 @@
   --gs-primary-soft: #ccfbf1;
   --gs-on-primary: #ffffff;
   --gs-accent: #f59e0b;
+  /* Text on light tints (chips, banners): WCAG AA at 12 px. */
+  --gs-accent-ink: #92400e;
+  --gs-success-ink: #166534;
+  --gs-on-danger: #ffffff;
   --gs-success: #15803d;
   --gs-danger: #b91c1c;
   --gs-bg: #f8fafc;
@@ -28,6 +32,9 @@
     --gs-primary-soft: #134e4a;
     --gs-on-primary: #042f2e;
     --gs-accent: #fbbf24;
+    --gs-accent-ink: #fbbf24;
+    --gs-success-ink: #4ade80;
+    --gs-on-danger: #450a0a;
     --gs-success: #4ade80;
     --gs-danger: #f87171;
     --gs-bg: #0b1120;
@@ -45,6 +52,9 @@
   --color-primary-soft: var(--gs-primary-soft);
   --color-on-primary: var(--gs-on-primary);
   --color-accent: var(--gs-accent);
+  --color-accent-ink: var(--gs-accent-ink);
+  --color-success-ink: var(--gs-success-ink);
+  --color-on-danger: var(--gs-on-danger);
   --color-success: var(--gs-success);
   --color-danger: var(--gs-danger);
   --color-bg: var(--gs-bg);
@@ -110,5 +120,17 @@ dialog::backdrop {
 @media (max-width: 1023px) {
   :root:has([data-ai-trip-cta]) [data-ai-fab] {
     display: none;
+  }
+}
+
+/* Respect "reduce motion": no animated transitions or looping indicators. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

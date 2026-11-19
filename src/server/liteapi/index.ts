@@ -6,7 +6,7 @@ import type { LiteApiErrorKind } from "@/lib/liteapi-messages";
 import type { HotelListResponse } from "./schemas";
 import { isPastCheckIn, isTooFarAhead, staySchema, type Stay } from "@/lib/booking/stay";
 import { findCity } from "@/lib/cities";
-import { liteApiKey } from "@/server/env";
+import { liteApiHosts, liteApiKey } from "@/server/env";
 import { createLiteApiClient } from "./client";
 import { LiteApiError, reviveLiteApiError } from "./errors";
 import { toBookingState, toCancelOutcome, toCheckoutQuote, toConfirmedBooking, toHotelDetails, toReviews, type CancelOutcome } from "./mappers";
@@ -27,7 +27,7 @@ export { LiteApiError } from "./errors";
 export const hotelIdSchema = z.string().regex(/^[a-z0-9]{3,32}$/i);
 
 // Read inside each function, never passed in: the key can't become part of a cache key.
-const client = () => createLiteApiClient({ apiKey: liteApiKey() });
+const client = () => createLiteApiClient({ apiKey: liteApiKey(), hosts: liteApiHosts() });
 
 function invalid(endpoint: string): never {
   throw new LiteApiError("invalid_request", endpoint);

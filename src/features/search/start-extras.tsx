@@ -81,7 +81,7 @@ export function AiBanner() {
       </span>
       <div className="flex-1 text-sm">
         <p className="font-semibold text-primary-dark">Не знаєте, що обрати?</p>
-        <p className="text-xs text-primary-dark/80">Скоро: опишіть ідеальний готель — Guesteria AI підбере</p>
+        <p className="text-xs text-primary-dark">Опишіть ідеальний готель — Guesteria AI підбере</p>
       </div>
       <ChevronRight className="size-5 text-primary" aria-hidden />
     </div>

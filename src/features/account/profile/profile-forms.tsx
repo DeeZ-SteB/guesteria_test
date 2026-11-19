@@ -32,7 +32,7 @@ function Status({ state }: { state: AccountFormState }) {
     );
   if (state.notice)
     return (
-      <p role="status" className="rounded-button bg-success/10 px-3 py-2 text-sm text-success">
+      <p role="status" className="rounded-button bg-success/10 px-3 py-2 text-sm text-success-ink">
         {state.notice}
       </p>
     );
@@ -58,7 +58,7 @@ export function ProfileForms({ profile }: { profile: AccountProfile }) {
     <div className="space-y-4">
       {locked && (
         <p className="flex gap-2 rounded-button border border-accent/40 bg-accent/10 p-3 text-sm" role="status">
-          <ShieldAlert className="size-5 shrink-0 text-accent" aria-hidden />
+          <ShieldAlert className="size-5 shrink-0 text-accent-ink" aria-hidden />
           Це спільний демо-акаунт: профіль, пароль і видалення вимкнено. Бронювання та скасування працюють.
         </p>
       )}
@@ -142,7 +142,7 @@ export function ProfileForms({ profile }: { profile: AccountProfile }) {
           <p className="text-sm text-muted">Майбутні бронювання спершу потрібно скасувати.</p>
           <Input label="Поточний пароль" name="currentPassword" type="password" autoComplete="current-password" error={deleteState.fieldErrors?.currentPassword} required />
           <Input label={`Введіть ${DELETE_WORD} для підтвердження`} name="confirm" autoComplete="off" autoCapitalize="characters" error={deleteState.fieldErrors?.confirm} required />
-          <Button type="submit" size="lg" fullWidth loading={deletePending} className="bg-danger text-white hover:bg-danger/90">
+          <Button type="submit" size="lg" fullWidth loading={deletePending} className="bg-danger text-on-danger hover:bg-danger/90">
             Видалити назавжди
           </Button>
         </form>

@@ -12,8 +12,8 @@ import { buttonClasses } from "@/components/ui/button";
 import { RefreshButton } from "./refresh-button";
 
 const HEAD: Record<ViewState, { title: string; icon: typeof Check; tone: string }> = {
-  confirmed: { title: "Бронювання підтверджено", icon: Check, tone: "bg-success/10 text-success" },
-  pending: { title: "Бронювання обробляється", icon: Clock, tone: "bg-accent/10 text-accent" },
+  confirmed: { title: "Бронювання підтверджено", icon: Check, tone: "bg-success/10 text-success-ink" },
+  pending: { title: "Бронювання обробляється", icon: Clock, tone: "bg-accent/10 text-accent-ink" },
   cancelled: { title: "Бронювання скасовано", icon: XCircle, tone: "bg-danger/10 text-danger" },
   gone: { title: "Бронювання не відбулося", icon: XCircle, tone: "bg-danger/10 text-danger" },
 };
@@ -65,7 +65,7 @@ export function SuccessView({ booking, state }: { booking: OwnBooking; state: Vi
             <Sparkles className="size-4" aria-hidden />
             Guesteria AI уже знає про поїздку
           </p>
-          <p className="mt-1 text-primary-dark/80">Пройдіть онлайн-чекін, замовте ранній заїзд чи трансфер — просто напишіть.</p>
+          <p className="mt-1 text-primary-dark">Пройдіть онлайн-чекін, замовте ранній заїзд чи трансфер — просто напишіть.</p>
         </div>
       )}
 

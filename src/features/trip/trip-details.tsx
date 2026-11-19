@@ -14,7 +14,7 @@ import { cn } from "@/lib/cn";
 import { CancelSheet } from "@/features/account/trips/cancel-sheet";
 
 const STATUS = {
-  active: { label: "Підтверджено", tone: "bg-success/10 text-success" },
+  active: { label: "Підтверджено", tone: "bg-success/10 text-success-ink" },
   past: { label: "Завершено", tone: "bg-line text-muted" },
   cancelled: { label: "Скасовано", tone: "bg-danger/10 text-danger" },
 } as const;
@@ -37,7 +37,7 @@ function CopyNumber({ value }: { value: string }) {
       aria-label={`Скопіювати номер бронювання ${value}`}
     >
       {value}
-      {copied ? <Check className="size-4 text-success" aria-hidden /> : <Copy className="size-4 text-muted" aria-hidden />}
+      {copied ? <Check className="size-4 text-success-ink" aria-hidden /> : <Copy className="size-4 text-muted" aria-hidden />}
     </button>
   );
 }

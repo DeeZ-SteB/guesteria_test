@@ -34,12 +34,13 @@ export function Dropdown({ trigger, label, children }: { trigger: ReactNode; lab
     <div ref={ref} className="relative">
       <button
         type="button"
-        aria-label={label}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className="flex min-h-11 items-center gap-2 rounded-button px-2 hover:bg-bg"
       >
         {trigger}
+        {/* Visible text (e.g. initials) + this hidden text form the name: WCAG 2.5.3 "label in name". */}
+        <span className="sr-only">{label}</span>
       </button>
       {open && (
         <div
