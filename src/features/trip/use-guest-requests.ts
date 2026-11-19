@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { applyRequestEvent, type GuestRequestView } from "@/lib/booking/trip-page";
+import { applyRequestEvent, removeRequest, type GuestRequestView } from "@/lib/booking/trip-page";
 import { GUEST_REQUEST_COLUMNS, guestRequestRowSchema } from "./schemas";
+import { newUuid } from "@/lib/id/uuid";
 
 export type LiveState = "connecting" | "live" | "offline";
 
@@ -45,10 +46,11 @@ export function useGuestRequests(bookingId: string, initial: GuestRequestView[],
       if (data.session) await supabase.realtime.setAuth(data.session.access_token);
       if (disposed) return;
       channel = supabase
-        .channel(`trip-requests:${bookingId}:${crypto.randomUUID()}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "guest_requests", filter: `booking_id=eq.${bookingId}` }, (payload) =>
-          merge(payload.new),
-        )
+        .channel(`trip-requests:${bookingId}:${newUuid()}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "guest_requests", filter: `booking_id=eq.${bookingId}` }, (payload) => {
+          if (payload.eventType === "DELETE") setRequests((list) => removeRequest(list, (payload.old as { id?: unknown }).id));
+          else merge(payload.new);
+        })
         .subscribe((status) => {
           if (disposed) return;
           if (status === "SUBSCRIBED") {

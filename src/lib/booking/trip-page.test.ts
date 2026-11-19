@@ -7,6 +7,7 @@ import {
   isEarlierThan,
   mapsUrl,
   openTypes,
+  removeRequest,
   requestTypeAvailable,
   tripMode,
   type GuestRequestView,
@@ -81,5 +82,7 @@ describe("trip page logic", () => {
     expect(list.find((x) => x.id === "a")?.status).toBe("confirmed");
     expect(list).toHaveLength(2);
     expect([...openTypes(list)]).toEqual(["transfer"]);
+    expect(removeRequest(list, "a").map((x) => x.id)).toEqual(["b"]);
+    expect(removeRequest(list, undefined)).toBe(list);
   });
 });

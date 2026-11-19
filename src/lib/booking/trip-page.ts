@@ -106,6 +106,11 @@ export function applyRequestEvent(list: GuestRequestView[], row: GuestRequestVie
   return next.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+/** A row deleted on the hotel side (or by a cascade) disappears from the list. */
+export function removeRequest(list: GuestRequestView[], id: unknown): GuestRequestView[] {
+  return typeof id === "string" ? list.filter((r) => r.id !== id) : list;
+}
+
 /** Types with an unanswered request (the DB allows one per type, except "other"). */
 export function openTypes(list: GuestRequestView[]): Set<RequestType> {
   return new Set(list.filter((r) => r.status === "sent" && r.type !== "other").map((r) => r.type));

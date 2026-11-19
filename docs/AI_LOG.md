@@ -187,3 +187,22 @@ Format:
 | security | LOW | Phone in `user_metadata` travels in the JWT | Accepted: the user's own data in their own token; SPEC lists phone in the profile. Revisit if a `profiles` table appears. |
 | security | LOW | No rate limit on `cancelTrip` | Stage 8 (with prebook/book limits). Duplicate cancels are harmless (idempotent at LiteAPI). |
 - Verified live: double-click cancel → 1 LiteAPI call result `CANCELLED`, DB `cancelled`; favorites remove/undo; profile save updates the header at once; wrong / right current password; deletion of a test account; foreign trip id → 404; password-failure RPCs deny direct table access and anon calls.
+
+## 2026-11-19 — Stage 7: trip page (`feat/trip`)
+- `planner` → `docs/plans/07-trip.md`. Key decisions taken from it: server actions with the *user* client (RLS as second layer), column-level insert grants for `guest_requests`, client-generated request ids for idempotency, refetch on every Realtime (re)subscribe.
+- Verified live: check-in persists; double-click → one request; a status change in the DB reaches the page in ~1 s without reload; **a probe script subscribed as a second user received 0 events while the owner received 1** (Realtime honours RLS).
+- **My mistake:** to apply a new migration I ran `supabase db reset` instead of `migration up` — it wiped local data (demo user and two booking rows). Recreated the demo user and restored both rows from LiteAPI's own records (the sandbox bookings were never affected). Local resets only through `migration up` from now on.
+- Findings: code-reviewer 8 (3 MEDIUM, 5 LOW), security-auditor 5 (2 MEDIUM, 3 LOW). Both reviewers independently found the same main issue.
+
+| Agent | Sev | Finding | Resolution |
+|---|---|---|---|
+| both | MED | Browser can insert into `guest_requests`/`checkins` via REST, bypassing rules that existed only in TypeScript (early check-in after arrival, empty details, invisible/bidi characters that could smuggle text into the stage-8 AI prompt) | Migration `…trip_hardening`: rules moved into the DB (policy + CHECKs + `has_invisible_chars`); `checkins` column grants. pgTAP for each bypass. |
+| security | LOW | `security definer` cap trigger answered "limit" for a foreign booking (count oracle) | Trigger runs as invoker; foreign booking → RLS refusal. pgTAP. |
+| code | LOW | Retry of the 20th request answered "limit" instead of returning it | Trigger skips existing ids → unique violation → idempotent replay. pgTAP. |
+| code | MED | No tests for the DB error → result mapping (idempotency hinges on it) | `src/server/trip.test.ts` with a stubbed client. |
+| code | MED | Check-in and requests waited for LiteAPI (only a hint) | Hotel time raced against 1.5 s; the block renders from our DB. |
+| code | LOW | `crypto.randomUUID` missing on http LAN testing → form crash | `newUuid()` with a `getRandomValues` fallback. Test. |
+| code | LOW | Requests creatable while the list failed to load; new ones hidden behind the error | No request buttons without the list; created rows still shown. |
+| code | LOW | Early-arrival hint opened a request that was already pending | Hook lifted up; hint only when no open early request. Verified in browser. |
+| code | LOW | No tests for Kyiv-day boundaries, cross-user update, moving a check-in | pgTAP with Kyiv-date fixtures. |
+| security | LOW | Realtime DELETE events are not RLS-filtered (ids only); deleted rows stayed in the UI | UI removes deleted rows (test). Leak of random ids accepted; Broadcast with private channels if requests ever get deleted routinely. |

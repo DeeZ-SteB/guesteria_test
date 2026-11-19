@@ -21,7 +21,8 @@ import {
 import { formatKyivDateTime } from "@/lib/cancellation";
 import type { CheckinView } from "./schemas";
 import { createGuestRequest, saveCheckin, type CreateRequestResult, type SaveCheckinResult } from "./actions";
-import { useGuestRequests } from "./use-guest-requests";
+import { useGuestRequests, type LiveState } from "./use-guest-requests";
+import { newUuid } from "@/lib/id/uuid";
 
 function Card({ id, title, icon, children, aside }: { id: string; title: string; icon: ReactNode; children: ReactNode; aside?: ReactNode }) {
   return (
@@ -79,10 +80,13 @@ export type TripActionsProps = {
 /** Online check-in and requests to the hotel: one client island so the check-in hint can open a request. */
 export function TripActions(props: TripActionsProps) {
   const [requestType, setRequestType] = useState<RequestType | null>(null);
+  const live = useGuestRequests(props.bookingId, props.requests, props.live);
+  // The shortcut only when an early check-in can still be asked and none is waiting for an answer.
+  const canAskEarly = props.availableTypes.includes("early_check_in") && !openTypes(live.requests).has("early_check_in");
   return (
     <>
-      <CheckinCard {...props} onEarlyRequest={props.availableTypes.includes("early_check_in") ? () => setRequestType("early_check_in") : undefined} />
-      <GuestRequests {...props} requestType={requestType} setRequestType={setRequestType} />
+      <CheckinCard {...props} onEarlyRequest={canAskEarly ? () => setRequestType("early_check_in") : undefined} />
+      <GuestRequests {...props} {...live} requestType={requestType} setRequestType={setRequestType} />
     </>
   );
 }
@@ -238,14 +242,20 @@ function CheckinCard({
 
 function GuestRequests({
   bookingId,
-  requests: initial,
+  requests,
+  add,
+  connection,
   availableTypes,
   live,
   requestsError,
   requestType,
   setRequestType,
-}: TripActionsProps & { requestType: RequestType | null; setRequestType: (t: RequestType | null) => void }) {
-  const { requests, add, connection } = useGuestRequests(bookingId, initial, live);
+}: TripActionsProps & {
+  add: (row: GuestRequestView) => void;
+  connection: LiveState;
+  requestType: RequestType | null;
+  setRequestType: (t: RequestType | null) => void;
+}) {
   const open = openTypes(requests);
   const canAsk = availableTypes.length > 0;
 
@@ -283,7 +293,7 @@ function GuestRequests({
         </div>
       )}
 
-      {requestsError ? (
+      {requestsError && requests.length === 0 ? (
         <p role="alert" className="text-sm text-danger">
           Не вдалося завантажити запити. Оновіть сторінку.
         </p>
@@ -343,7 +353,7 @@ function RequestSheet({
   onCreated: (row: GuestRequestView) => void;
 }) {
   // One id per opened form: a double click or a retry cannot create two requests.
-  const [requestId] = useState(() => crypto.randomUUID());
+  const [requestId] = useState(() => newUuid());
   const [details, setDetails] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();

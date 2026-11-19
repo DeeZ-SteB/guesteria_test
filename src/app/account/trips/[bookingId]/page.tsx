@@ -103,10 +103,15 @@ async function TripContent({ params }: { params: PageProps<"/account/trips/[book
   );
 }
 
-/** Blocks 4–5. Waits for the (cached) hotel only for its check-in time; works without it. */
+/** The check-in time is only a hint: never hold check-in and requests back for a slow LiteAPI. */
+const HOTEL_HINT_WAIT_MS = 1500;
+const hotelHint = (hotelId: string) =>
+  Promise.race([getTripHotel(hotelId).then((h) => h?.checkIn ?? null), new Promise<null>((resolve) => setTimeout(() => resolve(null), HOTEL_HINT_WAIT_MS))]);
+
+/** Blocks 4–5: from our database; the hotel's check-in time is used if it arrives quickly. */
 async function TripActionsSection({ userId, booking, today, mode }: { userId: string; booking: OwnBooking; today: string; mode: "active" | "past" | "cancelled" }) {
   const stay = { status: booking.status, checkIn: booking.check_in, checkOut: booking.check_out };
-  const [checkin, requests, hotel] = await Promise.allSettled([getCheckin(userId, booking.id), listGuestRequests(userId, booking.id), getTripHotel(booking.hotel_id)]);
+  const [checkin, requests, hotelCheckIn] = await Promise.allSettled([getCheckin(userId, booking.id), listGuestRequests(userId, booking.id), hotelHint(booking.hotel_id)]);
   const active = mode === "active";
   return (
     <TripActions
@@ -116,9 +121,10 @@ async function TripActionsSection({ userId, booking, today, mode }: { userId: st
       checkinEditable={active && checkinEligibility(stay, today).ok}
       requests={requests.status === "fulfilled" ? requests.value : []}
       requestsError={requests.status === "rejected"}
-      availableTypes={active ? REQUEST_TYPES.filter((t) => requestTypeAvailable(t, stay, today)) : []}
+      // Without the current list the guest could not see what is already asked: no new requests then.
+      availableTypes={active && requests.status === "fulfilled" ? REQUEST_TYPES.filter((t) => requestTypeAvailable(t, stay, today)) : []}
       live={active && requests.status === "fulfilled"}
-      hotelCheckIn={hotel.status === "fulfilled" ? (hotel.value?.checkIn ?? null) : null}
+      hotelCheckIn={hotelCheckIn.status === "fulfilled" ? hotelCheckIn.value : null}
     />
   );
 }
