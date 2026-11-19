@@ -1,3 +1,5 @@
+import { AssistantPageContext } from "@/components/shell/assistant-fab";
+import { findCity } from "@/lib/cities";
 import { getCurrentUser } from "@/server/auth";
 import { getFavoriteHotelIds } from "@/server/favorites";
 import { LiteApiError, searchHotels } from "@/server/liteapi";
@@ -7,14 +9,21 @@ import type { SearchQuery } from "@/lib/search/params";
 import { ResultsView } from "./results-view";
 import { SearchError } from "./search-error";
 
-type Loaded = { hotels: HotelSummary[]; favoriteIds: string[]; signedIn: boolean } | { error: LiteApiErrorKind };
+type Loaded =
+  | { hotels: HotelSummary[]; favoriteIds: string[]; signedIn: boolean }
+  | { error: LiteApiErrorKind };
 
 async function load(query: SearchQuery): Promise<Loaded> {
   // An auth hiccup must not look like a pricing failure: fall back to signed-out.
   const userPromise = getCurrentUser().catch(() => null);
   try {
-    const [hotels, user] = await Promise.all([searchHotels(query), userPromise]);
-    const favoriteIds = user ? await getFavoriteHotelIds(hotels.map((h) => h.id)) : [];
+    const [hotels, user] = await Promise.all([
+      searchHotels(query),
+      userPromise,
+    ]);
+    const favoriteIds = user
+      ? await getFavoriteHotelIds(hotels.map((h) => h.id))
+      : [];
     return { hotels, favoriteIds, signedIn: !!user };
   } catch (error) {
     // Only the kind crosses to the client — never the error object or its cause.
@@ -28,13 +37,28 @@ export async function Results({ query }: { query: SearchQuery }) {
   if ("error" in data) return <SearchError kind={data.error} />;
   // Keyed by who is looking: signing in/out re-renders with the same search key, and the
   // client-side heart state must start again from the server's favorites.
+  const city = findCity(query.cityId);
   return (
-    <ResultsView
-      key={`${data.signedIn}:${data.favoriteIds.join(",")}`}
-      hotels={data.hotels}
-      favoriteIds={data.favoriteIds}
-      query={query}
-      signedIn={data.signedIn}
-    />
+    <>
+      {city && (
+        <AssistantPageContext
+          value={{
+            page: "search",
+            cityId: city.id,
+            cityName: city.nameUk,
+            checkin: query.checkIn,
+            checkout: query.checkOut,
+            adults: query.adults,
+          }}
+        />
+      )}
+      <ResultsView
+        key={`${data.signedIn}:${data.favoriteIds.join(",")}`}
+        hotels={data.hotels}
+        favoriteIds={data.favoriteIds}
+        query={query}
+        signedIn={data.signedIn}
+      />
+    </>
   );
 }

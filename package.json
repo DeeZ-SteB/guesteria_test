@@ -21,6 +21,7 @@
     "liteapi:check-cities": "node --env-file=.env scripts/check-cities.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.10.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.1",
     "lucide-react": "^1.75.0",

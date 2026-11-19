@@ -7,6 +7,7 @@ import { verifiedUser } from "@/server/auth";
 import { getOwnBooking, hasActiveTrips, markCancelled } from "@/server/bookings";
 import { cancelBookingAtLiteApi, getLiteApiBookingStatus } from "@/server/liteapi";
 import { deleteUserAccount } from "@/server/users";
+import { hit } from "@/server/rate-limit";
 import { cancelEligibility, type CancelBlock } from "@/lib/booking/trips";
 import { todayInKyiv } from "@/lib/booking/stay";
 import { fieldErrors } from "@/features/auth/schemas";
@@ -16,7 +17,7 @@ import { cancelTripSchema, deleteAccountSchema, passwordSchema, profileSchema } 
 
 export type CancelTripResult =
   | { ok: true; state: "cancelled" | "already_cancelled" | "cancelled_with_charges" }
-  | { ok: false; reason: "invalid" | "session" | "not_found" | "retry" | CancelBlock | "liteapi_failed" | "unknown_outcome" | "save_failed" };
+  | { ok: false; reason: "invalid" | "session" | "not_found" | "retry" | "rate_limited" | CancelBlock | "liteapi_failed" | "unknown_outcome" | "save_failed" };
 
 /**
  * Free cancellation of the user's own booking. Ownership is checked against our table before
@@ -29,6 +30,7 @@ export async function cancelTrip(input: { bookingId: string }): Promise<CancelTr
   const auth = await verifiedUser();
   if (auth.status !== "ok") return { ok: false, reason: "session" };
   const userId = auth.user.id;
+  if (!(await hit("cancelUser", userId)).allowed) return { ok: false, reason: "rate_limited" };
 
   let booking: Awaited<ReturnType<typeof getOwnBooking>>;
   try {

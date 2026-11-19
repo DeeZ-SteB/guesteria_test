@@ -4,6 +4,7 @@ const UID = "00000000-0000-4000-8000-00000000000a";
 const BID = "11111111-1111-4111-8111-111111111111";
 
 const mocks = vi.hoisted(() => ({
+  limit: { allowed: true } as { allowed: boolean; retryAfter?: number },
   auth: {} as Record<string, unknown>,
   getOwnBooking: vi.fn(),
   markCancelled: vi.fn(),
@@ -32,6 +33,7 @@ vi.mock("@/server/liteapi", () => ({ cancelBookingAtLiteApi: mocks.cancelBooking
 vi.mock("@/server/users", () => ({ deleteUserAccount: mocks.deleteUserAccount }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => mocks.supabase }));
 vi.mock("next/cache", () => ({ refresh: mocks.refresh }));
+vi.mock("@/server/rate-limit", () => ({ hit: async () => mocks.limit, hitAll: async () => mocks.limit }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect, RedirectType: { replace: "replace" } }));
 
 import { cancelTrip, changePassword, deleteAccount, updateProfile } from "./actions";
@@ -61,6 +63,7 @@ beforeEach(() => {
   mocks.markCancelled.mockResolvedValue("updated");
   mocks.cancelBookingAtLiteApi.mockResolvedValue({ status: "cancelled", charged: false });
   mocks.hasActiveTrips.mockResolvedValue(null);
+  mocks.limit = { allowed: true };
   mocks.supabase.rpc.mockImplementation(async (fn: string) => ({ data: fn === "recent_password_failures" ? 0 : null, error: null }));
   mocks.supabase.auth.updateUser.mockResolvedValue({ error: null });
   mocks.supabase.auth.refreshSession.mockResolvedValue({ error: null });
@@ -74,6 +77,12 @@ describe("cancelTrip", () => {
     mocks.auth = { status: "session" };
     expect(await cancelTrip({ bookingId: BID })).toEqual({ ok: false, reason: "session" });
     expect(mocks.getOwnBooking).not.toHaveBeenCalled();
+  });
+
+  it("is rate limited per user before LiteAPI is called", async () => {
+    mocks.limit = { allowed: false, retryAfter: 60 };
+    expect(await cancelTrip({ bookingId: BID })).toEqual({ ok: false, reason: "rate_limited" });
+    expect(mocks.cancelBookingAtLiteApi).not.toHaveBeenCalled();
   });
 
   it("someone else's booking is not found and never reaches LiteAPI", async () => {

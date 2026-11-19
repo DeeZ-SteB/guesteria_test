@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ---- mocks for everything the action talks to ----
 const UID = "00000000-0000-4000-8000-00000000000a";
 const mocks = vi.hoisted(() => ({
+  limit: { allowed: true } as { allowed: boolean; retryAfter?: number },
   auth: { status: "ok", user: { id: "00000000-0000-4000-8000-00000000000a" } } as { status: string; user?: { id: string } },
   bookPrebook: vi.fn(),
   findBookingsByReference: vi.fn(),
@@ -28,6 +29,7 @@ vi.mock("@/server/bookings", () => ({
   notePendingLiteApiId: mocks.notePendingLiteApiId,
   releaseAttempt: mocks.releaseAttempt,
 }));
+vi.mock("@/server/rate-limit", () => ({ hit: async () => mocks.limit, hitAll: async () => mocks.limit }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect, RedirectType: { replace: "replace" } }));
 
 import { confirmBooking } from "./actions";
@@ -68,7 +70,24 @@ beforeEach(() => {
   mocks.claimAttempt.mockResolvedValue({ claimed: true, attempt: ATTEMPT });
   mocks.confirmAttempt.mockResolvedValue(undefined);
   mocks.findBookingsByReference.mockResolvedValue([]);
+  mocks.limit = { allowed: true };
   vi.spyOn(console, "error").mockImplementation(() => {});
+});
+
+describe("confirmBooking — spending caps", () => {
+  it("a new booking over the limit is refused before anything is recorded or booked", async () => {
+    mocks.limit = { allowed: false, retryAfter: 60 };
+    const r = await run();
+    expect(r.state?.error).toBe("rate_limited");
+    expect(mocks.claimAttempt).not.toHaveBeenCalled();
+    expect(mocks.bookPrebook).not.toHaveBeenCalled();
+  });
+  it("resolving an existing attempt is never blocked by the limit", async () => {
+    mocks.limit = { allowed: false, retryAfter: 60 };
+    mocks.findOwnAttempt.mockResolvedValue({ ...ATTEMPT, status: "confirmed" });
+    const r = await run();
+    expect(r.redirect).toBe(`/checkout?booking=${ATTEMPT.id}`);
+  });
 });
 
 describe("confirmBooking — happy path", () => {

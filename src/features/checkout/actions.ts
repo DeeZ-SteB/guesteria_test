@@ -8,6 +8,7 @@ import { clientReferenceFor, verifyCheckoutToken, type CheckoutPayload } from "@
 import { guestSchema, storedCancellation, type CheckoutErrorKind, type ConfirmedBooking } from "@/lib/booking/checkout";
 import { fieldErrors } from "@/features/auth/schemas";
 import { isAllowedImageUrl } from "@/lib/hotels/images";
+import { hitAll } from "@/server/rate-limit";
 
 export type CheckoutFormState = {
   error?: CheckoutErrorKind;
@@ -109,6 +110,13 @@ export async function confirmBooking(_prev: CheckoutFormState, formData: FormDat
   if (verified.expired) return { error: "expired", ...keep };
   const guest = guestSchema.safeParse(values);
   if (!guest.success) return { fieldErrors: fieldErrors(guest.error), ...keep };
+  // Spending caps apply only to starting a NEW booking; resolving an existing attempt is never blocked.
+  const allowed = await hitAll([
+    ["bookUserHour", user.id],
+    ["bookUserDay", user.id],
+    ["bookAll", "all"],
+  ]);
+  if (!allowed.allowed) return { error: "rate_limited", ...keep };
 
   let claim: Awaited<ReturnType<typeof claimAttempt>>;
   try {

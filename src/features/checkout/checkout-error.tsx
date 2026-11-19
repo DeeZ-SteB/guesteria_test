@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { Button, buttonClasses } from "@/components/ui/button";
 
-export type CheckoutPageError = "rate_gone" | "offer_stale" | "mismatch" | "invalid" | "retry";
+export type CheckoutPageError = "rate_gone" | "offer_stale" | "mismatch" | "invalid" | "retry" | "rate_limited";
 
 const COPY: Record<CheckoutPageError, { title: string; text: string }> = {
   rate_gone: { title: "Цей тариф уже недоступний", text: "Хтось щойно забронював цей номер або тариф змінився. Оберіть інший." },
@@ -14,6 +14,7 @@ const COPY: Record<CheckoutPageError, { title: string; text: string }> = {
   mismatch: { title: "Посилання застаріло", text: "Дані бронювання не збігаються з обраними. Оберіть номер знову." },
   invalid: { title: "Неправильне посилання на бронювання", text: "Відкрийте готель і оберіть номер ще раз." },
   retry: { title: "Не вдалося перевірити тариф", text: "Сервіс бронювання відповідає надто довго або повернув помилку." },
+  rate_limited: { title: "Забагато спроб", text: "Ви перевіряли тарифи надто часто. Спробуйте за кілька хвилин." },
 };
 
 export function CheckoutError({ kind, backHref }: { kind: CheckoutPageError; backHref: string }) {

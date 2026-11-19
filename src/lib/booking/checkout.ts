@@ -71,7 +71,8 @@ export type CheckoutErrorKind =
   | "pending"
   | "support"
   | "failed"
-  | "unsaved";
+  | "unsaved"
+  | "rate_limited";
 
 const MESSAGES: Record<CheckoutErrorKind, string> = {
   session: "Сесія завершилась. Увійдіть знову, щоб завершити бронювання.",
@@ -84,6 +85,7 @@ const MESSAGES: Record<CheckoutErrorKind, string> = {
   support: "Бронювання створено, але його дані відрізняються від обраних. Ми перевіримо його вручну — не бронюйте повторно.",
   failed: "Не вдалося забронювати. Спробуйте ще раз або оберіть інший тариф.",
   unsaved: "Бронювання підтверджено, але ми не змогли його зберегти. Натисніть ще раз — повторного бронювання не буде.",
+  rate_limited: "Забагато бронювань за короткий час. Спробуйте пізніше або напишіть у підтримку.",
 };
 
 export function checkoutErrorMessage(kind: CheckoutErrorKind): string {

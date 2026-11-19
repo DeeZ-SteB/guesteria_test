@@ -24,6 +24,7 @@ import { BookingBarSkeleton, BookingSummary } from "./booking-summary";
 import { ReviewsSection } from "./reviews-section";
 import { HotelError } from "./hotel-error";
 import { AskAiButton } from "./ask-ai";
+import { AssistantPageContext } from "@/components/shell/assistant-fab";
 import { RoomsSkeleton } from "./hotel-skeleton";
 
 type Props = Pick<PageProps<"/hotels/[hotelId]">, "params" | "searchParams">;
@@ -101,6 +102,14 @@ export async function HotelPage({ params, searchParams }: Props) {
             <div className="mt-4 lg:hidden">
               <AskAiButton hotelId={hotel.id} hotelName={hotel.name} />
             </div>
+            <AssistantPageContext
+              value={{
+                page: "hotel",
+                hotelId: hotel.id,
+                hotelName: hotel.name,
+                ...(stayState.status === "ok" ? { checkin: stayState.stay.checkIn, checkout: stayState.stay.checkOut, adults: stayState.stay.adults } : {}),
+              }}
+            />
           </section>
 
           <Facilities facilities={hotel.facilities} />

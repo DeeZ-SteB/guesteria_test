@@ -7,6 +7,7 @@ import { AlertTriangle, CalendarCheck, FlaskConical, Info, ShieldCheck } from "l
 import { requireUser } from "@/server/auth";
 import { getHotel, LiteApiError, prebookOffer } from "@/server/liteapi";
 import { findSameStay, getOwnBooking } from "@/server/bookings";
+import { hitAll } from "@/server/rate-limit";
 import { signCheckoutToken } from "@/server/checkout/token";
 import { nightsBetween, todayInKyiv } from "@/lib/booking/stay";
 import { priceChange, type CheckoutQuote } from "@/lib/booking/checkout";
@@ -70,6 +71,12 @@ export async function CheckoutContent({ searchParams }: { searchParams: PageProp
 
   // Below this line runs only on a real navigation, not on link prefetch.
   await navigation();
+  // Prebook costs a supplier call: per user and overall caps (SPEC §17, stage 8).
+  const allowed = await hitAll([
+    ["prebookUser", user.id],
+    ["prebookAll", "all"],
+  ]);
+  if (!allowed.allowed) return <CheckoutError kind="rate_limited" backHref={back} />;
   const quote = await quoteFor(params.offerId);
   if ("error" in quote) return <CheckoutError kind={quote.error} backHref={back} />;
 

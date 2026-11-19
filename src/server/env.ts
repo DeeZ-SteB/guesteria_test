@@ -33,3 +33,20 @@ export function checkoutSecret(): string {
   if (!parsed.success) throw new Error("CHECKOUT_SECRET is not configured");
   return parsed.data;
 }
+
+/** Anthropic API key (server-only). Throws without revealing any value. */
+export function anthropicKey(): string {
+  const parsed = z.string().min(20).safeParse(process.env.ANTHROPIC_API_KEY);
+  if (!parsed.success) throw new Error("ANTHROPIC_API_KEY is not configured");
+  return parsed.data;
+}
+
+const capSchema = (fallback: number) => z.coerce.number().int().min(0).max(1_000_000).catch(fallback);
+
+/** Cost guard: model calls per day for everyone / for anonymous visitors. */
+export function assistantCaps(): { daily: number; anonDaily: number } {
+  return {
+    daily: capSchema(2000).parse(process.env.ASSISTANT_DAILY_CAP ?? 2000),
+    anonDaily: capSchema(600).parse(process.env.ASSISTANT_ANON_DAILY_CAP ?? 600),
+  };
+}

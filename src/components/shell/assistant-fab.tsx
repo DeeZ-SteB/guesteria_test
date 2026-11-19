@@ -1,35 +1,61 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Sparkles } from "lucide-react";
-import { Sheet } from "@/components/ui/sheet";
-import { EmptyState } from "@/components/ui/feedback";
+import { AssistantPanel, type AssistantContext } from "@/features/assistant/assistant-panel";
+import { useAssistantChat, type AssistantChat } from "@/features/assistant/use-assistant-chat";
 
-/** What the assistant is being asked about. Stage 8 sends this to the server (validated there). */
-export type AssistantContext =
-  | { page: "hotel"; hotelId: string; hotelName: string }
-  | { page: "trip"; bookingId: string; hotelName: string }
-  | { page: "other" };
+export type { AssistantContext } from "@/features/assistant/assistant-panel";
 
-const Ctx = createContext<{ open: (context?: AssistantContext) => void } | null>(null);
+type Ctx = {
+  open: (context?: AssistantContext) => void;
+  chat: AssistantChat;
+  /** The page's own context (set by <AssistantPageContext>), used by the floating button. */
+  setPageContext: (context: AssistantContext | null) => void;
+};
+
+const AssistantCtx = createContext<Ctx | null>(null);
 
 export function useAssistant() {
-  const value = useContext(Ctx);
+  const value = useContext(AssistantCtx);
   if (!value) throw new Error("useAssistant must be used inside <AssistantProvider>");
   return value;
 }
 
+/** Lets a page tell the floating button what the guest is looking at. Renders nothing. */
+export function AssistantPageContext({ value }: { value: AssistantContext }) {
+  const { setPageContext } = useAssistant();
+  const key = JSON.stringify(value);
+  useEffect(() => {
+    setPageContext(JSON.parse(key) as AssistantContext);
+    return () => setPageContext(null);
+  }, [key, setPageContext]);
+  return null;
+}
+
 /**
- * Entry point for the Guesteria AI assistant. Stage 8 replaces the stub panel;
- * the provider API, button and its placement are final.
+ * Guesteria AI: floating button + drawer (full screen on phones, 400 px panel from 768 px).
+ * One conversation per tab, shared with the trip page's inline panel.
  */
 export function AssistantProvider({ children }: { children: ReactNode }) {
-  const [context, setContext] = useState<AssistantContext | null>(null);
-  const open = useCallback((next: AssistantContext = { page: "other" }) => setContext(next), []);
-  const value = useMemo(() => ({ open }), [open]);
+  const chat = useAssistantChat();
+  const [openContext, setOpenContext] = useState<AssistantContext | null>(null);
+  const [pageContext, setPageContext] = useState<AssistantContext | null>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+
+  const open = useCallback((context?: AssistantContext) => setOpenContext(context ?? pageContext ?? { page: "other" }), [pageContext]);
+  const close = useCallback(() => setOpenContext(null), []);
+  const value = useMemo(() => ({ open, chat, setPageContext }), [open, chat]);
+
+  useEffect(() => {
+    const d = dialog.current;
+    if (!d) return;
+    if (openContext && !d.open) d.showModal();
+    if (!openContext && d.open) d.close();
+  }, [openContext]);
 
   return (
-    <Ctx.Provider value={value}>
+    <AssistantCtx.Provider value={value}>
       {children}
       <button
         type="button"
@@ -41,20 +67,18 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
         <Sparkles className="size-5" aria-hidden />
         <span className="hidden md:inline">Запитати Guesteria AI</span>
       </button>
-      <Sheet open={context !== null} onClose={() => setContext(null)} title="Guesteria AI">
-        <EmptyState
-          icon={Sparkles}
-          title="Асистент зʼявиться незабаром"
-          text={
-            context?.page === "hotel"
-              ? `Він відповідатиме на питання про «${context.hotelName}»: правила, зручності, відгуки гостей.`
-              : context?.page === "trip"
-                ? `Він знатиме про вашу поїздку в «${context.hotelName}»: пройде чекін, надішле запит готелю, підкаже дорогу.`
-                : "Він підбиратиме готелі, відповідатиме про них і допомагатиме з чекіном і запитами до готелю."
-          }
-          className="py-6"
-        />
-      </Sheet>
-    </Ctx.Provider>
+      <dialog
+        ref={dialog}
+        onCancel={(e) => {
+          e.preventDefault();
+          close();
+        }}
+        onClick={(e) => e.target === e.currentTarget && close()}
+        aria-label="Guesteria AI"
+        className="m-0 h-dvh max-h-none w-full max-w-none bg-surface p-0 text-ink md:ml-auto md:w-[400px] md:border-l md:border-line md:shadow-2xl"
+      >
+        {openContext && <AssistantPanel chat={chat} context={openContext} variant="drawer" onClose={close} />}
+      </dialog>
+    </AssistantCtx.Provider>
   );
 }

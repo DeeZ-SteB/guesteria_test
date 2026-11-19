@@ -17,6 +17,8 @@ function resultText(r: Extract<CancelTripResult, { ok: false }>["reason"]): stri
       return "Не вдалося перевірити результат. Оновіть сторінку за хвилину — повторне скасування безпечне.";
     case "save_failed":
       return "Бронювання скасовано в готелі, статус тут оновиться після повторної спроби.";
+    case "rate_limited":
+      return "Забагато спроб. Спробуйте за кілька хвилин.";
     case "retry":
       return "Не вдалося завантажити бронювання. Спробуйте ще раз.";
     case "session":
