@@ -133,6 +133,12 @@ export function hotelHref(hotelId: string, query: Stay & { cityId?: string | nul
   return `/hotels/${encodeURIComponent(hotelId)}?${params}`;
 }
 
+/** True only for this hotel's own page (with or without a query) — a safe redirect target. */
+export function isHotelHref(hotelId: string, href: unknown): href is string {
+  const base = `/hotels/${encodeURIComponent(hotelId)}`;
+  return typeof href === "string" && (href === base || href.startsWith(`${base}?`));
+}
+
 /**
  * Hand-off to checkout. Throws on a malformed offer token rather than building a bad link.
  * `price` (whole ₴ shown on the hotel page) is a display-only hint for the price-change banner.

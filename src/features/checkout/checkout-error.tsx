@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { Button, buttonClasses } from "@/components/ui/button";
+import { backToHotel } from "./back-to-hotel";
 
 export type CheckoutPageError = "rate_gone" | "offer_stale" | "mismatch" | "invalid" | "retry" | "rate_limited";
 
@@ -17,7 +18,10 @@ const COPY: Record<CheckoutPageError, { title: string; text: string }> = {
   rate_limited: { title: "Забагато спроб", text: "Ви перевіряли тарифи надто часто. Спробуйте за кілька хвилин." },
 };
 
-export function CheckoutError({ kind, backHref }: { kind: CheckoutPageError; backHref: string }) {
+/** A rate that is gone or stale: going back must drop the hotel's cached rates (see backToHotel). */
+const DEAD_RATE: ReadonlySet<CheckoutPageError> = new Set(["rate_gone", "offer_stale", "mismatch"]);
+
+export function CheckoutError({ kind, backHref, hotelId }: { kind: CheckoutPageError; backHref: string; hotelId?: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const copy = COPY[kind];
@@ -34,9 +38,17 @@ export function CheckoutError({ kind, backHref }: { kind: CheckoutPageError; bac
             Спробувати ще раз
           </Button>
         )}
-        <Link href={backHref} className={buttonClasses({ variant: kind === "retry" ? "ghost" : "primary", size: "lg" })}>
-          Повернутися до готелю
-        </Link>
+        {hotelId && DEAD_RATE.has(kind) ? (
+          <form action={backToHotel.bind(null, hotelId, backHref)}>
+            <button type="submit" className={buttonClasses({ variant: "primary", size: "lg", fullWidth: true })}>
+              Повернутися до готелю
+            </button>
+          </form>
+        ) : (
+          <Link href={backHref} className={buttonClasses({ variant: kind === "retry" ? "ghost" : "primary", size: "lg" })}>
+            Повернутися до готелю
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import "server-only";
-import { cacheLife, cacheTag } from "next/cache";
+import { cacheLife, cacheTag, updateTag } from "next/cache";
 import { z } from "zod";
 import type { HotelDetails, HotelSummary, Review, RoomOffer } from "@/lib/hotels/types";
 import type { LiteApiErrorKind } from "@/lib/liteapi-messages";
@@ -14,6 +14,7 @@ export type { CancelOutcome } from "./mappers";
 import { offerIdSchema } from "@/lib/booking/offer";
 import type { CheckoutQuote, ConfirmedBooking, Guest } from "@/lib/booking/checkout";
 import * as service from "./service";
+import { toHotelCards, type HotelCard } from "@/lib/home/showcase";
 
 export { LiteApiError } from "./errors";
 
@@ -52,7 +53,7 @@ function parseStay(input: Stay, endpoint: string): Stay {
 // lifetime depends on the outcome: days for data, minutes for "not found / invalid" (so random
 // ids don't hit LiteAPI every time), seconds for transient failures.
 
-type Cached<T> = { ok: true; value: T } | { ok: false; kind: LiteApiErrorKind; code?: number };
+export type Cached<T> = { ok: true; value: T } | { ok: false; kind: LiteApiErrorKind; code?: number };
 
 function failure(error: unknown): Cached<never> {
   const e = reviveLiteApiError(error);
@@ -100,16 +101,98 @@ async function cachedReviews(id: string): Promise<Cached<Review[]>> {
   }
 }
 
-/** Unwraps a cached result into a value or a LiteApiError (thrown here, outside the cache). */
-async function fromCache<T>(load: () => Promise<Cached<T>>, endpoint: string): Promise<T> {
-  let result: Cached<T>;
+// ---------- short-lived price caches ----------
+//
+// Search prices and room rates are cached briefly so repeated searches and hotel pages answer at
+// once. Safe for money: the price a guest pays is always re-checked live by prebook at checkout
+// (with a "price changed" banner), and a rate that turned out to be gone drops the hotel's rates
+// cache (forgetRoomRates, from the checkout page's "back to the hotel" action).
+// Failures are never served from these caches: a transient LiteAPI error is retried live, once,
+// outside the cache (as before caching), so "retry" really retries.
+// These caches are shared by all users: their arguments must stay city/hotel, dates and adults only
+// (currency and guest nationality are fixed in client.ts) — never add anything per-user here.
+
+/** Search prices: fresh for 1 min, refreshed in the background, never older than 4 min. */
+export const SEARCH_PRICES = { stale: 60, revalidate: 90, expire: 240 } as const;
+/** Room rates carry offer ids for checkout: keep them young. */
+export const ROOM_RATES = { stale: 30, revalidate: 60, expire: 180 } as const;
+/** "Nothing available" may change soon (cancellations): keep it for a minute at most. */
+export const EMPTY_RESULT = { stale: 30, revalidate: 30, expire: 60 } as const;
+
+/** A failure leaves the cache within seconds (callers retry it live anyway, see priceRead). */
+export const FAILED = { stale: 0, revalidate: 1, expire: 10 } as const;
+
+type Life = typeof SEARCH_PRICES | typeof ROOM_RATES | typeof EMPTY_RESULT | typeof FAILED;
+
+/** Cache lifetime for a price result: the profile for data, a minute for empty, seconds for failures. */
+export function priceLife(result: Cached<readonly unknown[]>, profile: typeof SEARCH_PRICES | typeof ROOM_RATES): Life {
+  if (!result.ok) return FAILED;
+  return result.value.length === 0 ? EMPTY_RESULT : profile;
+}
+
+/** Failures worth an immediate live retry (not "bad input" or "nothing available"). */
+export const isTransient = (r: Cached<unknown>) => !r.ok && r.kind !== "invalid_request" && r.kind !== "no_availability";
+
+async function loadSearch(cityId: string, checkIn: string, checkOut: string, adults: number): Promise<Cached<HotelSummary[]>> {
+  const city = findCity(cityId);
+  if (!city) return { ok: false, kind: "invalid_request" };
+  const list = await cachedCityHotels(city.countryCode, city.cityName);
+  if (!list.ok) return list;
   try {
-    result = await load();
+    return { ok: true, value: await service.searchHotels(client(), { hotels: list.value, stay: { checkIn, checkOut, adults } }) };
   } catch (error) {
-    throw reviveLiteApiError(error); // e.g. config errors thrown before the try
+    return failure(error);
   }
+}
+
+async function cachedSearch(cityId: string, checkIn: string, checkOut: string, adults: number): Promise<Cached<HotelSummary[]>> {
+  "use cache";
+  const result = await loadSearch(cityId, checkIn, checkOut, adults);
+  cacheLife(priceLife(result, SEARCH_PRICES));
+  return result;
+}
+
+async function loadRoomRates(hotelId: string, checkIn: string, checkOut: string, adults: number): Promise<Cached<RoomOffer[]>> {
+  const details = await cachedHotel(hotelId);
+  if (!details.ok) return details;
+  try {
+    return { ok: true, value: await service.getRoomRates(client(), { hotelId, stay: { checkIn, checkOut, adults }, rooms: details.value.rooms }) };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+async function cachedRoomRates(hotelId: string, checkIn: string, checkOut: string, adults: number): Promise<Cached<RoomOffer[]>> {
+  "use cache";
+  cacheTag(`rates:${hotelId}`);
+  const result = await loadRoomRates(hotelId, checkIn, checkOut, adults);
+  cacheLife(priceLife(result, ROOM_RATES));
+  return result;
+}
+
+/** Reads a cached result; config errors thrown before a cached function's try are revived here. */
+async function settle<T>(load: () => Promise<Cached<T>>): Promise<Cached<T>> {
+  try {
+    return await load();
+  } catch (error) {
+    throw reviveLiteApiError(error);
+  }
+}
+
+/** Unwraps a result into a value or a LiteApiError (thrown here, outside the cache). */
+function unwrap<T>(result: Cached<T>, endpoint: string): T {
   if (result.ok) return result.value;
   throw new LiteApiError(result.kind, endpoint, { code: result.code });
+}
+
+async function fromCache<T>(load: () => Promise<Cached<T>>, endpoint: string): Promise<T> {
+  return unwrap(await settle(load), endpoint);
+}
+
+/** A price read: cached, but a cached transient failure is retried live once (never shared). */
+async function priceRead<T>(cached: () => Promise<Cached<T>>, live: () => Promise<Cached<T>>, endpoint: string): Promise<T> {
+  const first = await settle(cached);
+  return unwrap(isTransient(first) ? await settle(live) : first, endpoint);
 }
 
 // ---------- public API ----------
@@ -124,20 +207,38 @@ export async function getReviews(hotelId: string): Promise<Review[]> {
   return fromCache(() => cachedReviews(id), "getReviews");
 }
 
-/** Hotels with live prices for a stay. Prices are never cached. */
+/** Static hotel cards of a city for the home page (no prices; cached for days with the hotel list). */
+export async function getCityHotelCards(cityId: string): Promise<HotelCard[]> {
+  const city = findCity(cityId) ?? invalid("getCityHotelCards");
+  const list = await fromCache(() => cachedCityHotels(city.countryCode, city.cityName), "getCityHotelCards");
+  return toHotelCards(list.data, city.id);
+}
+
+/** Hotels with prices for a stay (briefly cached, see SEARCH_PRICES). */
 export async function searchHotels(input: { cityId: string } & Stay): Promise<HotelSummary[]> {
   const city = findCity(input.cityId) ?? invalid("searchHotels");
   const stay = parseStay(input, "searchHotels");
-  const hotels = await fromCache(() => cachedCityHotels(city.countryCode, city.cityName), "searchHotels");
-  return service.searchHotels(client(), { hotels, stay });
+  return priceRead(
+    () => cachedSearch(city.id, stay.checkIn, stay.checkOut, stay.adults),
+    () => loadSearch(city.id, stay.checkIn, stay.checkOut, stay.adults),
+    "searchHotels",
+  );
 }
 
-/** Rooms and rates for a stay, with static room info attached. Never cached. */
+/** Rooms and rates for a stay, with static room info attached (briefly cached, see ROOM_RATES). */
 export async function getRoomRates(hotelId: string, stayInput: Stay): Promise<RoomOffer[]> {
   const id = parseHotelId(hotelId, "getRoomRates");
   const stay = parseStay(stayInput, "getRoomRates");
-  const details = await fromCache(() => cachedHotel(id), "getRoomRates");
-  return service.getRoomRates(client(), { hotelId: id, stay, rooms: details.rooms });
+  return priceRead(
+    () => cachedRoomRates(id, stay.checkIn, stay.checkOut, stay.adults),
+    () => loadRoomRates(id, stay.checkIn, stay.checkOut, stay.adults),
+    "getRoomRates",
+  );
+}
+
+/** Drops a hotel's cached rates (all stays) — a rate turned out to be gone. Server Actions only. */
+export function forgetRoomRates(hotelId: string): void {
+  updateTag(`rates:${parseHotelId(hotelId, "forgetRoomRates")}`);
 }
 
 // ---------- booking (never cached; server-only callers check the session first) ----------

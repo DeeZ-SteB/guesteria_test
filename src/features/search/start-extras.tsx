@@ -4,9 +4,8 @@ import { use } from "react";
 import { browser } from "react-dom";
 import Link from "next/link";
 import { History, Sparkles, ChevronRight } from "lucide-react";
-import { CITIES, findCity } from "@/lib/cities";
+import { findCity } from "@/lib/cities";
 import { adultsLabel, formatDateRange } from "@/lib/format";
-import { defaultStay } from "@/lib/booking/stay";
 import { readRecent } from "@/lib/search/recent";
 import { searchHref } from "@/lib/search/params";
 
@@ -28,42 +27,6 @@ export function RecentSearches({ today }: { today: string }) {
               <span className="block font-medium">{findCity(q.cityId)?.nameUk}</span>
               <span className="text-xs text-muted">
                 {formatDateRange(q.checkIn, q.checkOut)} · {adultsLabel(q.adults)}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-const TILE_GRADIENTS = [
-  "from-teal-700 to-teal-300",
-  "from-blue-900 to-blue-300",
-  "from-amber-700 to-amber-300",
-  "from-orange-900 to-orange-300",
-  "from-violet-700 to-violet-300",
-  "from-slate-700 to-slate-300",
-];
-
-export function PopularCities({ today }: { today: string }) {
-  const stay = defaultStay(today);
-  const popular = CITIES.filter((c) => c.popular).slice(0, 6);
-  return (
-    <section aria-labelledby="popular-title">
-      <h2 id="popular-title" className="mb-2 font-semibold">
-        Популярні напрямки
-      </h2>
-      <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-        {popular.map((city, i) => (
-          <li key={city.id}>
-            <Link
-              href={searchHref({ cityId: city.id, ...stay })}
-              className={`flex h-24 items-end rounded-card bg-gradient-to-br p-3 font-semibold text-white ${TILE_GRADIENTS[i % TILE_GRADIENTS.length]}`}
-            >
-              <span>
-                {city.nameUk}
-                <span className="block text-xs font-normal opacity-90">{city.countryUk}</span>
               </span>
             </Link>
           </li>

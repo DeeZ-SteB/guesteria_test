@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { HotelSummary } from "@/lib/hotels/types";
-import { DEFAULT_VIEW, hotelHref, parseSearchParams, parseView, searchHref, type ViewState } from "./params";
+import { DEFAULT_VIEW, hotelHref, isHotelHref, parseSearchParams, parseView, searchHref, type ViewState } from "./params";
 import { activeFilterCount, applyView, countMatching, priceBounds } from "./filter";
 
 const TODAY = "2026-11-18";
@@ -140,5 +140,16 @@ describe("validateSearch and searchKey", () => {
   });
   it("identifies a search without view params", () => {
     expect(searchKey({ cityId: "lviv", checkIn: "2026-12-09", checkOut: "2026-12-12", adults: 2 })).toBe("lviv|2026-12-09|2026-12-12|2");
+  });
+});
+
+describe("isHotelHref", () => {
+  it("accepts only the hotel's own page", () => {
+    expect(isHotelHref("lp1", "/hotels/lp1")).toBe(true);
+    expect(isHotelHref("lp1", hotelHref("lp1", { checkIn: "2026-12-01", checkOut: "2026-12-03", adults: 2 }))).toBe(true);
+    expect(isHotelHref("lp1", "/hotels/lp12?x=1")).toBe(false);
+    expect(isHotelHref("lp1", "https://evil.test/hotels/lp1")).toBe(false);
+    expect(isHotelHref("lp1", "//evil.test")).toBe(false);
+    expect(isHotelHref("lp1", 5)).toBe(false);
   });
 });

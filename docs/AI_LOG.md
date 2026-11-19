@@ -277,3 +277,24 @@ Format:
 - **Found only in production with the real model:** the assistant narrated before tool calls and named `verified_context`. Narration is now cleared from the screen when a tool runs, and the prompt forbids naming internals. Test added; redeployed; verified.
 - **My misdiagnosis:** Realtime looked stuck in production; I reproduced it on a local production build and added debug logs — it worked in a fresh browser: my browser tab was in the background (throttled). Debug code removed; nothing shipped.
 - Not done: CI auto-deploy secrets (VERCEL_TOKEN etc.) are not set in GitHub (GitHub CLI not logged in); CI status not visible from here (private repo).
+
+## 2026-11-19 — Polish: brand, richer home page, caching
+- User request: logo and icon; a fuller home page (more hotels, top-rated, reviews, a themed hero photo and a photo per city); faster search and API responses.
+- **Brand:** SVG mark (pin + spark), `icon.svg`, `apple-icon.tsx` (ImageResponse), `manifest.ts`; `favicon.ico` replaced.
+- **Home:** hero photo, 8 city tiles with real hotel photos, «Найкращі за відгуками гостей», «Чому Guesteria», «Що кажуть гості» — all from static LiteAPI data (hotel lists + reviews), cached for hours; partial failure cached for minutes, total failure for seconds.
+- **Caching:** search prices and room rates now cached briefly (`use cache`, 1–4 min / 30 s–3 min). Measured locally: search 4.0 s cold → 0.09 s warm; hotel page 1.3 s → 0.1 s. The price paid is still re-checked live by prebook.
+- **Found while checking in the browser:** loading 8 cities in parallel hit LiteAPI's burst limit (4290) → at most 2 in flight (`mapLimited`); a Russian-language review and mid-word cuts on the home page → filtered and clipped at a word boundary.
+- Findings: code-reviewer 8 (4 MEDIUM, 4 LOW; "changes required"), security-auditor 3 LOW ("clean").
+
+| Agent | Sev | Finding | Resolution |
+|---|---|---|---|
+| code | MED | A rate found gone at checkout stayed cached on the hotel page (up to 3 min) — guest could pick it again, burning prebook attempts | «Повернутися до готелю» on gone/stale/mismatch is a Server Action: `updateTag("rates:<hotel>")`, then redirect (own hotel page only — `isHotelHref`). Verified in the browser with a corrupted offer. Tests. |
+| code | MED | A LiteAPI 429/timeout was cached and shared: "retry" got the same error | Failures leave the price cache in seconds and a cached transient failure is retried live once (`priceRead`), as before caching. Tests. |
+| code | MED | No tests for the cache-lifetime branches | `price-cache.test.ts` (profiles, empty, retry, no retry for no-availability, tag invalidation) and `getHomeShowcase` tests (all ok / one city / reviews / all failed). |
+| code | MED | A hotel listed in two cities would repeat (duplicate React keys) | De-duplicated in `topHotels` and `reviewHighlights`. Test. |
+| code | LOW | Search prices up to 10 min old; "nothing available" cached as long | Search expire 4 min; empty results 1 min. |
+| code | LOW | Unused `prices:` tag; home cities derived by `slice(0, 8)` | Tag removed; explicit home city list. |
+| code | LOW | "Free cancellation" can show up to 3 min past the deadline (computed inside the cache) | Accepted: prebook re-checks the policy before booking. |
+| security | LOW | Full reviewer names on the public home page | First name + initial (`shortName`). Test. |
+| security | LOW | Stale "Never cached" comment; future per-user args would leak into a shared cache | Comment fixed; rule written next to the caches. |
+| security | LOW | Client-varied keys could churn the shared cache | Accepted: inputs validated, routes already rate-limited. |
