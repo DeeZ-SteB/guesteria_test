@@ -307,6 +307,9 @@ export async function runAssistant(input: RunInput): Promise<RunResult> {
 
     const roundUi: UiBlock[] = [];
     appended.push({ message: { role: "assistant", content }, ui: roundUi });
+    // Text written before a tool call is the model thinking aloud ("let me check…"): the guest sees
+    // the tool status instead, then only the final answer. History keeps it unchanged.
+    if (content.some((b) => b.type === "text" && b.text.trim())) emit({ event: "reset", data: {} });
     const results: BetaToolResultBlockParam[] = await Promise.all(
       toolUses.map(async (call, i): Promise<BetaToolResultBlockParam> => {
         if (i >= MAX_CALLS_PER_STEP)

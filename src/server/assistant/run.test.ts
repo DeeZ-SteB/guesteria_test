@@ -86,6 +86,13 @@ describe("assistant loop", () => {
     expect(calls[1].messages).toHaveLength(3);
   });
 
+  it("narration before a tool call is cleared from the screen (only the final answer stays)", async () => {
+    const { streamer } = scripted([msg([text("Перевірю в деталях готелю."), toolUse("a")], "tool_use"), msg([text("Басейн є.")], "end_turn")]);
+    const { result, events } = run(streamer);
+    await result;
+    expect(events.map((e) => e.event)).toEqual(["text", "reset", "status", "block", "text"]);
+  });
+
   it("caps tool calls per step", async () => {
     const { streamer } = scripted([msg([toolUse("a"), toolUse("b"), toolUse("c"), toolUse("d")], "tool_use"), msg([text("ok")], "end_turn")]);
     const r = await run(streamer).result;

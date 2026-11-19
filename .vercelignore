@@ -1,0 +1,11 @@
+# Never upload local secrets or local build/test artefacts.
+.env
+.env.*
+!.env.example
+.next
+node_modules
+supabase/.temp
+supabase/.branches
+e2e/.auth
+test-results
+playwright-report
